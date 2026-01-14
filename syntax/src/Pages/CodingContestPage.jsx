@@ -1,6 +1,6 @@
 // Enhanced Coding Contest Execution Page
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
 import {
@@ -60,7 +60,11 @@ const languageOptions = {
 function CodingContestPage() {
   const { problemId } = useParams(); // Contest ID from URL
   const navigate = useNavigate();
+  const location = useLocation();
   const { showError, showSuccess, showInfo } = useAlert();
+
+  // Get server time data from navigation state (passed from ContestsPreview)
+  const serverTimeData = location.state?.serverTimeData;
 
   // Contest & Problem State
   const [contest, setContest] = useState(null);
@@ -80,9 +84,15 @@ function CodingContestPage() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionType, setExecutionType] = useState(null); // 'run' or 'submit'
 
-  // Timer State
+  // Timer State (secure - server-based)
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [timerStarted, setTimerStarted] = useState(false);
+  const [isLoadingTimer, setIsLoadingTimer] = useState(true);
+
+  // Server time tracking for secure timer (cannot be manipulated by user)
+  const serverStartTimeRef = useRef(null);
+  const durationMsRef = useRef(null);
+  const serverClientOffsetRef = useRef(0); // Offset between server and client time
 
   // UI State
   const [activeTab, setActiveTab] = useState('problem');
@@ -186,6 +196,122 @@ function CodingContestPage() {
     startProctoring
   } = useProctoring(problemId, isStrictMode, handleProctoringAutoSubmit);
 
+  // Calculate remaining time from server data (secure - cannot be manipulated)
+  const calculateRemainingTime = useCallback(() => {
+    if (!serverStartTimeRef.current || !durationMsRef.current) return null;
+
+    // Calculate elapsed time accounting for server-client time offset
+    const now = Date.now() + serverClientOffsetRef.current;
+    const elapsed = now - serverStartTimeRef.current;
+    const remaining = Math.max(0, durationMsRef.current - elapsed);
+
+    return Math.floor(remaining / 1000); // Return seconds
+  }, []);
+
+  // Initialize timer from server data (secure - persists across reloads)
+  const initializeServerTimer = useCallback(async (contestData) => {
+    if (!contestData?.eventMode || contestData.eventMode !== 'strict') {
+      setIsLoadingTimer(false);
+      return;
+    }
+
+    setIsLoadingTimer(true);
+
+    try {
+      // First, try to use navigation state data (from fresh start)
+      if (serverTimeData?.serverStartTime && serverTimeData?.durationMinutes) {
+        console.log('🕐 Using server time from navigation state');
+        serverStartTimeRef.current = serverTimeData.serverStartTime;
+        durationMsRef.current = serverTimeData.durationMinutes * 60 * 1000;
+
+        // Calculate server-client time offset for accuracy
+        if (serverTimeData.serverCurrentTime) {
+          serverClientOffsetRef.current = serverTimeData.serverCurrentTime - Date.now();
+        }
+
+        const remaining = calculateRemainingTime();
+        if (remaining !== null && remaining > 0) {
+          setTimeRemaining(remaining);
+          setTimerStarted(true);
+        } else if (remaining === 0) {
+          // Time already expired
+          setTimeRemaining(0);
+          setTimerStarted(true);
+        }
+      } else {
+        // Fetch server time data on page reload
+        console.log('🕐 Fetching server time from API (page reload)');
+        const response = await axios.post('/api/student/status-with-results', {
+          eventId: problemId
+        }, { withCredentials: true });
+
+        if (response.data.eventStatus === 'completed') {
+          showInfo('This contest has already been completed.');
+          navigate('/student-contests');
+          return;
+        }
+
+        if (response.data.eventStatus === 'in_progress' && response.data.serverStartTime) {
+          serverStartTimeRef.current = response.data.serverStartTime;
+          durationMsRef.current = (response.data.durationMinutes || contestData.durationMinutes || 120) * 60 * 1000;
+
+          // Calculate server-client offset
+          if (response.data.serverCurrentTime) {
+            serverClientOffsetRef.current = response.data.serverCurrentTime - Date.now();
+          }
+
+          const remaining = calculateRemainingTime();
+          if (remaining !== null && remaining > 0) {
+            setTimeRemaining(remaining);
+            setTimerStarted(true);
+          } else if (remaining !== null && remaining <= 0) {
+            // Time expired - auto submit
+            setTimeRemaining(0);
+            setTimerStarted(true);
+          }
+        } else if (response.data.eventStatus === 'not_started') {
+          // Event not started - start it now
+          const startResponse = await axios.post('/api/student/start-event', {
+            eventId: problemId
+          }, { withCredentials: true });
+
+          if (startResponse.data.success) {
+            serverStartTimeRef.current = startResponse.data.serverStartTime;
+            durationMsRef.current = (startResponse.data.durationMinutes || contestData.durationMinutes || 120) * 60 * 1000;
+
+            if (startResponse.data.serverCurrentTime) {
+              serverClientOffsetRef.current = startResponse.data.serverCurrentTime - Date.now();
+            }
+
+            const remaining = calculateRemainingTime();
+            if (remaining !== null) {
+              setTimeRemaining(remaining);
+              setTimerStarted(true);
+            }
+          }
+        } else {
+          // Fallback - use local duration (less secure but functional)
+          console.warn('⚠️ Using fallback local timer');
+          const duration = contestData.durationMinutes || 120;
+          serverStartTimeRef.current = Date.now();
+          durationMsRef.current = duration * 60 * 1000;
+          setTimeRemaining(duration * 60);
+          setTimerStarted(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing timer:', error);
+      // Fallback to local timer on error
+      const duration = contestData.durationMinutes || 120;
+      serverStartTimeRef.current = Date.now();
+      durationMsRef.current = duration * 60 * 1000;
+      setTimeRemaining(duration * 60);
+      setTimerStarted(true);
+    } finally {
+      setIsLoadingTimer(false);
+    }
+  }, [problemId, serverTimeData, calculateRemainingTime, navigate, showInfo]);
+
   // OPTIMIZED: Fetch Contest Data - fetch single contest instead of all
   useEffect(() => {
     const fetchContest = async () => {
@@ -209,7 +335,7 @@ function CodingContestPage() {
         if (foundContest.problems && Array.isArray(foundContest.problems)) {
           setProblems(foundContest.problems);
 
-          // Load saved state from localStorage
+          // Load saved state from localStorage (code/problem state only, not timer)
           const savedState = localStorage.getItem(`contest_${problemId}_state`);
           if (savedState) {
             const parsed = JSON.parse(savedState);
@@ -217,21 +343,8 @@ function CodingContestPage() {
             setSelectedLang(parsed.selectedLang || 'python');
           }
 
-          // Initialize timer
-          if (foundContest.eventMode === 'strict' && foundContest.durationMinutes) {
-            const savedTimer = localStorage.getItem(`contest_${problemId}_timer`);
-            if (savedTimer) {
-              const timerData = JSON.parse(savedTimer);
-              const elapsed = Math.floor((Date.now() - timerData.startTime) / 1000);
-              const remaining = timerData.initialTime - elapsed;
-              if (remaining > 0) {
-                setTimeRemaining(remaining);
-                setTimerStarted(true);
-              } else {
-                setTimeRemaining(0);
-              }
-            }
-          }
+          // Initialize secure server-based timer
+          await initializeServerTimer(foundContest);
 
           // Backend handles all validation - no client-side encryption needed
           console.log('✓ Contest loaded - ready for secure backend-validated submissions');
@@ -249,7 +362,7 @@ function CodingContestPage() {
     };
 
     fetchContest();
-  }, [problemId, navigate, showError]);
+  }, [problemId, navigate, showError, initializeServerTimer]);
 
   // Show proctoring modal for strict mode contests
   useEffect(() => {
@@ -342,22 +455,26 @@ function CodingContestPage() {
     };
   }, [code, currentProblemIndex, selectedLang, problemId, problems.length]);
 
-  // Timer countdown
+  // Timer countdown - recalculates from server time each tick (secure)
   useEffect(() => {
-    if (!timerStarted || timeRemaining === null || timeRemaining <= 0) return;
+    if (isLoadingTimer || !timerStarted || timeRemaining === null) return;
 
     const timer = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
-          // Timer expired - will be handled by checking timeRemaining === 0
-          return 0;
+      const remaining = calculateRemainingTime();
+
+      if (remaining !== null) {
+        if (remaining <= 0) {
+          setTimeRemaining(0);
+          clearInterval(timer);
+          // Timer expired - will be handled by the time expiry effect
+        } else {
+          setTimeRemaining(remaining);
         }
-        return prev - 1;
-      });
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timerStarted, timeRemaining]);
+  }, [isLoadingTimer, timerStarted, calculateRemainingTime]);
 
   // Handle time expiry
   useEffect(() => {
@@ -367,19 +484,12 @@ function CodingContestPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRemaining, timerStarted]);
 
-  // Start timer on first interaction
+  // Timer is now server-based and starts automatically
+  // This function is kept for compatibility but does nothing since timer is server-managed
   const startTimer = useCallback(() => {
-    if (!timerStarted && contest?.eventMode === 'strict' && contest?.durationMinutes) {
-      const initialTime = contest.durationMinutes * 60;
-      setTimeRemaining(initialTime);
-      setTimerStarted(true);
-
-      localStorage.setItem(`contest_${problemId}_timer`, JSON.stringify({
-        startTime: Date.now(),
-        initialTime
-      }));
-    }
-  }, [timerStarted, contest, problemId]);
+    // Timer initialization is now handled by initializeServerTimer
+    // No action needed on user interaction - timer is already running from server start time
+  }, []);
 
   // Format time display
   const formatTime = (seconds) => {

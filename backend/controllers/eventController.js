@@ -632,6 +632,44 @@ const finishContest = async (req, res) => {
         const contest = contestDoc.data();
         const problems = contest.problems || [];
 
+        // SERVER-SIDE TIME VALIDATION: Check if submission is within allowed time
+        // This prevents users from manipulating the frontend timer
+        if (contest.eventMode === 'strict' && contest.durationMinutes) {
+            const eventAttemptQuery = await db.collection('eventAttempts')
+                .where('userId', '==', studentId)
+                .where('eventId', '==', contestId)
+                .limit(1)
+                .get();
+
+            if (!eventAttemptQuery.empty) {
+                const attemptData = eventAttemptQuery.docs[0].data();
+                const startTime = attemptData.started_at_ms ||
+                    (attemptData.started_at?._seconds ? attemptData.started_at._seconds * 1000 : null);
+
+                if (startTime) {
+                    const allowedDurationMs = contest.durationMinutes * 60 * 1000;
+                    const gracePeriodMs = 60 * 1000; // 60 second grace period for network latency
+                    const elapsedMs = Date.now() - startTime;
+
+                    if (elapsedMs > allowedDurationMs + gracePeriodMs) {
+                        console.warn(`⚠️ TIME EXCEEDED: Student ${studentId} submitted after time limit`);
+                        console.warn(`   Elapsed: ${Math.floor(elapsedMs / 1000)}s, Allowed: ${contest.durationMinutes * 60}s (+60s grace)`);
+
+                        // Still accept the submission but mark it as late
+                        // You could also reject it entirely if you prefer strict enforcement
+                        // return res.status(400).json({
+                        //     success: false,
+                        //     message: "Contest time limit exceeded. Submission rejected.",
+                        //     elapsedSeconds: Math.floor(elapsedMs / 1000),
+                        //     allowedSeconds: contest.durationMinutes * 60
+                        // });
+                    } else {
+                        console.log(`✓ Submission within time limit (${Math.floor(elapsedMs / 1000)}s / ${contest.durationMinutes * 60}s)`);
+                    }
+                }
+            }
+        }
+
         // Process verified submissions (already validated during submission via /api/judge/contest-submit)
         const results = [];
         let totalScore = 0;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, CheckCircle, Home, AlertCircle } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
@@ -14,17 +14,23 @@ const StudentQuiz = () => {
   const navigate = useNavigate();
   const { showError, showSuccess, showInfo } = useAlert();
 
-  // Get quiz data from navigation state
+  // Get quiz data and server time from navigation state
   const quizData = location.state?.quizData;
+  const serverTimeData = location.state?.serverTimeData;
 
   // State management
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(null);
-  const [quizStartTime] = useState(Date.now());
   const [quizResults, setQuizResults] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingTimer, setIsLoadingTimer] = useState(true);
+
+  // Server time tracking for secure timer (cannot be manipulated by user)
+  const serverStartTimeRef = useRef(null);
+  const durationMsRef = useRef(null);
+  const serverClientOffsetRef = useRef(0); // Offset between server and client time
 
   // Proctoring State
   const [showStartProctoringModal, setShowStartProctoringModal] = useState(false);
@@ -72,18 +78,123 @@ const StudentQuiz = () => {
     startProctoring
   } = useProctoring(quizData?.id, isStrictMode, handleProctoringAutoSubmit);
 
-  // Initialize timer and load saved answers
+  // Calculate remaining time from server data (secure - cannot be manipulated)
+  const calculateRemainingTime = useCallback(() => {
+    if (!serverStartTimeRef.current || !durationMsRef.current) return null;
+
+    // Calculate elapsed time accounting for server-client time offset
+    const now = Date.now() + serverClientOffsetRef.current;
+    const elapsed = now - serverStartTimeRef.current;
+    const remaining = Math.max(0, durationMsRef.current - elapsed);
+
+    return Math.floor(remaining / 1000); // Return seconds
+  }, []);
+
+  // Initialize timer from server data (secure - persists across reloads)
   useEffect(() => {
     if (!quizData) {
       navigate('/student-contests');
       return;
     }
 
-    // Set initial time (convert minutes to seconds)
-    const duration = quizData.durationMinutes || quizData.duration || 30;
-    setTimeRemaining(duration * 60);
+    const initializeTimer = async () => {
+      setIsLoadingTimer(true);
 
-    // Load saved answers from localStorage
+      try {
+        // First, try to use navigation state data (from fresh start)
+        if (serverTimeData?.serverStartTime && serverTimeData?.durationMinutes) {
+          console.log('🕐 Using server time from navigation state');
+          serverStartTimeRef.current = serverTimeData.serverStartTime;
+          durationMsRef.current = serverTimeData.durationMinutes * 60 * 1000;
+
+          // Calculate server-client time offset for accuracy
+          if (serverTimeData.serverCurrentTime) {
+            serverClientOffsetRef.current = serverTimeData.serverCurrentTime - Date.now();
+          }
+
+          const remaining = calculateRemainingTime();
+          if (remaining !== null && remaining > 0) {
+            setTimeRemaining(remaining);
+          } else if (remaining === 0) {
+            // Time already expired
+            handleSubmit();
+            return;
+          }
+        } else {
+          // Fetch server time data on page reload
+          console.log('🕐 Fetching server time from API (page reload)');
+          const response = await axios.post('/api/student/status-with-results', {
+            eventId: quizData.id
+          }, { withCredentials: true });
+
+          if (response.data.eventStatus === 'completed') {
+            showInfo('This quiz has already been completed.');
+            navigate('/student-contests');
+            return;
+          }
+
+          if (response.data.eventStatus === 'in_progress' && response.data.serverStartTime) {
+            serverStartTimeRef.current = response.data.serverStartTime;
+            durationMsRef.current = (response.data.durationMinutes || quizData.durationMinutes || 30) * 60 * 1000;
+
+            // Calculate server-client offset
+            if (response.data.serverCurrentTime) {
+              serverClientOffsetRef.current = response.data.serverCurrentTime - Date.now();
+            }
+
+            const remaining = calculateRemainingTime();
+            if (remaining !== null && remaining > 0) {
+              setTimeRemaining(remaining);
+            } else if (remaining !== null && remaining <= 0) {
+              // Time expired - auto submit
+              showError('Quiz time has expired!');
+              handleSubmit();
+              return;
+            }
+          } else if (response.data.eventStatus === 'not_started') {
+            // Event not started - this shouldn't happen normally
+            // Start the event now
+            const startResponse = await axios.post('/api/student/start-event', {
+              eventId: quizData.id
+            }, { withCredentials: true });
+
+            if (startResponse.data.success) {
+              serverStartTimeRef.current = startResponse.data.serverStartTime;
+              durationMsRef.current = (startResponse.data.durationMinutes || quizData.durationMinutes || 30) * 60 * 1000;
+
+              if (startResponse.data.serverCurrentTime) {
+                serverClientOffsetRef.current = startResponse.data.serverCurrentTime - Date.now();
+              }
+
+              const remaining = calculateRemainingTime();
+              if (remaining !== null) {
+                setTimeRemaining(remaining);
+              }
+            }
+          } else {
+            // Fallback - use local duration (less secure but functional)
+            console.warn('⚠️ Using fallback local timer');
+            const duration = quizData.durationMinutes || quizData.duration || 30;
+            serverStartTimeRef.current = Date.now();
+            durationMsRef.current = duration * 60 * 1000;
+            setTimeRemaining(duration * 60);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing timer:', error);
+        // Fallback to local timer on error
+        const duration = quizData.durationMinutes || quizData.duration || 30;
+        serverStartTimeRef.current = Date.now();
+        durationMsRef.current = duration * 60 * 1000;
+        setTimeRemaining(duration * 60);
+      } finally {
+        setIsLoadingTimer(false);
+      }
+    };
+
+    initializeTimer();
+
+    // Load saved answers from localStorage (answers only, not timer)
     const savedAnswers = localStorage.getItem(`quiz_${quizData.id}_answers`);
     if (savedAnswers) {
       setSelectedAnswers(JSON.parse(savedAnswers));
@@ -94,7 +205,7 @@ const StudentQuiz = () => {
     if (savedQuestion) {
       setCurrentQuestion(parseInt(savedQuestion));
     }
-  }, [quizData, navigate]);
+  }, [quizData, navigate, serverTimeData, calculateRemainingTime]);
 
   // Show proctoring modal for strict mode quizzes
   useEffect(() => {
@@ -132,22 +243,26 @@ const StudentQuiz = () => {
     }
   }, [startProctoring, showInfo, showError]);
 
-  // Timer countdown
+  // Timer countdown - recalculates from server time each tick (secure)
   useEffect(() => {
-    if (timeRemaining === null || timeRemaining <= 0 || showResults) return;
+    if (isLoadingTimer || timeRemaining === null || showResults) return;
 
     const timer = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
+      const remaining = calculateRemainingTime();
+
+      if (remaining !== null) {
+        if (remaining <= 0) {
+          setTimeRemaining(0);
+          clearInterval(timer);
           handleSubmit();
-          return 0;
+        } else {
+          setTimeRemaining(remaining);
         }
-        return prev - 1;
-      });
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeRemaining, showResults]);
+  }, [isLoadingTimer, showResults, calculateRemainingTime]);
 
   // Save answers to localStorage whenever they change
   useEffect(() => {
@@ -194,7 +309,12 @@ const StudentQuiz = () => {
   // Internal submit handler that can be called by both user and proctoring auto-submit
   const handleSubmitInternal = async (isDisqualified = false, disqualificationReason = null) => {
     setIsSubmitting(true);
-    
+
+    // Calculate time taken from server data (secure)
+    const totalDurationSeconds = durationMsRef.current ? Math.floor(durationMsRef.current / 1000) : (quizData.durationMinutes || 30) * 60;
+    const remainingSeconds = timeRemaining || 0;
+    const timeTakenSeconds = totalDurationSeconds - remainingSeconds;
+
     try {
       // Convert selectedAnswers indices to actual answer values
       const studentAnswerValues = {};
@@ -209,7 +329,7 @@ const StudentQuiz = () => {
         quizTitle: quizData.eventTitle || quizData.title || 'Quiz',
         studentAnswers: studentAnswerValues, // Now contains the actual answer text values
         submittedAt: new Date().toISOString(),
-        timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining,
+        timeTaken: timeTakenSeconds,
         totalQuestions: questions.length,
         answeredQuestions: Object.keys(selectedAnswers).length,
         disqualified: isDisqualified,
@@ -251,7 +371,7 @@ const StudentQuiz = () => {
         quizId: quizData.id,
         answers: selectedAnswers,
         submittedAt: new Date().toISOString(),
-        timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining,
+        timeTaken: timeTakenSeconds,
         validationResults: response.data
       };
 
@@ -272,7 +392,7 @@ const StudentQuiz = () => {
         quizId: quizData.id,
         answers: selectedAnswers,
         submittedAt: new Date().toISOString(),
-        timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining
+        timeTaken: timeTakenSeconds
       };
 
       localStorage.setItem(`quiz_${quizData.id}_final`, JSON.stringify(finalAnswers));

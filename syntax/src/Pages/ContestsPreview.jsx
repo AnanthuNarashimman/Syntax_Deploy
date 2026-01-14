@@ -272,17 +272,37 @@ const ContestsPreview = () => {
     }
 
     if (eventStatus === 'in_progress') {
-      // Allow resuming the event
+      // Allow resuming the event - fetch server time data first
       const isMockData = contestData.title && !contestData.eventTitle;
       const eventType = isMockData ?
         (contestData.type === 'Quiz' ? 'quiz' : 'contest') :
         contestData.eventType;
 
-      if (eventType === 'quiz') {
-        navigate('/student-quiz', { state: { quizData: contestData } });
-      } else {
-        // Navigate to contest execution page
-        navigate(`/contest/${contestData.id}`);
+      // Fetch server time data for timer resume
+      try {
+        const response = await axios.post('/api/student/start-event', {
+          eventId: contestData.id
+        }, { withCredentials: true });
+
+        const serverTimeData = {
+          serverStartTime: response.data.serverStartTime,
+          serverCurrentTime: response.data.serverCurrentTime,
+          durationMinutes: response.data.durationMinutes
+        };
+
+        if (eventType === 'quiz') {
+          navigate('/student-quiz', { state: { quizData: contestData, serverTimeData } });
+        } else {
+          navigate(`/contest/${contestData.id}`, { state: { serverTimeData } });
+        }
+      } catch (error) {
+        console.error('Error fetching server time:', error);
+        // Fallback navigation without server time
+        if (eventType === 'quiz') {
+          navigate('/student-quiz', { state: { quizData: contestData } });
+        } else {
+          navigate(`/contest/${contestData.id}`);
+        }
       }
       return;
     }
@@ -290,7 +310,7 @@ const ContestsPreview = () => {
     // Start new event
     try {
       setIsStarting(true);
-      
+
       // Make API call to start event
       const response = await axios.post('/api/student/start-event', {
         eventId: contestData.id
@@ -305,6 +325,13 @@ const ContestsPreview = () => {
         console.log('Event started successfully');
         setEventStatus('in_progress');
 
+        // Extract server time data for secure timer
+        const serverTimeData = {
+          serverStartTime: response.data.serverStartTime,
+          serverCurrentTime: response.data.serverCurrentTime,
+          durationMinutes: response.data.durationMinutes
+        };
+
         // Check if it's mock data
         const isMockData = contestData.title && !contestData.eventTitle;
         const eventType = isMockData ?
@@ -312,13 +339,14 @@ const ContestsPreview = () => {
           contestData.eventType;
 
         console.log(`Starting ${eventType}...`, contestData.id);
+        console.log('Server time data:', serverTimeData);
 
-        // Navigate to appropriate page based on type
+        // Navigate to appropriate page based on type - pass server time data
         if (eventType === 'quiz') {
-          navigate('/student-quiz', { state: { quizData: contestData } });
+          navigate('/student-quiz', { state: { quizData: contestData, serverTimeData } });
         } else {
           // Navigate to contest execution page
-          navigate(`/contest/${contestData.id}`);
+          navigate(`/contest/${contestData.id}`, { state: { serverTimeData } });
         }
       } else {
         throw new Error('Failed to start event');

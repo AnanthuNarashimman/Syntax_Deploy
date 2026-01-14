@@ -92,19 +92,35 @@ async function startEvent(eventId, userId) {
     console.log("UserId:", userId);
     console.log("EventId:", eventId);
 
+    // Get server timestamp as a real Date for returning to client
+    const serverStartTime = Date.now();
+
     const statusData = {
         "userId": userId,
         "eventId": eventId,
         "status": "in_progress",
         "started_at": admin.firestore.FieldValue.serverTimestamp(),
+        "started_at_ms": serverStartTime, // Store milliseconds for easy client calculation
         "completed_at": null,
         "result_ref": null
     }
 
     try {
+        // Fetch event details to get duration
+        const eventDoc = await db.collection('events').doc(eventId).get();
+        let durationMinutes = 30; // Default 30 minutes
+
+        if (eventDoc.exists) {
+            const eventData = eventDoc.data();
+            durationMinutes = eventData.durationMinutes || eventData.duration || 30;
+        }
+
         await db.collection('eventAttempts').add(statusData);
+
         return {
-            "success": true
+            "success": true,
+            "serverStartTime": serverStartTime,
+            "durationMinutes": durationMinutes
         }
     } catch (err) {
         console.log(err);

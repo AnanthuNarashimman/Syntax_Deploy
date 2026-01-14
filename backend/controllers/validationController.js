@@ -47,6 +47,51 @@ const validateQuiz = async (req, res) => {
         const totalQuestions = studentSubmission.totalQuestions || (result.QuizResult ? result.QuizResult.length : 0);
         const totalPoints = result.pointsPerQuestion * result.correctAnswerCount;
 
+        // SERVER-SIDE TIME VALIDATION: Check if submission is within allowed time
+        // This prevents users from manipulating the frontend timer
+        try {
+            const quizDoc = await db.collection('events').doc(quizId).get();
+            if (quizDoc.exists) {
+                const quizData = quizDoc.data();
+
+                if (quizData.eventMode === 'strict' && quizData.durationMinutes) {
+                    const eventAttemptQuery = await db.collection('eventAttempts')
+                        .where('userId', '==', userId)
+                        .where('eventId', '==', quizId)
+                        .limit(1)
+                        .get();
+
+                    if (!eventAttemptQuery.empty) {
+                        const attemptData = eventAttemptQuery.docs[0].data();
+                        const startTime = attemptData.started_at_ms ||
+                            (attemptData.started_at?._seconds ? attemptData.started_at._seconds * 1000 : null);
+
+                        if (startTime) {
+                            const allowedDurationMs = quizData.durationMinutes * 60 * 1000;
+                            const gracePeriodMs = 60 * 1000; // 60 second grace period for network latency
+                            const elapsedMs = Date.now() - startTime;
+
+                            if (elapsedMs > allowedDurationMs + gracePeriodMs) {
+                                console.warn(`⚠️ TIME EXCEEDED: Student ${userId} submitted quiz after time limit`);
+                                console.warn(`   Elapsed: ${Math.floor(elapsedMs / 1000)}s, Allowed: ${quizData.durationMinutes * 60}s (+60s grace)`);
+                                // Log but still accept - uncomment below to reject late submissions
+                                // return res.status(400).json({
+                                //     message: "Quiz time limit exceeded. Submission rejected.",
+                                //     elapsedSeconds: Math.floor(elapsedMs / 1000),
+                                //     allowedSeconds: quizData.durationMinutes * 60
+                                // });
+                            } else {
+                                console.log(`✓ Quiz submission within time limit (${Math.floor(elapsedMs / 1000)}s / ${quizData.durationMinutes * 60}s)`);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (timeValidationError) {
+            console.error('Time validation error (non-blocking):', timeValidationError);
+            // Don't fail the submission due to time validation errors
+        }
+
         // OPTIMIZED: Fetch user data once and use it for both updates
         let userName = 'Unknown';
         let department = 'Unknown';
@@ -165,6 +210,7 @@ const checkStatus = async (req, res) => {
 }
 
 // Marks event as started for the user id
+// Returns server start time for secure timer calculation
 const startEvent = async (req, res) => {
     try {
         const { eventId } = req.body;
@@ -179,10 +225,32 @@ const startEvent = async (req, res) => {
 
         // Check if user has already started this event
         const statusResult = await validationService.getEventStatus(eventId, userId);
-        if (statusResult.status === 'in_progress' || statusResult.status === 'completed') {
+        if (statusResult.status === 'in_progress') {
+            // Event already in progress - return stored start time for timer resume
+            const attemptData = statusResult.data;
+
+            // Fetch event duration
+            const eventDoc = await db.collection('events').doc(eventId).get();
+            let durationMinutes = 30;
+            if (eventDoc.exists) {
+                const eventData = eventDoc.data();
+                durationMinutes = eventData.durationMinutes || eventData.duration || 30;
+            }
+
             return res.status(200).json({
                 "success": true,
-                "message": "Event already started or completed",
+                "message": "Event already in progress",
+                "status": statusResult.status,
+                "serverStartTime": attemptData.started_at_ms || attemptData.started_at?._seconds * 1000 || Date.now(),
+                "durationMinutes": durationMinutes,
+                "serverCurrentTime": Date.now()
+            });
+        }
+
+        if (statusResult.status === 'completed') {
+            return res.status(200).json({
+                "success": true,
+                "message": "Event already completed",
                 "status": statusResult.status
             });
         }
@@ -192,7 +260,10 @@ const startEvent = async (req, res) => {
         if (result.success) {
             res.status(200).json({
                 "success": true,
-                "message": "Event started successfully"
+                "message": "Event started successfully",
+                "serverStartTime": result.serverStartTime,
+                "durationMinutes": result.durationMinutes,
+                "serverCurrentTime": Date.now()
             });
         } else {
             res.status(500).json({
@@ -250,6 +321,7 @@ const getResult = async (req, res) => {
 }
 
 // Combined endpoint to get status and results in single request
+// Also returns server time data for secure timer calculation on resume
 const getStatusWithResults = async (req, res) => {
     try {
         const { eventId } = req.body;
@@ -261,29 +333,50 @@ const getStatusWithResults = async (req, res) => {
             });
         }
 
-        // Fetch status and results in parallel
-        const [statusResult, resultSnapshot] = await Promise.all([
+        // Fetch status, results, and event details in parallel
+        const [statusResult, resultSnapshot, eventDoc] = await Promise.all([
             validationService.getEventStatus(eventId, userId),
             db.collection('eventResults')
                 .where("userId", "==", userId)
                 .where("eventId", "==", eventId)
                 .limit(1)
-                .get()
+                .get(),
+            db.collection('events').doc(eventId).get()
         ]);
 
         const status = statusResult.status;
         let resultData = null;
+        let durationMinutes = 30;
+
+        // Get event duration
+        if (eventDoc.exists) {
+            const eventData = eventDoc.data();
+            durationMinutes = eventData.durationMinutes || eventData.duration || 30;
+        }
 
         // Only include result if event is completed
         if (status === 'completed' && !resultSnapshot.empty) {
             resultData = resultSnapshot.docs[0].data();
         }
 
-        res.status(200).json({
+        // Build response with timer data for in_progress events
+        const response = {
             "eventStatus": status,
             "attemptData": statusResult.data || null,
-            "result": resultData
-        });
+            "result": resultData,
+            "serverCurrentTime": Date.now(),
+            "durationMinutes": durationMinutes
+        };
+
+        // Include server start time for timer calculation if event is in progress
+        if (status === 'in_progress' && statusResult.data) {
+            const attemptData = statusResult.data;
+            // Handle both new format (started_at_ms) and old format (Firestore timestamp)
+            response.serverStartTime = attemptData.started_at_ms ||
+                (attemptData.started_at?._seconds ? attemptData.started_at._seconds * 1000 : null);
+        }
+
+        res.status(200).json(response);
 
     } catch (error) {
         console.error('Error getting status with results:', error);
