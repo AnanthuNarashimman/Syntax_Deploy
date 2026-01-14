@@ -1,0 +1,816 @@
+import React, { useState, useEffect } from "react";
+import {
+  Award,
+  TrendingUp,
+  Users,
+  Calendar,
+  Clock,
+  Target,
+  Zap,
+  BookOpen,
+  Trophy,
+  Crown,
+  Diamond,
+  Shield,
+  Sword,
+  Star,
+  Search,
+  Code,
+} from "lucide-react";
+import StudentNavbar from "../Components/StudentNavbar";
+import Loader from "../Components/Loader";
+import { useContestContext } from "../contexts/ContestContext";
+import styles from "../Styles/PageStyles/StudentHome.module.css";
+import welcomeImg from "../assets/Images/welcome.jpg";
+import findImg from "../assets/Images/find.jpg";
+import { useAlert } from "../contexts/AlertContext";
+import { useNavigate } from "react-router-dom";
+
+const getInitial = (name) =>
+  name && name.length > 0 ? name[0].toUpperCase() : "?";
+
+// Tier calculation functions
+const getTierFromScore = (score) => {
+  if (score >= 10000) return "legend";
+  if (score >= 5000) return "titan";
+  if (score >= 2000) return "vanguard";
+  if (score >= 800) return "adept";
+  if (score >= 250) return "challenger";
+  return "novice";
+};
+
+const getTierName = (tier) => {
+  switch (tier) {
+    case "legend":
+      return "Legend";
+    case "titan":
+      return "Titan";
+    case "vanguard":
+      return "Vanguard";
+    case "adept":
+      return "Adept";
+    case "challenger":
+      return "Challenger";
+    case "novice":
+      return "Novice";
+    default:
+      return "Unranked";
+  }
+};
+
+const getTierIcon = (tier) => {
+  switch (tier) {
+    case "legend":
+      return <Crown size={24} />;
+    case "titan":
+      return <Diamond size={24} />;
+    case "vanguard":
+      return <Shield size={24} />;
+    case "adept":
+      return <Zap size={24} />;
+    case "challenger":
+      return <Sword size={24} />;
+    case "novice":
+      return <Target size={24} />;
+    default:
+      return <Star size={24} />;
+  }
+};
+
+const getNextTierThreshold = (currentTier) => {
+  switch (currentTier) {
+    case "novice":
+      return 250;
+    case "challenger":
+      return 800;
+    case "adept":
+      return 2000;
+    case "vanguard":
+      return 5000;
+    case "titan":
+      return 10000;
+    case "legend":
+      return null; // Max tier
+    default:
+      return 250;
+  }
+};
+
+const StudentHome = () => {
+  const { showError, showAlert } = useAlert();
+  const navigate = useNavigate();
+
+  // Get data from context
+  const {
+    studentContests,
+    studentContestsLoading,
+    getRecentStudentContests,
+    formatStudentDate,
+    getStudentContestStatus,
+    fetchStudentContests,
+    studentSubmissions,
+    submissionsLoading,
+    submissionsError,
+    fetchStudentSubmissions,
+  } = useContestContext();
+
+  const [contestCode, setContestCode] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submissionStats, setSubmissionStats] = useState({
+    contestsParticipated: 0,
+    totalScore: 0,
+  });
+
+  // Modal state for contest search
+  const [showModal, setShowModal] = useState(false);
+  const [selectedContest, setSelectedContest] = useState(null);
+  const [searchErrorMessage, setSearchErrorMessage] = useState("");
+  const [showSearchErrorModal, setShowSearchErrorModal] = useState(false);
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+
+  const [studentData, setStudentData] = useState({
+    userName: "User",
+    department: "",
+    year: "",
+    section: "",
+    semester: "",
+    batch: "",
+    rollNumber: "",
+    college: "",
+    languages: [],
+    skills: [],
+  });
+
+  // Get recent contests from context
+  const recentContests = getRecentStudentContests();
+  const upcomingContests = recentContests;
+
+  useEffect(() => {
+    const fetchStudentProfile = async () => {
+      try {
+        const response = await fetch("/api/student/profile", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch student profile");
+        }
+
+        const data = await response.json();
+        setStudentData({
+          ...data.profile,
+          languages: data.profile.languages || [],
+          skills: data.profile.skills || [],
+        });
+      } catch (error) {
+        console.error("Error fetching student profile:", error);
+        showError("Failed to load student profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentProfile();
+  }, [showError]);
+
+  useEffect(() => {
+    fetchStudentContests();
+    fetchStudentSubmissions();
+  }, []);
+
+  // Update submission stats when context data loads
+  useEffect(() => {
+    if (!submissionsLoading && !submissionsError && studentSubmissions) {
+      console.log(
+        "StudentHome - Updating submission stats:",
+        studentSubmissions
+      );
+      setSubmissionStats({
+        contestsParticipated: studentSubmissions.contestsParticipated || 0,
+        totalScore: studentSubmissions.totalPoints || 0,
+      });
+    }
+  }, [submissionsLoading, studentSubmissions, submissionsError]);
+
+  // REMOVED FALLBACK TIMER - This was causing duplicate Firebase reads
+  // Context now handles data fetching properly without automatic initialization
+
+  const handleContestJoin = () => {
+    if (contestCode.trim()) {
+      const foundContest = studentContests.find(
+        (contest) =>
+          contest.id.toLowerCase().includes(contestCode.toLowerCase()) ||
+          contest.eventTitle.toLowerCase().includes(contestCode.toLowerCase())
+      );
+
+      if (foundContest) {
+        setSelectedContest(foundContest);
+        setShowModal(true);
+      } else {
+        setSearchErrorMessage(`No contest found for code: "${contestCode}"`);
+        setShowSearchErrorModal(true);
+      }
+    }
+  };
+
+  // Modal handlers
+  const handleViewDetails = (contest) => {
+    setSelectedContest(contest);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedContest(null);
+  };
+
+  const handleCloseSearchErrorModal = () => {
+    setShowSearchErrorModal(false);
+    setSearchErrorMessage("");
+  };
+
+  const handleJoinContest = (contest) => {
+    const isApiData = !!contest.eventTitle;
+    const isCodingContest =
+      (isApiData && contest.eventType === "coding contest") ||
+      (!isApiData && contest.type === "Coding Contest");
+
+    if (isCodingContest) {
+      navigate(`/contest/${contest.id}`);
+    } else {
+      navigate("/student-contests-preview", {
+        state: { contestData: contest },
+      });
+    }
+    handleCloseModal();
+  };
+
+  // Handler for contest card join button
+  const handleContestCardJoin = (contest) => {
+    const isApiData = !!contest.eventTitle;
+    const isCodingContest =
+      (isApiData && contest.eventType === "coding contest") ||
+      (!isApiData && contest.type === "Coding Contest");
+
+    if (isCodingContest) {
+      navigate(`/contest/${contest.id}`);
+    } else {
+      navigate("/student-contests-preview", {
+        state: { contestData: contest },
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.studentHome}>
+        <StudentNavbar />
+        <Loader />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.studentHome}>
+      <StudentNavbar />
+      <div className={styles.homeContainer}>
+        {/* Header Section */}
+        <div className={styles.headerSection}>
+          <div className={styles.welcomeCard}>
+            <div className={styles.welcomeContent}>
+              <h1 className={styles.welcomeTitle}>
+                Welcome back,{" "}
+                <span className={styles.highlight}>{studentData.userName}</span>
+                !
+              </h1>
+              <p className={styles.welcomeSubtitle}>
+                Ready to conquer today's coding challenges?
+              </p>
+              <div className={styles.studentInfo}>
+                <span className={styles.infoTag}>{studentData.department}</span>
+                <span className={styles.infoTag}>Year {studentData.year}</span>
+                <span className={styles.infoTag}>
+                  Section {studentData.section}
+                </span>
+              </div>
+            </div>
+            <div className={styles.welcomeImage}>
+              <img src={welcomeImg} alt="Welcome" />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        <div className={styles.statsSection}>
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={styles.statIcon}>
+                <Trophy size={24} />
+              </div>
+              <div className={styles.statContent}>
+                <h3 className={styles.statNumber}>
+                  {submissionStats.contestsParticipated}
+                </h3>
+                <p className={styles.statLabel}>Events Participated</p>
+              </div>
+            </div>
+
+            <div className={styles.statCard}>
+              <div className={styles.statIcon}>
+                <Award size={24} />
+              </div>
+              <div className={styles.statContent}>
+                <h3 className={styles.statNumber}>
+                  {submissionStats.totalScore}
+                </h3>
+                <p className={styles.statLabel}>Total Points</p>
+              </div>
+            </div>
+
+            <div className={styles.statCard}>
+              <div className={styles.statIcon}>
+                {getTierIcon(getTierFromScore(submissionStats.totalScore))}
+              </div>
+              <div className={styles.statContent}>
+                <h3 className={styles.statNumber}>
+                  {getTierName(getTierFromScore(submissionStats.totalScore))}
+                </h3>
+                <p className={styles.statLabel}>Current Tier</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Section */}
+        <div className={styles.progressSection}>
+          <div className={styles.progressCard}>
+            <div className={styles.progressHeader}>
+              <h2 className={styles.progressTitle}>Level Progress</h2>
+              <div className={styles.progressBadge}>
+                {getTierName(getTierFromScore(submissionStats.totalScore))} Tier
+              </div>
+            </div>
+            <div className={styles.progressBar}>
+              <div
+                className={styles.progressFill}
+                style={{
+                  width: `${(() => {
+                    const currentTier = getTierFromScore(
+                      submissionStats.totalScore
+                    );
+                    const nextThreshold = getNextTierThreshold(currentTier);
+                    if (!nextThreshold) return 100; // Max tier reached
+                    const currentScore = submissionStats.totalScore;
+                    const previousThreshold =
+                      currentTier === "novice"
+                        ? 0
+                        : currentTier === "challenger"
+                        ? 0
+                        : currentTier === "adept"
+                        ? 250
+                        : currentTier === "vanguard"
+                        ? 800
+                        : currentTier === "titan"
+                        ? 2000
+                        : 5000;
+                    return Math.min(
+                      ((currentScore - previousThreshold) /
+                        (nextThreshold - previousThreshold)) *
+                        100,
+                      100
+                    );
+                  })()}%`,
+                }}
+              ></div>
+            </div>
+            <div className={styles.progressStats}>
+              <span>
+                {submissionStats.totalScore} /{" "}
+                {(() => {
+                  const nextThreshold = getNextTierThreshold(
+                    getTierFromScore(submissionStats.totalScore)
+                  );
+                  return nextThreshold || submissionStats.totalScore;
+                })()}{" "}
+                points
+              </span>
+              <span>
+                {(() => {
+                  const nextThreshold = getNextTierThreshold(
+                    getTierFromScore(submissionStats.totalScore)
+                  );
+                  return nextThreshold
+                    ? `${Math.max(
+                        nextThreshold - submissionStats.totalScore,
+                        0
+                      )} points to next tier`
+                    : "Maximum tier reached!";
+                })()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className={styles.actionsSection}>
+          <h2 className={styles.sectionTitle}>Quick Actions</h2>
+          <div className={styles.actionsGrid}>
+            <button
+              className={styles.actionCard}
+              onClick={() => navigate("/student-practice")}
+            >
+              <BookOpen size={24} />
+              <span>Practice Problems</span>
+            </button>
+            <button
+              className={styles.actionCard}
+              onClick={() => navigate("/student-contests")}
+            >
+              <Users size={24} />
+              <span>Join Contest</span>
+            </button>
+            <button
+              className={styles.actionCard}
+              onClick={() => navigate("/student-leader")}
+            >
+              <Trophy size={24} />
+              <span>View Leaderboard</span>
+            </button>
+            <button
+              className={styles.actionCard}
+              onClick={() => setShowComingSoonModal(true)}
+            >
+              <Zap size={24} />
+              <span>Daily Challenge</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Contest Join Section */}
+        <div className={styles.contestSection}>
+          <div className={styles.contestCard}>
+            <div className={styles.contestContent}>
+              <h2 className={styles.contestTitle}>Join Live Contests</h2>
+              <p className={styles.contestDescription}>
+                Enter contest codes to participate in real-time coding
+                challenges
+              </p>
+              <div className={styles.contestInput}>
+                <input
+                  type="text"
+                  placeholder="Enter contest code..."
+                  value={contestCode}
+                  onChange={(e) => setContestCode(e.target.value)}
+                  className={styles.codeInput}
+                />
+                <button
+                  onClick={handleContestJoin}
+                  className={styles.joinButton}
+                >
+                  Join Contest
+                </button>
+              </div>
+            </div>
+            <div className={styles.contestIllustration}>
+              <img src={findImg} alt="Join Contest" />
+            </div>
+          </div>
+        </div>
+
+        {/* Upcoming Contests */}
+        <div className={styles.upcomingSection}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Upcoming Contests</h2>
+            <button className={styles.viewAllButton} onClick={() => {navigate("/student-contests")}}>View All</button>
+          </div>
+          {upcomingContests.length > 0 ? (
+            <div className={styles.contestsGrid}>
+              {upcomingContests.map((contest) => {
+                const isApiData = contest.eventTitle; // Check if it's API data
+                const statusInfo = isApiData
+                  ? getStudentContestStatus(contest.status || "active")
+                  : null;
+
+                return (
+                  <div key={contest.id} className={styles.contestItem}>
+                    <div className={styles.contestHeader}>
+                      <div className={styles.contestType}>
+                        <span
+                          className={`${styles.typeBadge} ${
+                            styles[isApiData ? contest.eventType : contest.type]
+                          }`}
+                        >
+                          {isApiData
+                            ? contest.eventType === "quiz"
+                              ? "Quiz"
+                              : "Contest"
+                            : contest.type}
+                        </span>
+                        {isApiData && statusInfo ? (
+                          <span
+                            className={styles.difficulty}
+                            style={{ color: statusInfo.color }}
+                          >
+                            {statusInfo.label}
+                          </span>
+                        ) : (
+                          <span className={styles.difficulty}>
+                            {contest.difficulty}
+                          </span>
+                        )}
+                      </div>
+                      <div className={styles.contestTime}>
+                        <Clock size={16} />
+                        <span>
+                          {isApiData
+                            ? `${contest.durationMinutes} min`
+                            : contest.duration}
+                        </span>
+                      </div>
+                    </div>
+                    <h3 className={styles.contestName}>
+                      {isApiData ? contest.eventTitle : contest.title}
+                    </h3>
+                    <div className={styles.contestMeta}>
+                      <div className={styles.metaItem}>
+                        <Calendar size={16} />
+                        <span>
+                          {isApiData
+                            ? formatStudentDate(contest.createdAt)
+                            : contest.date}
+                        </span>
+                      </div>
+                      <div className={styles.metaItem}>
+                        <Users size={16} />
+                        <span>
+                          {isApiData
+                            ? `${contest.participants?.length || 0} participants`
+                            : `${contest.participants} participants`}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      className={styles.contestJoinBtn}
+                      onClick={() => handleContestCardJoin(contest)}
+                    >
+                      Join Now
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className={styles.emptyState}>
+              <Trophy size={48} style={{ color: '#ff8a65', opacity: 0.5 }} />
+              <p className={styles.emptyStateText}>No upcoming contests available</p>
+              <p className={styles.emptyStateSubtext}>Check back later or browse all contests</p>
+            </div>
+          )}
+        </div>
+
+        {/* Contest Details Modal */}
+        {showModal && selectedContest && (
+          <div className={styles.modalOverlay} onClick={handleCloseModal}>
+            <div
+              className={styles.modalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.modalHeader}>
+                <h2 className={styles.modalTitle}>
+                  {selectedContest.eventTitle || selectedContest.title}
+                </h2>
+                <button className={styles.closeBtn} onClick={handleCloseModal}>
+                  ×
+                </button>
+              </div>
+
+              <div className={styles.modalBody}>
+                <div className={styles.modalSection}>
+                  <h3>Description</h3>
+                  <p>
+                    {selectedContest.eventDescription ||
+                      selectedContest.description ||
+                      "No description available"}
+                  </p>
+                </div>
+
+                <div className={styles.modalSection}>
+                  <h3>Contest Details</h3>
+                  <div className={styles.detailsGrid}>
+                    <div className={styles.detailItem}>
+                      <Clock size={16} />
+                      <span>
+                        Duration:{" "}
+                        {selectedContest.durationMinutes
+                          ? `${selectedContest.durationMinutes} minutes`
+                          : selectedContest.duration}
+                      </span>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <Users size={16} />
+                      <span>
+                        Departments:{" "}
+                        {selectedContest.allowedDepartments ||
+                          selectedContest.department}
+                      </span>
+                    </div>
+                    {selectedContest.eventType && (
+                      <div className={styles.detailItem}>
+                        {selectedContest.eventType === "quiz" ? (
+                          <BookOpen size={16} />
+                        ) : (
+                          <Code size={16} />
+                        )}
+                        <span>
+                          Type:{" "}
+                          {selectedContest.eventType === "quiz"
+                            ? "Quiz Competition"
+                            : "Coding Contest"}
+                        </span>
+                      </div>
+                    )}
+                    {selectedContest.eventMode && (
+                      <div className={styles.detailItem}>
+                        <Trophy size={16} />
+                        <span>
+                          Mode:{" "}
+                          {selectedContest.eventMode === "strict"
+                            ? "Strict (Timed)"
+                            : "Practice (Flexible)"}
+                        </span>
+                      </div>
+                    )}
+                    {selectedContest.topicsCovered && (
+                      <div className={styles.detailItem}>
+                        <Target size={16} />
+                        <span>Topics: {selectedContest.topicsCovered}</span>
+                      </div>
+                    )}
+                    {selectedContest.totalScore && (
+                      <div className={styles.detailItem}>
+                        <Award size={16} />
+                        <span>Total Points: {selectedContest.totalScore}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.modalSection}>
+                  <h3>Contest Information</h3>
+                  <div className={styles.detailsGrid}>
+                    <div className={styles.detailItem}>
+                      <Target size={16} />
+                      <span className={styles.contestId}>
+                        Contest ID: {selectedContest.id}
+                      </span>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <Calendar size={16} />
+                      <span>
+                        Created:{" "}
+                        {selectedContest.createdAt
+                          ? formatStudentDate(selectedContest.createdAt)
+                          : "Unknown"}
+                      </span>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <Users size={16} />
+                      <span>
+                        Participants:{" "}
+                        {selectedContest.participants?.length || 0}
+                      </span>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <Trophy size={16} />
+                      <span>
+                        Status:{" "}
+                        {getStudentContestStatus(
+                          selectedContest.status || "active"
+                        ).label}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.modalFooter}>
+                <button
+                  className={styles.joinContestBtn}
+                  onClick={() => handleJoinContest(selectedContest)}
+                >
+                  <Trophy size={16} />
+                  Join Contest
+                </button>
+                <button className={styles.cancelBtn} onClick={handleCloseModal}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Search Error Modal */}
+        {showSearchErrorModal && (
+          <div
+            className={styles.modalOverlay}
+            onClick={handleCloseSearchErrorModal}
+          >
+            <div
+              className={styles.errorModalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.errorModalHeader}>
+                <div className={styles.errorIcon}>
+                  <Search size={48} />
+                </div>
+                <h2 className={styles.errorModalTitle}>Contest Not Found</h2>
+                <button
+                  className={styles.closeBtn}
+                  onClick={handleCloseSearchErrorModal}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className={styles.errorModalBody}>
+                <p className={styles.errorMessage}>{searchErrorMessage}</p>
+                <div className={styles.errorSuggestions}>
+                  <h4>Please check:</h4>
+                  <ul>
+                    <li>The contest ID is correct</li>
+                    <li>The contest exists and is available</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className={styles.errorModalFooter}>
+                <button
+                  className={styles.tryAgainBtn}
+                  onClick={handleCloseSearchErrorModal}
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Coming Soon Modal */}
+        {showComingSoonModal && (
+          <div
+            className={styles.modalOverlay}
+            onClick={() => setShowComingSoonModal(false)}
+          >
+            <div
+              className={styles.comingSoonModalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.comingSoonModalHeader}>
+                <div className={styles.comingSoonIcon}>
+                  <Zap size={64} />
+                </div>
+                <h2 className={styles.comingSoonTitle}>Coming Soon!</h2>
+                <button
+                  className={styles.closeBtn}
+                  onClick={() => setShowComingSoonModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className={styles.comingSoonBody}>
+                <p className={styles.comingSoonMessage}>
+                  Daily Challenge feature is currently under development.
+                </p>
+                <div className={styles.comingSoonFeatures}>
+                  <h4>What to expect:</h4>
+                  <ul>
+                    <li>New coding challenges every day</li>
+                    <li>Earn bonus points and achievements</li>
+                    <li>Compete with students worldwide</li>
+                    <li>Track your daily streak</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className={styles.comingSoonFooter}>
+                <button
+                  className={styles.gotItBtn}
+                  onClick={() => setShowComingSoonModal(false)}
+                >
+                  Got It!
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default StudentHome;

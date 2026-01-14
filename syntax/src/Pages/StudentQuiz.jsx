@@ -1,0 +1,626 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Clock, CheckCircle, Home, AlertCircle } from 'lucide-react';
+import StudentNavbar from '../Components/StudentNavbar';
+import styles from '../Styles/PageStyles/StudentQuiz.module.css';
+import axios from 'axios';
+import { useAlert } from '../contexts/AlertContext';
+import useProctoring from '../hooks/useProctoring';
+import ProctoringWarning from '../Components/ProctoringWarning';
+import StartProctoringModal from '../Components/StartProctoringModal';
+
+const StudentQuiz = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { showError, showSuccess, showInfo } = useAlert();
+
+  // Get quiz data from navigation state
+  const quizData = location.state?.quizData;
+
+  // State management
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [showResults, setShowResults] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [quizStartTime] = useState(Date.now());
+  const [quizResults, setQuizResults] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Proctoring State
+  const [showStartProctoringModal, setShowStartProctoringModal] = useState(false);
+
+  // Proctoring - Only active for strict mode quizzes
+  const isStrictMode = quizData?.eventMode === 'strict';
+
+  // Auto-submit handler for proctoring violations
+  const handleProctoringAutoSubmit = useCallback(async (reason) => {
+    showError(`Quiz auto-submitted: ${reason}`);
+    console.warn(`⚠️ Auto-submitting quiz: ${reason}`);
+
+    // Submit quiz with current answers (even if incomplete)
+    try {
+      showInfo('Submitting your quiz due to proctoring violations...');
+      
+      // Call the existing handleSubmit but mark as disqualified
+      await handleSubmitInternal(true, reason);
+      
+    } catch (error) {
+      console.error('Error during proctoring auto-submit:', error);
+      showError('Failed to submit quiz. Please contact support.');
+    }
+
+    // Clear proctoring data
+    if (quizData?.id) {
+      localStorage.removeItem(`proctoring_violations_${quizData.id}`);
+      localStorage.removeItem(`proctoring_log_${quizData.id}`);
+    }
+
+    // Navigate away
+    setTimeout(() => {
+      navigate('/student-contests');
+    }, 2000);
+  }, [quizData, navigate, showError, showInfo]);
+
+  // Initialize proctoring hook
+  const {
+    violations,
+    maxViolations,
+    showWarning,
+    setShowWarning,
+    violationType,
+    isProctoringActive,
+    startProctoring
+  } = useProctoring(quizData?.id, isStrictMode, handleProctoringAutoSubmit);
+
+  // Initialize timer and load saved answers
+  useEffect(() => {
+    if (!quizData) {
+      navigate('/student-contests');
+      return;
+    }
+
+    // Set initial time (convert minutes to seconds)
+    const duration = quizData.durationMinutes || quizData.duration || 30;
+    setTimeRemaining(duration * 60);
+
+    // Load saved answers from localStorage
+    const savedAnswers = localStorage.getItem(`quiz_${quizData.id}_answers`);
+    if (savedAnswers) {
+      setSelectedAnswers(JSON.parse(savedAnswers));
+    }
+
+    // Load saved current question
+    const savedQuestion = localStorage.getItem(`quiz_${quizData.id}_current`);
+    if (savedQuestion) {
+      setCurrentQuestion(parseInt(savedQuestion));
+    }
+  }, [quizData, navigate]);
+
+  // Show proctoring modal for strict mode quizzes
+  useEffect(() => {
+    if (quizData && isStrictMode && !isProctoringActive && !showResults) {
+      console.log('🔒 Strict mode quiz detected - showing proctoring modal');
+      setShowStartProctoringModal(true);
+    }
+  }, [quizData, isStrictMode, isProctoringActive, showResults]);
+
+  // Handle proctoring start (called when user clicks "Start Exam" button)
+  const handleStartProctoring = useCallback(async () => {
+    console.log('User clicked Start Proctored Quiz');
+    
+    // Enter fullscreen IMMEDIATELY with user gesture
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        console.log('✅ Fullscreen activated successfully');
+        
+        // Close modal and activate proctoring ONLY after successful fullscreen
+        setShowStartProctoringModal(false);
+        showInfo('Proctoring activated! Stay in fullscreen mode and keep focus on the quiz window.');
+        startProctoring();
+      } else {
+        // Browser doesn't support fullscreen API
+        console.error('❌ Fullscreen API not supported');
+        showError('Your browser does not support fullscreen mode. Please use Chrome, Firefox, or Edge for this quiz.');
+        // Keep modal open - don't start quiz
+      }
+    } catch (err) {
+      // User denied fullscreen permission or other error
+      console.error('❌ Failed to enter fullscreen:', err);
+      showError('Fullscreen mode is required for this proctored quiz. Please click "Start Quiz" again and allow fullscreen.');
+      // Keep modal open - don't start quiz
+    }
+  }, [startProctoring, showInfo, showError]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (timeRemaining === null || timeRemaining <= 0 || showResults) return;
+
+    const timer = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          handleSubmit();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeRemaining, showResults]);
+
+  // Save answers to localStorage whenever they change
+  useEffect(() => {
+    if (quizData && Object.keys(selectedAnswers).length > 0) {
+      localStorage.setItem(`quiz_${quizData.id}_answers`, JSON.stringify(selectedAnswers));
+      localStorage.setItem(`quiz_${quizData.id}_current`, currentQuestion.toString());
+    }
+  }, [selectedAnswers, currentQuestion, quizData]);
+
+  // Get questions array from quiz data
+  const questions = quizData?.questions || [];
+
+  // Utility functions
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleAnswerSelect = (questionIndex, optionIndex) => {
+    const newAnswers = {
+      ...selectedAnswers,
+      [questionIndex]: optionIndex
+    };
+    setSelectedAnswers(newAnswers);
+  };
+
+  const handleNext = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(currentQuestion - 1);
+    }
+  };
+
+  const handleQuestionJump = (questionIndex) => {
+    setCurrentQuestion(questionIndex);
+  };
+
+  // Internal submit handler that can be called by both user and proctoring auto-submit
+  const handleSubmitInternal = async (isDisqualified = false, disqualificationReason = null) => {
+    setIsSubmitting(true);
+    
+    try {
+      // Convert selectedAnswers indices to actual answer values
+      const studentAnswerValues = {};
+      Object.keys(selectedAnswers).forEach(questionIndex => {
+        const answerIndex = selectedAnswers[questionIndex];
+        studentAnswerValues[questionIndex] = questions[questionIndex].options[answerIndex];
+      });
+
+      // Create studentSubmission data structure
+      const studentSubmission = {
+        quizId: quizData.id,
+        quizTitle: quizData.eventTitle || quizData.title || 'Quiz',
+        studentAnswers: studentAnswerValues, // Now contains the actual answer text values
+        submittedAt: new Date().toISOString(),
+        timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining,
+        totalQuestions: questions.length,
+        answeredQuestions: Object.keys(selectedAnswers).length,
+        disqualified: isDisqualified,
+        disqualificationReason: disqualificationReason,
+        questionDetails: questions.map((question, index) => ({
+          questionIndex: index,
+          question: question.question,
+          options: question.options,
+          selectedAnswer: selectedAnswers[index] !== undefined ? selectedAnswers[index] : null,
+          selectedAnswerText: selectedAnswers[index] !== undefined ? question.options[selectedAnswers[index]] : null,
+          correctAnswer: question.correctAnswer,
+          correctAnswerText: question.options[question.correctAnswer],
+          isCorrect: selectedAnswers[index] === question.correctAnswer
+        }))
+      };
+
+      // Log the studentSubmission data to console
+      console.log('Student Submission Data:', studentSubmission);
+
+      // Make API request to validate quiz
+      const response = await axios.post('/api/student/validate-quiz', studentSubmission, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Quiz Validation Response:', response.data);
+      
+      // Store the quiz results
+      setQuizResults(response.data);
+
+      // Clear localStorage
+      localStorage.removeItem(`quiz_${quizData.id}_answers`);
+      localStorage.removeItem(`quiz_${quizData.id}_current`);
+
+      // Save final answers with timestamp
+      const finalAnswers = {
+        quizId: quizData.id,
+        answers: selectedAnswers,
+        submittedAt: new Date().toISOString(),
+        timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining,
+        validationResults: response.data
+      };
+
+      localStorage.setItem(`quiz_${quizData.id}_final`, JSON.stringify(finalAnswers));
+      setShowResults(true);
+      
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      
+      // Fallback to local calculation if API fails
+      alert('There was an error submitting your quiz. Showing local results.');
+      
+      // Clear localStorage and show results anyway
+      localStorage.removeItem(`quiz_${quizData.id}_answers`);
+      localStorage.removeItem(`quiz_${quizData.id}_current`);
+      
+      const finalAnswers = {
+        quizId: quizData.id,
+        answers: selectedAnswers,
+        submittedAt: new Date().toISOString(),
+        timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining
+      };
+
+      localStorage.setItem(`quiz_${quizData.id}_final`, JSON.stringify(finalAnswers));
+      setShowResults(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Public submit handler (called by user clicking submit button)
+  const handleSubmit = async () => {
+    await handleSubmitInternal(false, null);
+  };
+
+  const handleRestart = () => {
+    // Restart functionality removed
+  };
+
+  const handleBackToContests = () => {
+    navigate('/student-contests');
+  };
+
+  const getScoreColor = (percentage) => {
+    if (percentage >= 80) return '#10b981';
+    if (percentage >= 60) return '#f59e0b';
+    return '#ef4444';
+  };
+
+  const getScoreMessage = (percentage) => {
+    if (percentage >= 90) return { text: "Excellent! Outstanding performance!", class: "excellent" };
+    if (percentage >= 80) return { text: "Great job! You did very well!", class: "excellent" };
+    if (percentage >= 70) return { text: "Good work! Keep it up!", class: "good" };
+    if (percentage >= 60) return { text: "Not bad! There's room for improvement.", class: "good" };
+    return { text: "Keep practicing! You'll do better next time.", class: "needsImprovement" };
+  };
+
+  // Early return if no quiz data
+  if (!quizData) {
+    return (
+      <div className={styles.studentQuiz}>
+        <StudentNavbar />
+        <div className={styles.resultsContainer}>
+          <div className={styles.resultsQuizCard}>
+            <h2>No Quiz Data Found</h2>
+            <p>Please select a quiz from the contests page.</p>
+            <button className={styles.homeButton} onClick={handleBackToContests}>
+              Back to Contests
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate score for results
+  const calculateScore = () => {
+    // Use API results if available
+    if (quizResults) {
+      return {
+        correct: quizResults.CorrectAnswerCount,
+        total: quizResults.TotalQuestions
+      };
+    }
+
+    // Fallback to local calculation
+    let correct = 0;
+    questions.forEach((question, index) => {
+      if (selectedAnswers[index] === question.correctAnswer) {
+        correct++;
+      }
+    });
+    return {
+      correct: correct,
+      total: questions.length
+    };
+  };
+
+  // Results view
+  if (showResults) {
+    const scoreData = calculateScore();
+    const percentage = scoreData.total > 0 ? (scoreData.correct / scoreData.total) * 100 : 0;
+    const scoreMessage = getScoreMessage(percentage);
+    const scoreColor = getScoreColor(percentage);
+
+    return (
+      <div className={styles.studentQuiz}>
+        <StudentNavbar />
+        <div className={styles.resultsContainer}>
+          <div className={styles.resultsQuizCard}>
+            <div className={styles.resultsSection}>
+              <h1 className={styles.resultsTitle}>Quiz Completed!</h1>
+
+              <div className={styles.scoreDisplay}>
+                <div
+                  className={styles.scoreCircle}
+                  style={{ borderColor: scoreColor }}
+                >
+                  <div className={styles.scoreText} style={{ color: scoreColor }}>
+                    {scoreData.correct}/{scoreData.total}
+                  </div>
+                </div>
+                <div className={styles.scorePercentage}>
+                  {percentage.toFixed(1)}%
+                </div>
+                {quizResults && (
+                  <div className={styles.pointsDisplay}>
+                    <strong>{quizResults.Points} Points</strong>
+                  </div>
+                )}
+                <div className={`${styles.scoreMessage} ${styles[scoreMessage.class]}`}>
+                  {scoreMessage.text}
+                </div>
+              </div>
+
+              <div className={styles.actionButtons}>
+                <button className={styles.homeButton} onClick={handleBackToContests}>
+                  <Home size={20} />
+                  Back to Contests
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main quiz view
+  if (questions.length === 0) {
+    return (
+      <div className={styles.studentQuiz}>
+        <StudentNavbar />
+        <div className={styles.resultsContainer}>
+          <div className={styles.resultsQuizCard}>
+            <h2>No Questions Available</h2>
+            <p>This quiz doesn't have any questions yet.</p>
+            <button className={styles.homeButton} onClick={handleBackToContests}>
+              Back to Contests
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQ = questions[currentQuestion];
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
+
+  return (
+    <div className={styles.studentQuiz}>
+      {/* Hide navbar when proctoring is active */}
+      {!isProctoringActive && <StudentNavbar />}
+
+      {/* Start Proctoring Modal - Shows before quiz starts */}
+      {isStrictMode && (
+        <StartProctoringModal
+          show={showStartProctoringModal}
+          onStart={handleStartProctoring}
+          contestTitle={quizData?.eventTitle || quizData?.title || 'Quiz'}
+        />
+      )}
+
+      {/* Proctoring Warning Modal - Only shown for strict mode */}
+      {isStrictMode && (
+        <ProctoringWarning
+          show={showWarning}
+          violation={violationType}
+          count={violations}
+          maxViolations={maxViolations}
+          onClose={() => setShowWarning(false)}
+        />
+      )}
+
+      <div className={styles.quizContainer}>
+        {/* Quiz Header */}
+        <div className={styles.quizHeader}>
+          <button className={styles.backBtn} onClick={handleBackToContests}>
+            <ArrowLeft size={20} />
+            Back to Contests
+          </button>
+
+          <h1 className={styles.quizTitle}>
+            {quizData.eventTitle || quizData.title || 'Quiz'}
+          </h1>
+
+          <div className={styles.timerContainer}>
+            <Clock size={20} />
+            <span className={styles.timerText}>
+              {timeRemaining !== null ? formatTime(timeRemaining) : '--:--'}
+            </span>
+          </div>
+
+          {/* Proctoring Indicator */}
+          {isStrictMode && (
+            <div className={styles.proctoringBadge} title={`${violations}/${maxViolations} violations`}>
+              <AlertCircle size={16} />
+              <span>Proctored</span>
+              <span className={violations > 0 ? styles.violationCountActive : styles.violationCount}>
+                {violations}/{maxViolations}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Main Quiz Layout */}
+        <div className={styles.quizLayout}>
+          {/* Left Panel - Question and Options */}
+          <div className={styles.leftPanel}>
+            {/* Progress Section */}
+            <div className={styles.progressSection}>
+              <div className={styles.progressBar}>
+                <div
+                  className={styles.progressFill}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className={styles.progressInfo}>
+                <span className={styles.questionCounter}>
+                  Question {currentQuestion + 1} of {questions.length}
+                </span>
+              </div>
+            </div>
+
+            {/* Quiz Content - No Card Wrapper */}
+            <div className={styles.quizCard}>
+              <div className={styles.questionSection}>
+                <div className={styles.questionNumber}>
+                  Q{currentQuestion + 1}
+                </div>
+                <div className={styles.questionText}>
+                  {currentQ.question}
+                </div>
+              </div>
+
+              <div className={styles.optionsContainer}>
+                {currentQ.options.map((option, index) => (
+                  <div
+                    key={index}
+                    className={`${styles.option} ${
+                      selectedAnswers[currentQuestion] === index ? styles.selected : ''
+                    }`}
+                    onClick={() => handleAnswerSelect(currentQuestion, index)}
+                  >
+                    <div className={styles.optionIndicator}>
+                      {String.fromCharCode(65 + index)}
+                    </div>
+                    <div className={styles.optionText}>
+                      {option}
+                    </div>
+                    {selectedAnswers[currentQuestion] === index && (
+                      <CheckCircle className={styles.selectedIcon} size={20} />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Navigation Controls */}
+              <div className={styles.navigationControls}>
+                <button
+                  className={`${styles.navButton} ${styles.secondary}`}
+                  onClick={handlePrevious}
+                  disabled={currentQuestion === 0}
+                >
+                  <ArrowLeft size={16} />
+                  Previous
+                </button>
+
+                <button
+                  className={`${styles.navButton} ${styles.primary}`}
+                  onClick={handleNext}
+                  disabled={currentQuestion === questions.length - 1}
+                >
+                  Next
+                  <ArrowLeft size={16} style={{ transform: 'rotate(180deg)' }} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel - Question Navigation */}
+          <div className={styles.rightPanel}>
+            <div className={styles.questionNavigationCard}>
+              <div className={styles.navigationHeader}>
+                <h3 className={styles.navigationTitle}>Questions</h3>
+                <div className={styles.navigationLegend}>
+                  <div className={styles.legendItem}>
+                    <div className={`${styles.legendDot} ${styles.current}`}></div>
+                    <span>Current</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <div className={`${styles.legendDot} ${styles.answered}`}></div>
+                    <span>Answered</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <div className={`${styles.legendDot} ${styles.unanswered}`}></div>
+                    <span>Unanswered</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={styles.questionsGrid}>
+                {questions.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`${styles.questionNumberBtn} ${
+                      index === currentQuestion ? styles.currentQuestion :
+                      selectedAnswers[index] !== undefined ? styles.answeredQuestion : styles.unansweredQuestion
+                    }`}
+                    onClick={() => handleQuestionJump(index)}
+                    title={`Question ${index + 1} ${
+                      index === currentQuestion ? '(Current)' :
+                      selectedAnswers[index] !== undefined ? '(Answered)' : '(Unanswered)'
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+              
+              <div className={styles.navigationSummary}>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Total Questions:</span>
+                  <span className={styles.summaryValue}>{questions.length}</span>
+                </div>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Answered:</span>
+                  <span className={styles.summaryValue}>{Object.keys(selectedAnswers).length}</span>
+                </div>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Remaining:</span>
+                  <span className={styles.summaryValue}>{questions.length - Object.keys(selectedAnswers).length}</span>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                className={styles.rightPanelSubmitButton}
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StudentQuiz;
