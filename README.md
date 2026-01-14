@@ -7,27 +7,27 @@
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-**An enterprise-grade quiz and coding contest platform with advanced proctoring, real-time leaderboards, and comprehensive contest management for educational institutions.**
+**A quiz and coding contest platform with proctoring, real-time leaderboards, and contest management for educational institutions.**
 
 ---
 
 ## 📋 Overview
 
-**Syntax** is a production-ready, full-stack web application designed for educational institutions to conduct secure coding contests and quizzes. The platform features **real-time proctoring**, **encrypted submission handling**, **live code execution**, and a **comprehensive role-based access control system** with three distinct user hierarchies.
+**Syntax** is a full-stack web application designed for educational institutions to conduct coding contests and quizzes. The platform features **real-time proctoring**, **encrypted submission handling**, **live code execution**, and a **role-based access control system** with three user types.
 
-Built with security and scalability in mind, Syntax provides educators with powerful tools to create, monitor, and manage competitive programming contests while offering students a seamless and secure testing environment.
+Syntax helps educators create, monitor, and manage programming contests while providing students a secure testing environment.
 
 ---
 
 ## 🌟 Key Highlights
 
-- **🔐 Secure Contest Environment** - Military-grade encryption for submissions with anti-tampering measures
+- **🔐 Secure Contest Environment** - RSA encryption for submissions with anti-tampering measures
 - **👁️ Real-time Proctoring** - Automated violation detection with tab switching, window blur, and fullscreen monitoring
 - **⚡ Live Code Execution** - Support for Python, Java, C++, C, and JavaScript with Judge0 integration
-- **📊 Real-time Leaderboards** - Dynamic participant rankings with advanced filtering and Excel export
+- **📋 Real-time Leaderboards** - Participant rankings with filtering and Excel export
 - **🛡️ Exam Mode** - Strict proctoring with automatic submission on violations
 - **🔄 Contest Failsafe** - Admin ability to reopen contests for students with network issues
-- **📈 Advanced Analytics** - Comprehensive tracking of submissions, violations, and performance metrics
+- **📈 Tracking & Analytics** - Submission tracking, violation logs, and performance metrics
 
 ---
 
@@ -99,8 +99,8 @@ Built with security and scalability in mind, Syntax provides educators with powe
 - **Contest Search**: Filter contests by title, status, or type
 
 #### **Participant Management**
-- **Detailed Leaderboards**: View comprehensive participant data with scores
-- **Advanced Filtering**: Filter by department, year, section, or search by name/email
+- **Detailed Leaderboards**: View participant data with scores
+- **Filtering**: Filter by department, year, section, or search by name/email
 - **Sortable Columns**: Sort by score, submission time, or any field
 - **Excel Export**: Download complete participant data with one click
 - **Proctoring Logs**: View violation history for each participant
@@ -386,7 +386,7 @@ Built with security and scalability in mind, Syntax provides educators with powe
 
 ## 🚀 Development Status
 
-### ✅ **Production-Ready Features**
+### ✅ **Completed Features**
 
 #### **Authentication & Authorization**
 - ✔️ JWT-based authentication with secure cookie handling
@@ -457,7 +457,7 @@ Built with security and scalability in mind, Syntax provides educators with powe
 ### 🔮 **Future Enhancements**
 
 #### **Analytics & Reporting**
-- 📊 Advanced performance analytics
+- 📋 Performance analytics
 - 📈 Student progress tracking over time
 - 📉 Difficulty analysis per problem
 - 📊 Department-wise statistics
@@ -469,7 +469,7 @@ Built with security and scalability in mind, Syntax provides educators with powe
 - 💬 In-app announcements
 - 📢 Broadcast messages to participants
 
-#### **Advanced Features**
+#### **Additional Features**
 - 🏆 Badges and achievements system
 - 🎖️ Global ranking system
 - 👥 Team-based contests
@@ -672,7 +672,7 @@ Developed for educational institutions to conduct secure and fair programming co
 
 ## 🙏 Acknowledgments
 
-- **Judge0 CE** - For the powerful code execution engine
+- **Judge0 CE** - For the code execution engine
 - **Firebase** - For reliable backend infrastructure
 - **Monaco Editor** - For the excellent code editing experience
 - **React Community** - For the amazing ecosystem
