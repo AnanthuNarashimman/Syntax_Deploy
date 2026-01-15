@@ -11,6 +11,12 @@
 
 ---
 
+## ⚠️ Repository Notice
+
+**This repository is a deployment-enhanced copy of an original public repository.** The codebase was not built from scratch in this repository. It was copied from another repository of mine and subsequently enhanced with deployment configurations, optimizations, and additional features for production use.
+
+---
+
 ## 📋 Overview
 
 **Syntax** is a full-stack web application designed for educational institutions to conduct coding contests and quizzes. The platform features **real-time proctoring**, **encrypted submission handling**, **live code execution**, and a **role-based access control system** with three user types.
