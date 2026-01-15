@@ -557,6 +557,7 @@ function CodingContestPage() {
 
     const problem = problems[currentProblemIndex];
 
+    //TODO marked for review; not sure why the timer starts on code run
     startTimer();
     setIsExecuting(true);
     setExecutionType('run');
@@ -581,106 +582,17 @@ function CodingContestPage() {
           console.log('✗ Code execution completed with status:', response.data.status?.description);
         }
       } else {
-        // If no custom input, run against open test cases
-        const exampleTestCases = problem.exampleIO || problem.examples || [];
-        const openTestCases = problem.openTestCases || [];
-        const allOpenTests = [...exampleTestCases, ...openTestCases];
-
-        if (allOpenTests.length === 0) {
-          showError('No open test cases available. Please provide custom input.');
-          setIsExecuting(false);
-          return;
-        }
-
-        // Run against all open test cases
-        const submissions = allOpenTests.map(tc => ({
+        // If no custom input, run against open test cases via SECURE BACKEND
+        const response = await axios.post('/api/judge/run-open-tests', {
           source_code: code,
           language_id: languageOptions[selectedLang].id,
-          stdin: tc.input,
-          expected_output: tc.output
-        }));
-
-        // Submit batch and get tokens
-        const batchResponse = await axios.post('https://judge0-ce.p.rapidapi.com/submissions/batch',
-          { submissions },
-          {
-            params: { base64_encoded: 'false' },
-            headers: {
-              'content-type': 'application/json',
-              'X-RapidAPI-Key': import.meta.env.VITE_JUDGE0_RAPIDAPI_KEY || 'fba00342ccmshd4915b90c833a20p1a34bcjsne81de2afa405',
-              'X-RapidAPI-Host': import.meta.env.VITE_JUDGE0_RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
-            }
-          }
-        );
-
-        const tokens = batchResponse.data;
-
-        if (!Array.isArray(tokens)) {
-          throw new Error('Invalid response from Judge0 API');
-        }
-
-        const tokenList = tokens.map(t => t.token).join(',');
-
-        // Poll for results
-        let results = [];
-        let attempts = 0;
-        const maxAttempts = 30;
-
-        while (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-
-          const resultsResponse = await axios.get(`https://judge0-ce.p.rapidapi.com/submissions/batch`,
-            {
-              params: {
-                tokens: tokenList,
-                base64_encoded: 'false',
-                fields: 'stdout,stderr,status,time,memory,compile_output'
-              },
-              headers: {
-                'X-RapidAPI-Key': import.meta.env.VITE_JUDGE0_RAPIDAPI_KEY || 'fba00342ccmshd4915b90c833a20p1a34bcjsne81de2afa405',
-                'X-RapidAPI-Host': import.meta.env.VITE_JUDGE0_RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
-              }
-            }
-          );
-
-          results = resultsResponse.data.submissions;
-          const allComplete = results.every(r => r.status && r.status.id !== 1 && r.status.id !== 2);
-
-          if (allComplete) {
-            break;
-          }
-
-          attempts++;
-        }
-
-        if (attempts >= maxAttempts) {
-          throw new Error('Timeout waiting for Judge0 results');
-        }
-
-        // Process results
-        const testResults = results.map((result, index) => {
-          const testCase = allOpenTests[index];
-          const statusId = result.status?.id || 0;
-          const actualOutput = (result.stdout || '').trim();
-          const expectedOutput = (testCase.output || '').trim();
-          const executedSuccessfully = statusId === 3;
-          const outputMatches = actualOutput === expectedOutput;
-          const passed = executedSuccessfully && outputMatches;
-
-          return {
-            index: index + 1,
-            passed,
-            status: passed ? 'Passed' : (executedSuccessfully ? 'Failed' : result.status?.description || 'Error'),
-            input: testCase.input,
-            expectedOutput: testCase.output,
-            actualOutput: result.stdout || '',
-            stderr: result.stderr || '',
-            compile_output: result.compile_output || ''
-          };
+          event_id: problemId,
+          problem_index: currentProblemIndex
+        }, {
+          withCredentials: true
         });
 
-        const passedCount = testResults.filter(r => r.passed).length;
-        const totalCount = testResults.length;
+        const { passedCount, totalCount, testResults } = response.data;
 
         // Log results to console
         console.log(`\n=== Open Test Cases Results ===`);

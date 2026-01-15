@@ -554,7 +554,16 @@ const getEventResults = async (req, res) => {
   }
 };
 
-
+// Controller to submit event attempt
+// 1) Gets the required data from request body
+// 2) Gets the auth token from cookies
+// 3) Decodes the token to find the user id
+// 4) Checks if there is already a submission from the user id on the same event
+// 5) Fetches the event details
+// 6) Updates points correspondingly
+// 7) Updates participated count, status and points accordingly in multiple collections needed
+// 8) Returns necessary data to the client
+// 9) In case of error or exception, appropriate logs are made
 const finishContest = async (req, res) => {
     try {
         const { contestId, submissions, totalProblems, completedAt, submissionToken } = req.body;
@@ -583,15 +592,15 @@ const finishContest = async (req, res) => {
 
         // CRITICAL: Check if this contest has already been submitted by this student
         // This prevents duplicate document creation from race conditions
-        const existingResultRef = db.collection('users')
-            .doc(studentId)
-            .collection('contestResults')
-            .doc(contestId);
+        const existingResultRef = db.collection('eventResults')
+            .where("userID", "==", studentId)
+            .where("eventId", "==", contestId)
 
         const existingResult = await existingResultRef.get();
 
         if (existingResult.exists) {
-            const existingData = existingResult.data();
+            const existingDoc = existingResult.docs[0]; 
+            const existingData = existingDoc.data();
             console.log(`⚠️ Contest ${contestId} already submitted by student ${studentId}`);
             console.log(`Existing submission timestamp: ${existingData.completedAt || existingData.verifiedAt}`);
 
@@ -657,16 +666,16 @@ const finishContest = async (req, res) => {
 
                     if (elapsedMs > allowedDurationMs + gracePeriodMs) {
                         console.warn(`⚠️ TIME EXCEEDED: Student ${studentId} submitted after time limit`);
-                        console.warn(`   Elapsed: ${Math.floor(elapsedMs / 1000)}s, Allowed: ${contest.durationMinutes * 60}s (+60s grace)`);
+                        // console.warn(`   Elapsed: ${Math.floor(elapsedMs / 1000)}s, Allowed: ${contest.durationMinutes * 60}s (+60s grace)`);
 
                         // Still accept the submission but mark it as late
                         // You could also reject it entirely if you prefer strict enforcement
-                        // return res.status(400).json({
-                        //     success: false,
-                        //     message: "Contest time limit exceeded. Submission rejected.",
-                        //     elapsedSeconds: Math.floor(elapsedMs / 1000),
-                        //     allowedSeconds: contest.durationMinutes * 60
-                        // });
+                        return res.status(400).json({
+                            success: false,
+                            message: "Contest time limit exceeded. Submission rejected.",
+                            elapsedSeconds: Math.floor(elapsedMs / 1000),
+                            allowedSeconds: contest.durationMinutes * 60
+                        });
                     } else {
                         console.log(`✓ Submission within time limit (${Math.floor(elapsedMs / 1000)}s / ${contest.durationMinutes * 60}s)`);
                     }
@@ -742,7 +751,7 @@ const finishContest = async (req, res) => {
             submissionToken: submissionToken || null // Store token for duplicate detection
         });
 
-        // 1) Update user's total scores and contests participated
+        // Update user's total scores and contests participated
         let userName = 'Unknown';
         let department = 'Unknown';
 
@@ -766,7 +775,7 @@ const finishContest = async (req, res) => {
             console.error('Error updating user scores:', e);
         }
 
-        // 2) Update userSubmissions collection
+        // Update userSubmissions collection
         try {
             const userSubmissionSnapshot = await db.collection("userSubmissions")
                 .where("userId", "==", studentId)
@@ -799,7 +808,7 @@ const finishContest = async (req, res) => {
             console.error('Error updating userSubmissions:', e);
         }
 
-        // 3) Update eventAttempts and eventResults
+        // Update eventAttempts and eventResults
         try {
             // Find the event attempt
             const eventSnapshot = await db.collection('eventAttempts')

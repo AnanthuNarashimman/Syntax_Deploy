@@ -25,7 +25,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
   const [violationType, setViolationType] = useState('');
   const [isProctoringActive, setIsProctoringActive] = useState(false);
 
-  const MAX_VIOLATIONS = 3;
+  const MAX_VIOLATIONS = 10;
   const mouseOutsideTimer = useRef(null);
   const mouseOutsideStartTime = useRef(null);
   const devToolsCheckInterval = useRef(null);
@@ -206,7 +206,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
 
     console.log('✅ Starting proctoring event listeners...');
 
-    // ==================== FULLSCREEN MONITORING ====================
+    // FULLSCREEN MONITORING 
     let fullscreenExitTimer = null;
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
@@ -228,7 +228,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       }
     };
 
-    // ==================== TAB SWITCHING DETECTION ====================
+    // TAB SWITCHING DETECTION 
     const handleVisibilityChange = () => {
       console.log('👀 Visibility change detected - document.hidden:', document.hidden);
       if (document.hidden) {
@@ -236,13 +236,13 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       }
     };
 
-    // ==================== WINDOW FOCUS DETECTION ====================
+    // WINDOW FOCUS DETECTION 
     const handleWindowBlur = () => {
       console.log('👀 Window blur detected');
       recordViolation('Window lost focus');
     };
 
-    // ==================== MOUSE TRACKING ====================
+    // MOUSE TRACKING 
     const handleMouseMove = (e) => {
       const { clientX, clientY } = e;
       const { innerWidth, innerHeight } = window;
@@ -291,7 +291,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       }
     };
 
-    // ==================== COPY/PASTE/CUT BLOCKING ====================
+    // COPY/PASTE/CUT BLOCKING 
     const handleCopy = (e) => {
       e.preventDefault();
       recordViolation('Copy attempt blocked');
@@ -307,7 +307,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       recordViolation('Cut attempt blocked');
     };
 
-    // ==================== KEYBOARD SHORTCUTS BLOCKING ====================
+    // KEYBOARD SHORTCUTS BLOCKING 
     const handleKeyDown = (e) => {
       // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (DevTools shortcuts)
       if (
@@ -322,19 +322,19 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       // Ctrl+C, Ctrl+V, Ctrl+X (Clipboard shortcuts)
       if (e.ctrlKey && ['c', 'v', 'x', 'C', 'V', 'X'].includes(e.key)) {
         e.preventDefault();
-        recordViolation('Clipboard shortcut blocked');
+        // recordViolation('Clipboard shortcut blocked');
         return false;
       }
 
       // Ctrl+U (View Source)
       if (e.ctrlKey && ['u', 'U'].includes(e.key)) {
         e.preventDefault();
-        recordViolation('View source blocked');
+        // recordViolation('View source blocked');
         return false;
       }
     };
 
-    // ==================== RIGHT-CLICK BLOCKING ====================
+    // RIGHT-CLICK BLOCKING
     const handleContextMenu = (e) => {
       e.preventDefault();
       // Don't record violation for every right-click (too noisy)
@@ -342,7 +342,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       return false;
     };
 
-    // ==================== NAVIGATION BLOCKING ====================
+    // NAVIGATION BLOCKING 
     const handleBeforeUnload = (e) => {
       e.preventDefault();
       e.returnValue = 'Are you sure you want to leave? Your progress will be saved but proctoring will record this as a violation.';
@@ -355,7 +355,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       recordViolation('Navigation attempt blocked');
     };
 
-    // ==================== DEVTOOLS DETECTION (SIZE-BASED) ====================
+    // DEVTOOLS DETECTION (SIZE-BASED) 
     let lastInnerWidth = window.innerWidth;
     let lastInnerHeight = window.innerHeight;
 
@@ -374,7 +374,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       }
     };
 
-    // ==================== ATTACH EVENT LISTENERS ====================
+    // Attach event listeners
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
@@ -395,7 +395,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
     // Start DevTools detection interval
     devToolsCheckInterval.current = setInterval(checkDevTools, 2000);
 
-    // ==================== CLEANUP ====================
+    // Cleanup
     return () => {
       isCleaningUp.current = true;
 
