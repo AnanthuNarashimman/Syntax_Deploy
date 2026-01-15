@@ -648,7 +648,11 @@ const finishContest = async (req, res) => {
 
                 if (startTime) {
                     const allowedDurationMs = contest.durationMinutes * 60 * 1000;
-                    const gracePeriodMs = 60 * 1000; // 60 second grace period for network latency
+                    // 60 second grace period accounts for:
+                    // - 10 second auto-submit countdown modal shown to user
+                    // - Network latency for submission
+                    // - Any processing delays
+                    const gracePeriodMs = 60 * 1000;
                     const elapsedMs = Date.now() - startTime;
 
                     if (elapsedMs > allowedDurationMs + gracePeriodMs) {

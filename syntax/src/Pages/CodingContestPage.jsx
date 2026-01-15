@@ -105,11 +105,16 @@ function CodingContestPage() {
   // Proctoring State
   const [showStartProctoringModal, setShowStartProctoringModal] = useState(false);
 
+  // Auto-submit modal state
+  const [showAutoSubmitModal, setShowAutoSubmitModal] = useState(false);
+  const [autoSubmitCountdown, setAutoSubmitCountdown] = useState(10);
+
   // Refs
   const autoSaveTimer = useRef(null);
   const editorRef = useRef(null);
   const isAutoSubmitting = useRef(false); // Guard against duplicate auto-submit
   const submissionTokenRef = useRef(null); // Idempotency token for contest submission
+  const timerAutoSubmitRef = useRef(null); // Ref for timer auto-submit to avoid stale closures
 
   // Proctoring - Only active for strict mode contests
   const isStrictMode = contest?.eventMode === 'strict';
@@ -476,13 +481,42 @@ function CodingContestPage() {
     return () => clearInterval(timer);
   }, [isLoadingTimer, timerStarted, calculateRemainingTime]);
 
-  // Handle time expiry
+  // Handle time expiry - show modal instead of immediate submit
   useEffect(() => {
-    if (timeRemaining === 0 && timerStarted) {
-      handleTimerAutoSubmit();
+    if (timeRemaining === 0 && timerStarted && !showAutoSubmitModal) {
+      // Show auto-submit modal with countdown
+      setShowAutoSubmitModal(true);
+      setAutoSubmitCountdown(10);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRemaining, timerStarted]);
+  }, [timeRemaining, timerStarted, showAutoSubmitModal]);
+
+  // Auto-submit countdown effect
+  useEffect(() => {
+    if (!showAutoSubmitModal) return;
+
+    if (autoSubmitCountdown <= 0) {
+      // Guard against duplicate submissions
+      if (isAutoSubmitting.current) {
+        console.log('⏭️ Auto-submit already in progress, skipping duplicate call');
+        setShowAutoSubmitModal(false);
+        return;
+      }
+      isAutoSubmitting.current = true;
+
+      // Time's up - submit now
+      setShowAutoSubmitModal(false);
+      if (timerAutoSubmitRef.current) {
+        timerAutoSubmitRef.current();
+      }
+      return;
+    }
+
+    const countdownTimer = setInterval(() => {
+      setAutoSubmitCountdown(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(countdownTimer);
+  }, [showAutoSubmitModal, autoSubmitCountdown]);
 
   // Timer is now server-based and starts automatically
   // This function is kept for compatibility but does nothing since timer is server-managed
@@ -811,7 +845,7 @@ function CodingContestPage() {
   };
 
   // Auto-submit when timer expires
-  const handleTimerAutoSubmit = async () => {
+  const handleTimerAutoSubmit = useCallback(async () => {
     showInfo('Time expired! Auto-submitting your contest...');
 
     // Save final results with all encrypted submissions
@@ -824,7 +858,12 @@ function CodingContestPage() {
     } else {
       showError('Failed to submit contest. Please try again.');
     }
-  };
+  }, [problemId, problems, navigate, showInfo, showError, showSuccess]);
+
+  // Keep timerAutoSubmitRef updated with latest handler (avoids stale closures in timer effect)
+  useEffect(() => {
+    timerAutoSubmitRef.current = handleTimerAutoSubmit;
+  }, [handleTimerAutoSubmit]);
 
   // Save final contest results - Send all verified submissions to backend
   const saveFinalResults = async () => {
@@ -870,6 +909,11 @@ function CodingContestPage() {
       // Clean up local data after successful submission
       clearAllSubmissions(problemId, problems.length);
 
+      // Clear proctoring data from localStorage
+      localStorage.removeItem(`proctoring_violations_${problemId}`);
+      localStorage.removeItem(`proctoring_log_${problemId}`);
+      localStorage.removeItem(`contest_start_${problemId}`);
+
       showSuccess(message || `Contest completed! Your score: ${totalScore}/${totalPossible}`);
       console.log(`✓ Final score: ${totalScore}/${totalPossible}`);
 
@@ -881,6 +925,10 @@ function CodingContestPage() {
       if (error.response?.status === 409) {
         console.log('ℹ️ Contest already submitted (duplicate prevented)');
         const existingData = error.response?.data;
+        // Clear proctoring data even on duplicate
+        localStorage.removeItem(`proctoring_violations_${problemId}`);
+        localStorage.removeItem(`proctoring_log_${problemId}`);
+        localStorage.removeItem(`contest_start_${problemId}`);
         showInfo(`Contest already submitted. Your score: ${existingData.existingScore || 0}/${existingData.existingPossible || 0}`);
         return true; // Treat as success so user can navigate away
       }
@@ -1139,6 +1187,28 @@ function CodingContestPage() {
           maxViolations={maxViolations}
           onClose={() => setShowWarning(false)}
         />
+      )}
+
+      {/* Auto-Submit Modal - Shows when timer expires */}
+      {showAutoSubmitModal && (
+        <div className={styles.autoSubmitModalOverlay}>
+          <div className={styles.autoSubmitModal}>
+            <div className={styles.autoSubmitIcon}>
+              <Clock size={48} />
+            </div>
+            <h2 className={styles.autoSubmitTitle}>Time's Up!</h2>
+            <p className={styles.autoSubmitMessage}>
+              Your contest time has expired. Your work will be automatically submitted.
+            </p>
+            <div className={styles.autoSubmitCountdown}>
+              <span className={styles.countdownNumber}>{autoSubmitCountdown}</span>
+              <span className={styles.countdownLabel}>seconds</span>
+            </div>
+            <p className={styles.autoSubmitNote}>
+              Auto-submitting your work...
+            </p>
+          </div>
+        </div>
       )}
 
       <div className={styles.contestContainer}>

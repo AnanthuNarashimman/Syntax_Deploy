@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Clock, CheckCircle, Home, AlertCircle } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import styles from '../Styles/PageStyles/StudentQuiz.module.css';
@@ -12,13 +12,17 @@ import StartProctoringModal from '../Components/StartProctoringModal';
 const StudentQuiz = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { showError, showSuccess, showInfo } = useAlert();
 
-  // Get quiz data and server time from navigation state
-  const quizData = location.state?.quizData;
-  const serverTimeData = location.state?.serverTimeData;
+  // Get quiz data from navigation state OR sessionStorage (for refresh persistence)
+  const navigationQuizData = location.state?.quizData;
+  const navigationServerTimeData = location.state?.serverTimeData;
 
   // State management
+  const [quizData, setQuizData] = useState(navigationQuizData || null);
+  const [serverTimeData, setServerTimeData] = useState(navigationServerTimeData || null);
+  const [isLoadingQuiz, setIsLoadingQuiz] = useState(!navigationQuizData);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
@@ -27,16 +31,91 @@ const StudentQuiz = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingTimer, setIsLoadingTimer] = useState(true);
 
+  // Auto-submit modal state
+  const [showAutoSubmitModal, setShowAutoSubmitModal] = useState(false);
+  const [autoSubmitCountdown, setAutoSubmitCountdown] = useState(10);
+
   // Server time tracking for secure timer (cannot be manipulated by user)
   const serverStartTimeRef = useRef(null);
   const durationMsRef = useRef(null);
   const serverClientOffsetRef = useRef(0); // Offset between server and client time
+
+  // Ref for submit handler to avoid stale closures in timer
+  const submitHandlerRef = useRef(null);
+
+  // Guard against duplicate submissions (ref is synchronous, unlike state)
+  const isSubmittingRef = useRef(false);
 
   // Proctoring State
   const [showStartProctoringModal, setShowStartProctoringModal] = useState(false);
 
   // Proctoring - Only active for strict mode quizzes
   const isStrictMode = quizData?.eventMode === 'strict';
+
+  // Store quiz data in sessionStorage when navigating with state (for refresh persistence)
+  useEffect(() => {
+    if (navigationQuizData) {
+      sessionStorage.setItem('currentQuizData', JSON.stringify(navigationQuizData));
+      setQuizData(navigationQuizData);
+      setIsLoadingQuiz(false);
+    }
+  }, [navigationQuizData]);
+
+  // Restore quiz data from sessionStorage on page refresh
+  useEffect(() => {
+    const loadQuizData = async () => {
+      // If we already have quiz data from navigation, skip
+      if (navigationQuizData) return;
+
+      setIsLoadingQuiz(true);
+
+      // Try to restore from sessionStorage
+      const savedQuizData = sessionStorage.getItem('currentQuizData');
+      if (savedQuizData) {
+        try {
+          const parsed = JSON.parse(savedQuizData);
+          console.log('📋 Restored quiz data from sessionStorage');
+          setQuizData(parsed);
+
+          // Fetch fresh server time data
+          try {
+            const response = await axios.post('/api/student/status-with-results', {
+              eventId: parsed.id
+            }, { withCredentials: true });
+
+            if (response.data.eventStatus === 'completed') {
+              showInfo('This quiz has already been completed.');
+              sessionStorage.removeItem('currentQuizData');
+              navigate('/student-contests');
+              return;
+            }
+
+            if (response.data.serverStartTime) {
+              setServerTimeData({
+                serverStartTime: response.data.serverStartTime,
+                serverCurrentTime: response.data.serverCurrentTime,
+                durationMinutes: response.data.durationMinutes
+              });
+            }
+          } catch (error) {
+            console.error('Error fetching server time on refresh:', error);
+          }
+
+          setIsLoadingQuiz(false);
+          return;
+        } catch (e) {
+          console.error('Error parsing saved quiz data:', e);
+          sessionStorage.removeItem('currentQuizData');
+        }
+      }
+
+      // No saved data - redirect to contests
+      console.log('❌ No quiz data available, redirecting');
+      navigate('/student-contests');
+    };
+
+    loadQuizData();
+  }, [navigationQuizData, navigate, showInfo]);
 
   // Auto-submit handler for proctoring violations
   const handleProctoringAutoSubmit = useCallback(async (reason) => {
@@ -92,8 +171,8 @@ const StudentQuiz = () => {
 
   // Initialize timer from server data (secure - persists across reloads)
   useEffect(() => {
-    if (!quizData) {
-      navigate('/student-contests');
+    // Wait for quiz data to be loaded
+    if (isLoadingQuiz || !quizData) {
       return;
     }
 
@@ -115,9 +194,11 @@ const StudentQuiz = () => {
           const remaining = calculateRemainingTime();
           if (remaining !== null && remaining > 0) {
             setTimeRemaining(remaining);
-          } else if (remaining === 0) {
-            // Time already expired
-            handleSubmit();
+          } else if (remaining !== null && remaining <= 0) {
+            // Time already expired - show auto-submit modal
+            setTimeRemaining(0);
+            setShowAutoSubmitModal(true);
+            setAutoSubmitCountdown(10);
             return;
           }
         } else {
@@ -146,9 +227,10 @@ const StudentQuiz = () => {
             if (remaining !== null && remaining > 0) {
               setTimeRemaining(remaining);
             } else if (remaining !== null && remaining <= 0) {
-              // Time expired - auto submit
-              showError('Quiz time has expired!');
-              handleSubmit();
+              // Time expired - show auto-submit modal
+              setTimeRemaining(0);
+              setShowAutoSubmitModal(true);
+              setAutoSubmitCountdown(10);
               return;
             }
           } else if (response.data.eventStatus === 'not_started') {
@@ -205,7 +287,7 @@ const StudentQuiz = () => {
     if (savedQuestion) {
       setCurrentQuestion(parseInt(savedQuestion));
     }
-  }, [quizData, navigate, serverTimeData, calculateRemainingTime]);
+  }, [quizData, navigate, serverTimeData, calculateRemainingTime, isLoadingQuiz, showInfo, showError]);
 
   // Show proctoring modal for strict mode quizzes
   useEffect(() => {
@@ -245,7 +327,7 @@ const StudentQuiz = () => {
 
   // Timer countdown - recalculates from server time each tick (secure)
   useEffect(() => {
-    if (isLoadingTimer || timeRemaining === null || showResults) return;
+    if (isLoadingTimer || timeRemaining === null || showResults || showAutoSubmitModal) return;
 
     const timer = setInterval(() => {
       const remaining = calculateRemainingTime();
@@ -254,7 +336,9 @@ const StudentQuiz = () => {
         if (remaining <= 0) {
           setTimeRemaining(0);
           clearInterval(timer);
-          handleSubmit();
+          // Show auto-submit modal instead of immediately submitting
+          setShowAutoSubmitModal(true);
+          setAutoSubmitCountdown(10);
         } else {
           setTimeRemaining(remaining);
         }
@@ -262,7 +346,34 @@ const StudentQuiz = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isLoadingTimer, showResults, calculateRemainingTime]);
+  }, [isLoadingTimer, showResults, showAutoSubmitModal, calculateRemainingTime]);
+
+  // Auto-submit countdown effect
+  useEffect(() => {
+    if (!showAutoSubmitModal) return;
+
+    if (autoSubmitCountdown <= 0) {
+      // Guard against duplicate submissions
+      if (isSubmittingRef.current) {
+        console.log('⏭️ Submission already in progress, skipping duplicate call');
+        setShowAutoSubmitModal(false);
+        return;
+      }
+
+      // Time's up - submit now
+      setShowAutoSubmitModal(false);
+      if (submitHandlerRef.current) {
+        submitHandlerRef.current();
+      }
+      return;
+    }
+
+    const countdownTimer = setInterval(() => {
+      setAutoSubmitCountdown(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(countdownTimer);
+  }, [showAutoSubmitModal, autoSubmitCountdown]);
 
   // Save answers to localStorage whenever they change
   useEffect(() => {
@@ -308,6 +419,12 @@ const StudentQuiz = () => {
 
   // Internal submit handler that can be called by both user and proctoring auto-submit
   const handleSubmitInternal = async (isDisqualified = false, disqualificationReason = null) => {
+    // Guard against duplicate submissions using ref (synchronous check)
+    if (isSubmittingRef.current) {
+      console.log('⏭️ Submission already in progress, skipping duplicate call');
+      return;
+    }
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     // Calculate time taken from server data (secure)
@@ -362,9 +479,16 @@ const StudentQuiz = () => {
       // Store the quiz results
       setQuizResults(response.data);
 
-      // Clear localStorage
+      // Clear localStorage (quiz answers)
       localStorage.removeItem(`quiz_${quizData.id}_answers`);
       localStorage.removeItem(`quiz_${quizData.id}_current`);
+
+      // Clear proctoring data from localStorage
+      localStorage.removeItem(`proctoring_violations_${quizData.id}`);
+      localStorage.removeItem(`proctoring_log_${quizData.id}`);
+
+      // Clear sessionStorage (quiz data for refresh persistence)
+      sessionStorage.removeItem('currentQuizData');
 
       // Save final answers with timestamp
       const finalAnswers = {
@@ -383,11 +507,18 @@ const StudentQuiz = () => {
       
       // Fallback to local calculation if API fails
       alert('There was an error submitting your quiz. Showing local results.');
-      
-      // Clear localStorage and show results anyway
+
+      // Clear localStorage (quiz answers)
       localStorage.removeItem(`quiz_${quizData.id}_answers`);
       localStorage.removeItem(`quiz_${quizData.id}_current`);
-      
+
+      // Clear proctoring data from localStorage
+      localStorage.removeItem(`proctoring_violations_${quizData.id}`);
+      localStorage.removeItem(`proctoring_log_${quizData.id}`);
+
+      // Clear sessionStorage
+      sessionStorage.removeItem('currentQuizData');
+
       const finalAnswers = {
         quizId: quizData.id,
         answers: selectedAnswers,
@@ -399,13 +530,20 @@ const StudentQuiz = () => {
       setShowResults(true);
     } finally {
       setIsSubmitting(false);
+      // Note: Don't reset isSubmittingRef here - we want to prevent any further submissions
+      // once the quiz is submitted (even if there's an error, we show results)
     }
   };
 
   // Public submit handler (called by user clicking submit button)
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     await handleSubmitInternal(false, null);
-  };
+  }, [quizData, questions, selectedAnswers, timeRemaining]);
+
+  // Keep submitHandlerRef updated with latest handleSubmit (avoids stale closures in timer)
+  useEffect(() => {
+    submitHandlerRef.current = handleSubmit;
+  }, [handleSubmit]);
 
   const handleRestart = () => {
     // Restart functionality removed
@@ -564,6 +702,28 @@ const StudentQuiz = () => {
           maxViolations={maxViolations}
           onClose={() => setShowWarning(false)}
         />
+      )}
+
+      {/* Auto-Submit Modal - Shows when timer expires */}
+      {showAutoSubmitModal && (
+        <div className={styles.autoSubmitModalOverlay}>
+          <div className={styles.autoSubmitModal}>
+            <div className={styles.autoSubmitIcon}>
+              <Clock size={48} />
+            </div>
+            <h2 className={styles.autoSubmitTitle}>Time's Up!</h2>
+            <p className={styles.autoSubmitMessage}>
+              Your quiz time has expired. Your answers will be automatically submitted.
+            </p>
+            <div className={styles.autoSubmitCountdown}>
+              <span className={styles.countdownNumber}>{autoSubmitCountdown}</span>
+              <span className={styles.countdownLabel}>seconds</span>
+            </div>
+            <p className={styles.autoSubmitNote}>
+              Auto-submitting your work...
+            </p>
+          </div>
+        </div>
       )}
 
       <div className={styles.quizContainer}>
