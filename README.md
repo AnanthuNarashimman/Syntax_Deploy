@@ -1,6 +1,5 @@
 # Syntax 🎯
 
-![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)
 ![React Version](https://img.shields.io/badge/react-18.x-blue.svg)
 ![Firebase](https://img.shields.io/badge/firebase-10.x-orange.svg)
