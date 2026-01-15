@@ -3,8 +3,6 @@
 ![Node Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)
 ![React Version](https://img.shields.io/badge/react-18.x-blue.svg)
 ![Firebase](https://img.shields.io/badge/firebase-10.x-orange.svg)
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
 **A quiz and coding contest platform with proctoring, real-time leaderboards, and contest management for educational institutions.**
 
