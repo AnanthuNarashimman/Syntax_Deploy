@@ -17,6 +17,7 @@ const adminLogin = async (req, res) => {
       secure: true,
       maxAge: 1000 * 60 * 180, // 3 hours
       sameSite: "None",
+      partitioned: true,
       path: "/",
     });
 
