@@ -1,4 +1,4 @@
-# Use official Node.js LTS (Long Term Support) image
+# Use official Node.js LTS(Long Term Support) image
 FROM node:20-slim
 
 # Set working directory
