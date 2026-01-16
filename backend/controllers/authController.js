@@ -14,7 +14,7 @@ const adminLogin = async (req, res) => {
     // creating cookie
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       maxAge: 1000 * 60 * 180, // 3 hours
       sameSite: "None",
       path: "/",
@@ -60,7 +60,7 @@ const studentLogin = async (req, res) => {
 
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       maxAge: 1000 * 60 * 180, // 3 hours
       sameSite: "None",
       path: "/",
@@ -100,7 +100,7 @@ const superAdminLogin = async (req, res) => {
 
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       maxAge: 1000 * 60 * 60, // 1 hour for Super Admin
       sameSite: "None",
       path: "/",
@@ -119,7 +119,7 @@ const superAdminLogin = async (req, res) => {
 const logout = (req, res) => {
   res.clearCookie("auth_token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: true,
     sameSite: "None",
     path: "/",
   });
