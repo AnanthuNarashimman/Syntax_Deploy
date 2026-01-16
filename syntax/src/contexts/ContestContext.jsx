@@ -67,7 +67,7 @@ export const ContestProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("/api/admin/events", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/events`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -120,7 +120,7 @@ export const ContestProvider = ({ children }) => {
       setStudentContestsLoading(true);
       setStudentContestsError(null);
 
-      const response = await fetch("/api/student/events", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/student/events`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -161,7 +161,7 @@ export const ContestProvider = ({ children }) => {
       setStudentArticlesLoading(true);
       setStudentArticlesError(null);
 
-      const response = await fetch("/api/student/articles", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/student/articles`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -202,7 +202,7 @@ export const ContestProvider = ({ children }) => {
       setSubmissionsLoading(true);
       setSubmissionsError(null);
 
-      const response = await fetch("/api/student/profile/submissions", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/student/profile/submissions`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -341,7 +341,7 @@ export const ContestProvider = ({ children }) => {
   // Update event status
   const updateEventStatus = async (eventId, newStatus) => {
     try {
-      const response = await fetch(`/api/admin/events/${eventId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/events/${eventId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
