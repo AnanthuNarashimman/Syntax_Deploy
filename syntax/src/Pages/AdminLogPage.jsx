@@ -53,7 +53,7 @@ function AdminLogPage() {
         setLoading(true);
 
         try {
-            const response = await fetch('/api/auth/admin-login', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/admin-login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ function AdminLogPage() {
         setLoading(true);
 
         try {
-            const response = await fetch('/api/auth/logout', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
                 method: 'POST',
                 credentials: 'include'
             });

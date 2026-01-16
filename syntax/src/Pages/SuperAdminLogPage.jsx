@@ -53,7 +53,7 @@ function SuperAdminLogPage() {
         setLoading(true);
 
         try {
-            const response = await fetch('/api/auth/super-login', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/super-login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ function SuperAdminLogPage() {
         setLoading(true);
 
         try {
-            const response = await fetch('/api/auth/logout', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
                 method: 'POST',
                 credentials: 'include'
             });
