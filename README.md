@@ -1,10 +1,79 @@
 # Syntax 🎯
 
-![Node Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)
-![React Version](https://img.shields.io/badge/react-18.x-blue.svg)
-![Firebase](https://img.shields.io/badge/firebase-10.x-orange.svg)
-
 **A quiz and coding contest platform with proctoring, real-time leaderboards, and contest management for educational institutions.**
+
+---
+
+## 🚀 Tech Stack
+
+### **Frontend**
+<div align="left">
+  <img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React"/>
+  <img src="https://img.shields.io/badge/Vite-5.x-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite"/>
+  <img src="https://img.shields.io/badge/Monaco_Editor-Latest-2C2C32?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="Monaco Editor"/>
+  <img src="https://img.shields.io/badge/Axios-1.x-5A29E4?style=for-the-badge&logo=axios&logoColor=white" alt="Axios"/>
+  <img src="https://img.shields.io/badge/CSS3-Modules-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3"/>
+</div>
+
+**Deployed on:** 
+<img src="https://img.shields.io/badge/Vercel-Production-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel"/>
+
+### **Backend**
+<div align="left">
+  <img src="https://img.shields.io/badge/Node.js-20.x-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/>
+  <img src="https://img.shields.io/badge/Express.js-4.x-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express"/>
+  <img src="https://img.shields.io/badge/Firebase-10.x-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase"/>
+  <img src="https://img.shields.io/badge/Firestore-NoSQL-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firestore"/>
+</div>
+
+**Deployed on:** 
+<img src="https://img.shields.io/badge/Google_Cloud_Run-Production-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Google Cloud Run"/>
+
+### **Code Execution**
+<div align="left">
+  <img src="https://img.shields.io/badge/Judge0-CE-FF6C37?style=for-the-badge&logo=codepen&logoColor=white" alt="Judge0"/>
+  <img src="https://img.shields.io/badge/RapidAPI-Integration-0055DA?style=for-the-badge&logo=rapidapi&logoColor=white" alt="RapidAPI"/>
+</div>
+
+### **Security & Authentication**
+<div align="left">
+  <img src="https://img.shields.io/badge/Firebase_Auth-Sessions-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase Auth"/>
+  <img src="https://img.shields.io/badge/RSA-Encryption-FF6C37?style=for-the-badge&logo=letsencrypt&logoColor=white" alt="RSA Encryption"/>
+  <img src="https://img.shields.io/badge/bcrypt-Hashing-338B00?style=for-the-badge&logo=security&logoColor=white" alt="bcrypt"/>
+  <img src="https://img.shields.io/badge/JWT-Tokens-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT"/>
+</div>
+
+### **Development Tools**
+<div align="left">
+  <img src="https://img.shields.io/badge/ESLint-Config-4B32C3?style=for-the-badge&logo=eslint&logoColor=white" alt="ESLint"/>
+  <img src="https://img.shields.io/badge/Git-Version_Control-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git"/>
+  <img src="https://img.shields.io/badge/npm-Package_Manager-CB3837?style=for-the-badge&logo=npm&logoColor=white" alt="npm"/>
+</div>
+
+### **Cloud & DevOps**
+<div align="left">
+  <img src="https://img.shields.io/badge/Google_Cloud-Platform-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Google Cloud"/>
+  <img src="https://img.shields.io/badge/Cloud_Run-Container-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Cloud Run"/>
+  <img src="https://img.shields.io/badge/Secret_Manager-GCP-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Secret Manager"/>
+  <img src="https://img.shields.io/badge/Vercel-Hosting-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel"/>
+  <img src="https://img.shields.io/badge/Docker-Containerization-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+</div>
+
+### **Languages**
+<div align="left">
+  <img src="https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
+  <img src="https://img.shields.io/badge/HTML5-Markup-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5"/>
+  <img src="https://img.shields.io/badge/CSS3-Styling-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3"/>
+</div>
+
+**Supported Contest Languages:**
+<div align="left">
+  <img src="https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/Java-11+-007396?style=for-the-badge&logo=java&logoColor=white" alt="Java"/>
+  <img src="https://img.shields.io/badge/C++-17-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++"/>
+  <img src="https://img.shields.io/badge/C-11-A8B9CC?style=for-the-badge&logo=c&logoColor=black" alt="C"/>
+  <img src="https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
+</div>
 
 ---
 
