@@ -95,7 +95,7 @@ function Articles() {
       console.log('Deleting article with ID:', articleToDelete.id);
       console.log('Full article object:', JSON.stringify(articleToDelete, null, 2));
 
-      const url = `/api/articles/${articleToDelete.id}`;
+      const url = `${import.meta.env.VITE_API_URL}/api/articles/${articleToDelete.id}`;
       console.log('DELETE request URL:', url);
       console.log('Encoded URL:', encodeURI(url));
 

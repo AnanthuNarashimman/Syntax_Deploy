@@ -74,7 +74,7 @@ function AdminProfile() {
 
         try {
             const oldPassword = currentPassword;
-            const response = await fetch('/api/verify/pass-verify', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/verify/pass-verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ function AdminProfile() {
         console.log('Password change attempted');
 
         try {
-        const response = await fetch('/api/update/pass-update', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/update/pass-update`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

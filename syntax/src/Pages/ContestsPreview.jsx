@@ -280,7 +280,7 @@ const ContestsPreview = () => {
 
       // Fetch server time data for timer resume
       try {
-        const response = await axios.post('/api/student/start-event', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/start-event`, {
           eventId: contestData.id
         }, { withCredentials: true });
 
@@ -312,7 +312,7 @@ const ContestsPreview = () => {
       setIsStarting(true);
 
       // Make API call to start event
-      const response = await axios.post('/api/student/start-event', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/start-event`, {
         eventId: contestData.id
       }, {
         withCredentials: true,

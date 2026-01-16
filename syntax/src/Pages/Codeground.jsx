@@ -157,7 +157,7 @@ function Codeground() {
 
     try {
       const response = await axios.post(
-        '/api/judge/run',
+        `${import.meta.env.VITE_API_URL}/api/judge/run`,
         {
           source_code: code,
           language_id: languageId,

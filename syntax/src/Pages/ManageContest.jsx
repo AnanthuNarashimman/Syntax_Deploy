@@ -561,7 +561,7 @@ function ManageContest() {
       setShowProctoringLogsModal(true);
 
       const response = await fetch(
-        `/api/proctoring/student/${studentId}/contest/${contestId}/violations`,
+        `${import.meta.env.VITE_API_URL}/api/proctoring/student/${studentId}/contest/${contestId}/violations`,
         {
           credentials: "include",
         }

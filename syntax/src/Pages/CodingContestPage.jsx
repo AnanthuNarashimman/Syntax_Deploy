@@ -146,7 +146,7 @@ function CodingContestPage() {
       const submissionToken = `${problemId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Submit to backend - even if no submissions (to record the disqualification)
-      await axios.post('/api/student/finish-contest', {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/student/finish-contest`, {
         contestId: problemId,
         submissions: submissionArray,
         totalProblems: problems.length,
@@ -252,7 +252,7 @@ function CodingContestPage() {
       } else {
         // Fetch server time data on page reload
         console.log('🕐 Fetching server time from API (page reload)');
-        const response = await axios.post('/api/student/status-with-results', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/status-with-results`, {
           eventId: problemId
         }, { withCredentials: true });
 
@@ -287,7 +287,7 @@ function CodingContestPage() {
           localStorage.removeItem(`proctoring_log_${problemId}`);
           localStorage.removeItem(`contest_start_${problemId}`);
 
-          const startResponse = await axios.post('/api/student/start-event', {
+          const startResponse = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/start-event`, {
             eventId: problemId
           }, { withCredentials: true });
 
@@ -578,7 +578,7 @@ function CodingContestPage() {
     try {
       // If custom input is provided, run against custom input only
       if (customInput.trim()) {
-        const response = await axios.post('/api/judge/run', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/judge/run`, {
           source_code: code,
           language_id: languageOptions[selectedLang].id,
           stdin: customInput
@@ -594,7 +594,7 @@ function CodingContestPage() {
         }
       } else {
         // If no custom input, run against open test cases via SECURE BACKEND
-        const response = await axios.post('/api/judge/run-open-tests', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/judge/run-open-tests`, {
           source_code: code,
           language_id: languageOptions[selectedLang].id,
           event_id: problemId,
@@ -665,7 +665,7 @@ function CodingContestPage() {
 
     try {
       // Call secure backend API - backend will fetch hidden test cases and run all tests
-      const response = await axios.post('/api/judge/contest-submit', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/judge/contest-submit`, {
         source_code: code,
         language_id: languageOptions[selectedLang].id,
         event_id: problemId,
@@ -829,7 +829,7 @@ function CodingContestPage() {
       }
 
       // Send verified submissions to backend for final storage
-      const response = await axios.post('/api/student/finish-contest', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/finish-contest`, {
         contestId: problemId,
         submissions: submissionArray,
         totalProblems: problems.length,

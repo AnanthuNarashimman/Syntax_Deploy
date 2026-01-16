@@ -72,7 +72,7 @@ function SuperManageUsers() {
   const handleUpdateAdmin = async () => {
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/super-admin/admins/${editingAdmin.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/admins/${editingAdmin.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ function SuperManageUsers() {
     }
     setAddLoading(true);
     try {
-      const response = await fetch('/api/super-admin/admins', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/admins`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -66,7 +66,7 @@ export default function SettingsModal({ onClose, currentUsername }) {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/student/profile/username", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/student/profile/username`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -111,7 +111,7 @@ export default function SettingsModal({ onClose, currentUsername }) {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/student/profile/password", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/student/profile/password`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

@@ -79,7 +79,7 @@ const StudentQuiz = () => {
 
           // Fetch fresh server time data
           try {
-            const response = await axios.post('/api/student/status-with-results', {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/status-with-results`, {
               eventId: parsed.id
             }, { withCredentials: true });
 
@@ -204,7 +204,7 @@ const StudentQuiz = () => {
         } else {
           // Fetch server time data on page reload
           console.log('🕐 Fetching server time from API (page reload)');
-          const response = await axios.post('/api/student/status-with-results', {
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/status-with-results`, {
             eventId: quizData.id
           }, { withCredentials: true });
 
@@ -236,7 +236,7 @@ const StudentQuiz = () => {
           } else if (response.data.eventStatus === 'not_started') {
             // Event not started - this shouldn't happen normally
             // Start the event now
-            const startResponse = await axios.post('/api/student/start-event', {
+            const startResponse = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/start-event`, {
               eventId: quizData.id
             }, { withCredentials: true });
 
