@@ -16,7 +16,7 @@ const adminLogin = async (req, res) => {
       httpOnly: true,
       secure: true,
       maxAge: 1000 * 60 * 180, // 3 hours
-      sameSite: "None",
+      sameSite: "none",
       path: "/",
     });
 
@@ -62,7 +62,7 @@ const studentLogin = async (req, res) => {
       httpOnly: true,
       secure: true,
       maxAge: 1000 * 60 * 180, // 3 hours
-      sameSite: "None",
+      sameSite: "none",
       path: "/",
     });
 
@@ -102,7 +102,7 @@ const superAdminLogin = async (req, res) => {
       httpOnly: true,
       secure: true,
       maxAge: 1000 * 60 * 60, // 1 hour for Super Admin
-      sameSite: "None",
+      sameSite: "none",
       path: "/",
     });
 
@@ -120,7 +120,7 @@ const logout = (req, res) => {
   res.clearCookie("auth_token", {
     httpOnly: true,
     secure: true,
-    sameSite: "None",
+    sameSite: "none",
     path: "/",
   });
   res.status(200).json({ message: "Logged out successfully." });
