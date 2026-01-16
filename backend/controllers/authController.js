@@ -64,7 +64,6 @@ const studentLogin = async (req, res) => {
       secure: true,
       maxAge: 1000 * 60 * 180, // 3 hours
       sameSite: "None",
-      ...(isProduction && { partitioned: true }),
       path: "/",
     });
 
@@ -106,7 +105,6 @@ const superAdminLogin = async (req, res) => {
       secure: true,
       maxAge: 1000 * 60 * 60, // 1 hour for Super Admin
       sameSite: "None",
-      ...(isProduction && { partitioned: true }),
       path: "/",
     });
 
