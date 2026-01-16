@@ -58,12 +58,12 @@ const studentLogin = async (req, res) => {
       token,
     } = loginResult;
 
-    const isProduction = process.env.NODE_ENV === "production";
+    // const isProduction = process.env.NODE_ENV === "production";
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: isProduction,
+      secure: true,
       maxAge: 1000 * 60 * 180, // 3 hours
-      sameSite: isProduction ? "None" : "Lax",
+      sameSite: "None",
       ...(isProduction && { partitioned: true }),
       path: "/",
     });
@@ -100,12 +100,12 @@ const superAdminLogin = async (req, res) => {
   try {
     const { id, email: userEmail, userName, isSuper, token } = await authService.loginSuperAdminUser(email, password);
 
-    const isProduction = process.env.NODE_ENV === "production";
+    // const isProduction = process.env.NODE_ENV === "production";
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: isProduction,
+      secure: true,
       maxAge: 1000 * 60 * 60, // 1 hour for Super Admin
-      sameSite: isProduction ? "None" : "Lax",
+      sameSite: "None",
       ...(isProduction && { partitioned: true }),
       path: "/",
     });

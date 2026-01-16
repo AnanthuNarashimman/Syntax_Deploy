@@ -63,7 +63,7 @@ export const StudentLogPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Important for JWT cookies
+        credentials: 'include', 
         body: JSON.stringify(formData),
       });
 
