@@ -13,7 +13,7 @@ const app = express();
 // Trust proxy - required for Cloud Run to correctly detect HTTPS
 // Cloud Run's load balancer terminates HTTPS and forwards HTTP to container
 // This tells Express to trust X-Forwarded-* headers from the load balancer
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
