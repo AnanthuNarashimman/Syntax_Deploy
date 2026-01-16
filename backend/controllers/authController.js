@@ -16,7 +16,7 @@ const adminLogin = async (req, res) => {
       httpOnly: true,
       secure: true,
       maxAge: 1000 * 60 * 180, // 3 hours
-      sameSite: "none",
+      sameSite: "None",
       path: "/",
     });
 
