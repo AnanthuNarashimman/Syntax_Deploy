@@ -726,7 +726,7 @@ const StudentQuiz = () => {
         </div>
       )}
 
-      <div className={styles.quizContainer}>
+      <div className={isProctoringActive ? styles.quizContainerFullscreen : styles.quizContainer}>
         {/* Quiz Header */}
         <div className={styles.quizHeader}>
           <button className={styles.backBtn} onClick={handleBackToContests}>

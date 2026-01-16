@@ -61,8 +61,27 @@ app.use('/api/student', validationRoutes);
 app.use('/api/judge', judgeRoutes);
 app.use('/api/proctoring', proctoringRoutes);
 
+// Health check endpoint (for Cloud Run probes and warming)
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: 'Syntax Backend API',
+    version: '1.0.0',
+    status: 'running'
+  });
+});
 
 // Starting up Express Server
+// Cloud Run injects PORT=8080, fallback to 5000 for local development
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

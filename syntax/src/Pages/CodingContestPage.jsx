@@ -234,6 +234,12 @@ function CodingContestPage() {
           serverClientOffsetRef.current = serverTimeData.serverCurrentTime - Date.now();
         }
 
+        // Clear old proctoring violations for fresh contest start
+        console.log('🧹 Fresh contest start - clearing old proctoring violations');
+        localStorage.removeItem(`proctoring_violations_${problemId}`);
+        localStorage.removeItem(`proctoring_log_${problemId}`);
+        localStorage.removeItem(`contest_start_${problemId}`);
+
         const remaining = calculateRemainingTime();
         if (remaining !== null && remaining > 0) {
           setTimeRemaining(remaining);
@@ -276,6 +282,11 @@ function CodingContestPage() {
           }
         } else if (response.data.eventStatus === 'not_started') {
           // Event not started - start it now
+          console.log('🆕 Starting fresh contest - clearing old proctoring violations');
+          localStorage.removeItem(`proctoring_violations_${problemId}`);
+          localStorage.removeItem(`proctoring_log_${problemId}`);
+          localStorage.removeItem(`contest_start_${problemId}`);
+
           const startResponse = await axios.post('/api/student/start-event', {
             eventId: problemId
           }, { withCredentials: true });
@@ -760,15 +771,32 @@ function CodingContestPage() {
   const handleTimerAutoSubmit = useCallback(async () => {
     showInfo('Time expired! Auto-submitting your contest...');
 
-    // Save final results with all encrypted submissions
-    const saved = await saveFinalResults();
+    try {
+      // Save final results with all encrypted submissions (or empty submission)
+      const saved = await saveFinalResults();
 
-    if (saved) {
+      if (saved) {
+        setTimeout(() => {
+          navigate('/student-contests');
+        }, 2000);
+      } else {
+        // Reset auto-submit flag if save failed
+        isAutoSubmitting.current = false;
+        showError('Failed to submit contest. Redirecting...');
+        // Still navigate away after failed submission to prevent user from being stuck
+        setTimeout(() => {
+          navigate('/student-contests');
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error in handleTimerAutoSubmit:', error);
+      // Reset auto-submit flag on error
+      isAutoSubmitting.current = false;
+      showError('Unexpected error during submission. Redirecting...');
+      // Navigate away to prevent infinite loop
       setTimeout(() => {
         navigate('/student-contests');
-      }, 2000);
-    } else {
-      showError('Failed to submit contest. Please try again.');
+      }, 3000);
     }
   }, [problemId, problems, navigate, showInfo, showError, showSuccess]);
 
@@ -792,11 +820,7 @@ function CodingContestPage() {
         problemIndex: parseInt(index)
       }));
 
-      if (submissionArray.length === 0) {
-        showError('No submissions found. Please solve at least one problem.');
-        return false;
-      }
-
+      // Allow empty submissions (0 score) - backend will handle it
       console.log(`Submitting ${submissionArray.length} verified problem(s) to backend for final storage...`);
 
       // Generate unique submission token (only once per contest)
@@ -853,6 +877,9 @@ function CodingContestPage() {
       }
 
       showError(errorMessage);
+      
+      // Reset auto-submit flag to prevent infinite countdown loop
+      isAutoSubmitting.current = false;
       return false;
     }
   };
@@ -1123,7 +1150,7 @@ function CodingContestPage() {
         </div>
       )}
 
-      <div className={styles.contestContainer}>
+      <div className={isProctoringActive ? styles.contestContainerFullscreen : styles.contestContainer}>
         {/* Header */}
         <div className={styles.contestHeader}>
           <div className={styles.headerLeft}>

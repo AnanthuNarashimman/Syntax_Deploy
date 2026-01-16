@@ -24,7 +24,7 @@ router.get('/student/profile/progress',middleware.requireStudentAuth, profileCon
 router.get('/students/profile/leaderboard',middleware.requireStudentAuth, profileController.getLeaderboard);
 
 // Contest routes
-router.get('/contest/public-key', profileController.getPublicKey); // Public key for encryption (no auth required)
+// router.get('/contest/public-key', profileController.getPublicKey); // Public key for encryption (no auth required)
 
 
 module.exports = router;

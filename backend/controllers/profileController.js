@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const passwordUtil = require('../utils/passwordUtil');
 const cache = require('../utils/cache');
-const keyManager = require('../utils/cryptoKeys');
+// const keyManager = require('../utils/cryptoKeys');
 
 
 // Controllers for Profile related operations
@@ -761,24 +761,24 @@ const getLeaderboard = async (req, res) => {
 // Get Public Key - Provides RSA public key for frontend encryption
 // Frontend uses this key to encrypt submissions
 // Only backend can decrypt with private key
-const getPublicKey = async (req, res) => {
-    try {
-        const publicKey = keyManager.getPublicKey();
+// const getPublicKey = async (req, res) => {
+//     try {
+//         const publicKey = keyManager.getPublicKey();
 
-        console.log('✓ Public key requested by client');
+//         console.log('✓ Public key requested by client');
 
-        res.status(200).json({
-            success: true,
-            publicKey: publicKey
-        });
-    } catch (error) {
-        console.error('Error getting public key:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to retrieve public key'
-        });
-    }
-};
+//         res.status(200).json({
+//             success: true,
+//             publicKey: publicKey
+//         });
+//     } catch (error) {
+//         console.error('Error getting public key:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Failed to retrieve public key'
+//         });
+//     }
+// };
 
 
 
@@ -796,5 +796,5 @@ module.exports = {
     getSubmissionDetails,
     getStudentProgressData,
     getLeaderboard,
-    getPublicKey
+    // getPublicKey
 }
