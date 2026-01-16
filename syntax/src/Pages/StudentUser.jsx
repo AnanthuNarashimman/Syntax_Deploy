@@ -166,7 +166,7 @@ const StudentUser = () => {
   useEffect(() => {
     const fetchStudentProfile = async () => {
       try {
-        const res = await fetch("/api/student/profile", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/student/profile`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -245,7 +245,7 @@ const StudentUser = () => {
 
   const handleSaveSkills = async ({ languages, skills }) => {
     try {
-      const res = await fetch("/api/student/profile/skills", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/student/profile/skills`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
