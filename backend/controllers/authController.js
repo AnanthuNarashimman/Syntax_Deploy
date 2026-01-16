@@ -59,11 +59,13 @@ const studentLogin = async (req, res) => {
       token,
     } = loginResult;
 
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
       maxAge: 1000 * 60 * 180, // 3 hours
-      sameSite: "none",
+      sameSite: isProduction ? "None" : "Lax",
+      ...(isProduction && { partitioned: true }),
       path: "/",
     });
 
@@ -99,11 +101,13 @@ const superAdminLogin = async (req, res) => {
   try {
     const { id, email: userEmail, userName, isSuper, token } = await authService.loginSuperAdminUser(email, password);
 
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
       maxAge: 1000 * 60 * 60, // 1 hour for Super Admin
-      sameSite: "none",
+      sameSite: isProduction ? "None" : "Lax",
+      ...(isProduction && { partitioned: true }),
       path: "/",
     });
 
@@ -118,10 +122,12 @@ const superAdminLogin = async (req, res) => {
 };
 
 const logout = (req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
   res.clearCookie("auth_token", {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "None" : "Lax",
+    ...(isProduction && { partitioned: true }),
     path: "/",
   });
   res.status(200).json({ message: "Logged out successfully." });
