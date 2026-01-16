@@ -65,7 +65,7 @@ const ContestsPreview = () => {
     try {
       setStatusLoading(true);
       // Use optimized combined endpoint
-      const response = await axios.post('/api/student/status-with-results', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/status-with-results`, {
         eventId: eventId
       }, {
         withCredentials: true,
@@ -115,7 +115,7 @@ const ContestsPreview = () => {
   // Function to fetch event results
   const fetchEventResults = async (eventId) => {
     try {
-      const response = await axios.post('/api/student/event-result', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/event-result`, {
         eventId: eventId
       }, {
         withCredentials: true,
@@ -144,7 +144,7 @@ const ContestsPreview = () => {
   // Function to fetch contest results for coding contests
   const fetchContestResults = async (eventId) => {
     try {
-      const response = await axios.get(`/api/student/contest-results/${eventId}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/student/contest-results/${eventId}`, {
         withCredentials: true,
         headers: {
           'Content-Type': 'application/json'

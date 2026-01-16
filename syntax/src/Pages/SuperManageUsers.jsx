@@ -41,7 +41,7 @@ function SuperManageUsers() {
   const fetchAdmins = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/super-admin/admins', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/admins`, {
         credentials: 'include'
       });
 
@@ -107,7 +107,7 @@ function SuperManageUsers() {
   const confirmDeleteAdmin = async () => {
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/super-admin/admins/${adminToDelete.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/admins/${adminToDelete.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });

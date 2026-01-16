@@ -31,7 +31,7 @@ function SuperAdminProfile() {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/super-admin/profile', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/profile`, {
         credentials: 'include'
       });
 
@@ -90,7 +90,7 @@ function SuperAdminProfile() {
         return;
       }
 
-      const response = await fetch('/api/super-admin/profile', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

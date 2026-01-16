@@ -46,7 +46,7 @@ function AdminProfile() {
 
     const fetchProfile = async () => {
         try {
-            const response = await fetch('/api/user/profile', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/profile`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -179,7 +179,7 @@ function AdminProfile() {
         setError('');
         setSuccessMessage('');
         try {
-            const response = await fetch('/api/auth/logout', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
                 method: 'POST',
                 credentials: 'include'
             });

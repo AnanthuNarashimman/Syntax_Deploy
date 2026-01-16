@@ -467,7 +467,7 @@ const StudentQuiz = () => {
       console.log('Student Submission Data:', studentSubmission);
 
       // Make API request to validate quiz
-      const response = await axios.post('/api/student/validate-quiz', studentSubmission, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/student/validate-quiz`, studentSubmission, {
         withCredentials: true,
         headers: {
           'Content-Type': 'application/json'

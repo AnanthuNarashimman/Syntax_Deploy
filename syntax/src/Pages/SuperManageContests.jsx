@@ -31,7 +31,7 @@ function SuperManageContests() {
   const fetchContests = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/super-admin/contests', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/contests`, {
         credentials: 'include'
       });
 
@@ -62,7 +62,7 @@ function SuperManageContests() {
   const confirmDeleteContest = async () => {
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/super-admin/contests/${contestToDelete.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/contests/${contestToDelete.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });

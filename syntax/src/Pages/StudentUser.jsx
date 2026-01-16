@@ -81,7 +81,7 @@ const StudentUser = () => {
   useEffect(() => {
     const fetchPerformanceData = async () => {
       try {
-        const response = await fetch('/api/student/profile/progress', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/student/profile/progress`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include'
@@ -210,7 +210,7 @@ const StudentUser = () => {
       const fetchSubmissionsDirectly = async () => {
         try {
           console.log('Fetching submissions directly as fallback...');
-          const response = await fetch('/api/student/profile/submissions', {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/student/profile/submissions`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'

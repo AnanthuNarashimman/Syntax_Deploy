@@ -41,7 +41,7 @@ export const ContestProvider = ({ children }) => {
     const fetchAdminName = async () => {
       try {
         setAdminNameLoading(true);
-        const response = await fetch("/api/user/profile", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/profile`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -92,7 +92,7 @@ export const ContestProvider = ({ children }) => {
   // Check student authentication status
   const checkStudentAuth = async () => {
     try {
-      const response = await fetch("/api/user/student-profile", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/student-profile`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

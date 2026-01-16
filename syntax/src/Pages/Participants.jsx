@@ -25,7 +25,7 @@ function Participants() {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const response = await fetch('/api/user/profile', {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/profile`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -126,7 +126,7 @@ function Participants() {
 
         try {
             setLoading(true);
-            const response = await fetch(`/api/admin/students?page=${page}&limit=${STUDENTS_PER_PAGE}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/students?page=${page}&limit=${STUDENTS_PER_PAGE}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -186,7 +186,7 @@ function Participants() {
         setConfirmMessage('Are you sure you want to delete this student? This action cannot be undone.');
         setConfirmAction(() => async () => {
             try {
-                const response = await fetch(`/api/admin/students/${studentId}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/students/${studentId}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -215,7 +215,7 @@ function Participants() {
         setConfirmAction(() => async () => {
             try {
                 const deletePromises = selectedParticipants.map(studentId =>
-                    fetch(`/api/admin/students/${studentId}`, {
+                    fetch(`${import.meta.env.VITE_API_URL}/api/admin/students/${studentId}`, {
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
@@ -253,7 +253,7 @@ function Participants() {
         }
 
         try {
-            const response = await fetch(`/api/admin/students/${selectedStudent.id}/ban`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/students/${selectedStudent.id}/ban`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -281,7 +281,7 @@ function Participants() {
         setConfirmMessage(`Are you sure you want to unban ${student.name}? This will restore their access.`);
         setConfirmAction(() => async () => {
             try {
-                const response = await fetch(`/api/admin/students/${student.id}/unban`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/students/${student.id}/unban`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -326,7 +326,7 @@ function Participants() {
             formData.append('file', bulkImportFile);
 
             console.log('Sending request to /api/admin/students/bulk-import');
-            const response = await fetch('/api/admin/students/bulk-import', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/students/bulk-import`, {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
@@ -445,7 +445,7 @@ function Participants() {
         }
 
         try {
-            const response = await fetch('/api/admin/students', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/students`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

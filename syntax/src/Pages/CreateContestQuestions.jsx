@@ -387,7 +387,7 @@ function CreateContestQuestions() {
 
     try {
         // TODO: Make sure this endpoint matches your backend routes
-        const response = await fetch('/api/admin/create-contest', { 
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/create-contest`, { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

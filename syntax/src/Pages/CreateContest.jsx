@@ -152,7 +152,7 @@ function CreateContest() {
           articleContent: articleInputType === 'file' ? articleText : undefined,
           articleLink: articleInputType === 'link' ? articleLink : undefined,
         };
-        const response = await fetch('/api/articles', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/articles`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

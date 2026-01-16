@@ -148,7 +148,7 @@ const StudentHome = () => {
   useEffect(() => {
     const fetchStudentProfile = async () => {
       try {
-        const response = await fetch("/api/student/profile", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/student/profile`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

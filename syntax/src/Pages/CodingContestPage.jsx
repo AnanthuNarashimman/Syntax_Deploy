@@ -334,7 +334,7 @@ function CodingContestPage() {
       setIsLoadingContest(true);
       try {
         // Fetch single contest by ID instead of fetching all contests
-        const response = await axios.get(`/api/student/events/${problemId}`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/student/events/${problemId}`, {
           withCredentials: true
         });
 

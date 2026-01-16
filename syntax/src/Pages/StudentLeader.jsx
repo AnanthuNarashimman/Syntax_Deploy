@@ -20,7 +20,7 @@ const StudentLeader = () => {
   const fetchLeaderboardData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/students/profile/leaderboard', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/students/profile/leaderboard`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'

@@ -28,7 +28,7 @@ function Articles() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/articles', { credentials: 'include' });
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/articles`, { credentials: 'include' });
       const data = await response.json();
       if (!response.ok) {
         setError(data.message || 'Failed to fetch articles.');

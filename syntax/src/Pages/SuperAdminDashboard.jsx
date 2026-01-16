@@ -34,13 +34,13 @@ function SuperAdminDashboard() {
       setLoading(true);
       
       // Fetch admins count
-      const adminsResponse = await fetch('/api/super-admin/admins', {
+      const adminsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/admins`, {
         credentials: 'include'
       });
       const adminsData = await adminsResponse.json();
       
       // Fetch contests count
-      const contestsResponse = await fetch('/api/super-admin/contests', {
+      const contestsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/super-admin/contests`, {
         credentials: 'include'
       });
       const contestsData = await contestsResponse.json();

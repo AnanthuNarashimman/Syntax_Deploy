@@ -186,7 +186,7 @@ function ManageContest() {
       const existingEvent = categorizedEvents.all.find(e => e.id === eventId);
       const participantCount = existingEvent?.participants || 0;
 
-      const response = await fetch(`/api/admin/events/${eventId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/events/${eventId}`, {
         credentials: "include",
       });
 
@@ -224,7 +224,7 @@ function ManageContest() {
       setSelectedEvent({ eventTitle: eventTitle });
       setShowLeaderboardModal(true);
 
-      const response = await fetch(`/api/events/${eventId}/results`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/results`, {
         credentials: "include",
       });
 
@@ -323,7 +323,7 @@ function ManageContest() {
       setViewLoading(true);
       setSelectedEventId(eventId);
 
-      const response = await fetch(`/api/admin/events/${eventId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/events/${eventId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -600,7 +600,7 @@ function ManageContest() {
 
     try {
       setShowReopenConfirm(false);
-      const response = await fetch('/api/admin/reopen-contest', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/reopen-contest`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

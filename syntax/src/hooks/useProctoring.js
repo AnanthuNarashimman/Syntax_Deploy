@@ -109,7 +109,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       localStorage.setItem(`proctoring_log_${contestId}`, JSON.stringify(violationLog));
 
       // Send to backend for admin review
-      axios.post('/api/proctoring/log-violation', {
+      axios.post(`${import.meta.env.VITE_API_URL}/api/proctoring/log-violation`, {
         contestId,
         violationType: type,
         violationCount: newCount,
