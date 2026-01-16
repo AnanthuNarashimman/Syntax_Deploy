@@ -371,7 +371,7 @@ export const ContestProvider = ({ children }) => {
   // Update event data
   const updateEventData = async (eventId, updateData) => {
     try {
-      const response = await fetch(`/api/admin/events/${eventId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/events/${eventId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

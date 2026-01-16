@@ -15,7 +15,10 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [
+      process.env.FRONTEND_URL,
+      "http://localhost:5173"
+    ],
     credentials: true,
   })
 );
@@ -26,7 +29,7 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     if (
       file.mimetype ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       file.mimetype === "application/vnd.ms-excel"
     ) {
       cb(null, true);
@@ -35,7 +38,7 @@ const upload = multer({
     }
   },
   limits: {
-    fileSize: 5 * 1024 * 1024, 
+    fileSize: 5 * 1024 * 1024,
   },
 });
 
@@ -63,8 +66,8 @@ app.use('/api/proctoring', proctoringRoutes);
 
 // Health check endpoint (for Cloud Run probes and warming)
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy', 
+  res.status(200).json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development'
@@ -73,7 +76,7 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-  res.status(200).json({ 
+  res.status(200).json({
     message: 'Syntax Backend API',
     version: '1.0.0',
     status: 'running'
