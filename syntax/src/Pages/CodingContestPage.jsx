@@ -1154,10 +1154,12 @@ function CodingContestPage() {
         {/* Header */}
         <div className={styles.contestHeader}>
           <div className={styles.headerLeft}>
-            <button className={styles.backBtn} onClick={() => navigate('/student-contests')}>
-              <ArrowLeft size={16} />
-              Back
-            </button>
+            {!isProctoringActive && (
+              <button className={styles.backBtn} onClick={() => navigate('/student-contests')}>
+                <ArrowLeft size={16} />
+                Back
+              </button>
+            )}
             <div className={styles.contestInfo}>
               <h1 className={styles.contestTitle}>{contest.eventTitle}</h1>
               <div className={styles.contestMeta}>
@@ -1179,7 +1181,7 @@ function CodingContestPage() {
                 <div className={styles.timerCard}>
                   <Clock className={styles.timerIcon} />
                   <div className={styles.timerInfo}>
-                    <span className={styles.timerLabel}>Time Left</span>
+                    <span className={styles.timerLabel}>TIME LEFT</span>
                     <span className={styles.timerValue}>{formatTime(timeRemaining)}</span>
                   </div>
                 </div>
