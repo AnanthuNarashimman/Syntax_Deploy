@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ShieldCheck, Cpu, Terminal, Sparkles, ArrowRight, Zap, Lock, BarChart3, Send, AppWindow } from 'lucide-react';
+import { User, ShieldCheck, Cpu, Terminal, Sparkles, ArrowRight, Zap, Lock, BarChart3, Send, AppWindow, X, Mail, Copy } from 'lucide-react';
 import LP from "../assets/Images/LP.png";
 
 export default function LandingPage() {
     const navigate = useNavigate();
 
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [showContactModal, setShowContactModal] = useState(false);
 
     useEffect(() => {
         const handleMouseMove = (e) => {
@@ -18,6 +19,17 @@ export default function LandingPage() {
 
     const scrollToRoles = () => {
         document.getElementById('roles-section')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const openMailClient = () => {
+        const email = 'syntaxplatform@gmail.com';
+        const subject = encodeURIComponent('Inquiry about Syntax Platform');
+        const body = encodeURIComponent('Hello Syntax Team,\n\nI would like to inquire about...\n\n');
+        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    };
+
+    const copyEmail = () => {
+        navigator.clipboard.writeText('syntaxplatform@gmail.com');
     };
 
     return (
@@ -562,6 +574,213 @@ export default function LandingPage() {
           gap: 0.75rem;
         }
 
+        /* Contact Modal */
+        .lp-modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(10, 10, 15, 0.6);
+          backdrop-filter: blur(8px);
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+          animation: modalFadeIn 0.25s ease;
+        }
+
+        @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .lp-modal {
+          background: linear-gradient(180deg, #ffffff 0%, #fefdfb 100%);
+          border-radius: 28px;
+          padding: 0;
+          max-width: 400px;
+          width: 100%;
+          box-shadow:
+            0 0 0 1px rgba(0, 0, 0, 0.03),
+            0 25px 50px -12px rgba(0, 0, 0, 0.25),
+            0 0 100px rgba(249, 115, 22, 0.1);
+          animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+          overflow: hidden;
+        }
+
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(30px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .lp-modal-hero {
+          background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+          padding: 2rem 2rem 1.5rem;
+          text-align: center;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .lp-modal-hero::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 50%);
+          animation: modalGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes modalGlow {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(20px, 20px); }
+        }
+
+        .lp-modal-icon {
+          position: relative;
+          width: 72px;
+          height: 72px;
+          margin: 0 auto 1rem;
+          background: linear-gradient(135deg, var(--accent) 0%, #ea580c 100%);
+          border-radius: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          box-shadow: 0 10px 30px rgba(249, 115, 22, 0.3);
+        }
+
+        .lp-modal-title {
+          position: relative;
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: var(--text-primary);
+          margin-bottom: 0.25rem;
+        }
+
+        .lp-modal-subtitle {
+          position: relative;
+          font-size: 0.95rem;
+          color: var(--text-muted);
+        }
+
+        .lp-modal-close {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          width: 36px;
+          height: 36px;
+          border: none;
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(10px);
+          border-radius: 12px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-muted);
+          transition: all 0.2s;
+          z-index: 10;
+        }
+
+        .lp-modal-close:hover {
+          background: #ffffff;
+          color: var(--text-primary);
+          transform: scale(1.05);
+        }
+
+        .lp-modal-body {
+          padding: 1.5rem 2rem 2rem;
+        }
+
+        .lp-modal-email-box {
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          border-radius: 14px;
+          padding: 0.75rem 1rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+        }
+
+        .lp-modal-email {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          font-family: 'JetBrains Mono', monospace;
+          letter-spacing: -0.02em;
+        }
+
+        .lp-modal-copy {
+          padding: 0.5rem 0.75rem;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s;
+          font-family: inherit;
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+          flex-shrink: 0;
+        }
+
+        .lp-modal-copy:hover {
+          background: #fff7ed;
+          border-color: var(--accent);
+          color: var(--accent);
+        }
+
+        .lp-modal-send-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.6rem;
+          padding: 1rem 1.5rem;
+          background: linear-gradient(135deg, var(--primary) 0%, #2d2d2d 100%);
+          border: none;
+          border-radius: 14px;
+          color: white;
+          font-size: 1rem;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          transition: all 0.3s;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .lp-modal-send-btn::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+          transform: translateX(-100%);
+          transition: transform 0.5s;
+        }
+
+        .lp-modal-send-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .lp-modal-send-btn:hover::before {
+          transform: translateX(100%);
+        }
+
+        .lp-modal-hint {
+          margin-top: 1rem;
+          text-align: center;
+          font-size: 0.8rem;
+          color: var(--text-muted);
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
           .lp-main {
@@ -673,7 +892,7 @@ export default function LandingPage() {
                                 Get Started
                                 <ArrowRight size={18} />
                             </button>
-                            <button className="lp-contact-btn">
+                            <button className="lp-contact-btn" onClick={() => setShowContactModal(true)}>
                                 <Send size={18} />
                                 Contact
                             </button>
@@ -768,6 +987,41 @@ export default function LandingPage() {
                     </div>
                 </section>
             </div>
+
+            {/* Contact Modal */}
+            {showContactModal && (
+                <div className="lp-modal-overlay" onClick={() => setShowContactModal(false)}>
+                    <div className="lp-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="lp-modal-hero">
+                            <button className="lp-modal-close" onClick={() => setShowContactModal(false)}>
+                                <X size={18} />
+                            </button>
+                            <div className="lp-modal-icon">
+                                <Send size={32} />
+                            </div>
+                            <h3 className="lp-modal-title">Get in Touch</h3>
+                            <p className="lp-modal-subtitle">We'd love to hear from you</p>
+                        </div>
+
+                        <div className="lp-modal-body">
+                            <div className="lp-modal-email-box">
+                                <span className="lp-modal-email">syntaxplatform@gmail.com</span>
+                                <button className="lp-modal-copy" onClick={copyEmail}>
+                                    <Copy size={14} />
+                                    Copy
+                                </button>
+                            </div>
+
+                            <button className="lp-modal-send-btn" onClick={openMailClient}>
+                                <Mail size={20} />
+                                Open Mail App
+                            </button>
+
+                            <p className="lp-modal-hint">Opens your default email client</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
