@@ -50,7 +50,8 @@ function AdminProfile() {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -80,6 +81,7 @@ function AdminProfile() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ currentPassword: oldPassword }),
+                credentials:'include'
             });
 
             if (!response.ok) {
@@ -132,6 +134,7 @@ function AdminProfile() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({newPassword: newPassword}),
+            credentials: 'include'
         });
 
         if(!response.ok) {

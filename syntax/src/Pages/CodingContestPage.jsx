@@ -582,7 +582,8 @@ function CodingContestPage() {
           source_code: code,
           language_id: languageOptions[selectedLang].id,
           stdin: customInput
-        });
+        },
+      {withCredentials: 'true'});
 
         setOutput(response.data);
 

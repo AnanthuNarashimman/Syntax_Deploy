@@ -393,7 +393,8 @@ function CreateContestQuestions() {
                 'Content-Type': 'application/json',
                 // TODO: Add Authorization header if needed
             },
-            body: JSON.stringify(dataToSend)
+            body: JSON.stringify(dataToSend),
+            credentials: 'include'
         });
 
         if (!response.ok) {
