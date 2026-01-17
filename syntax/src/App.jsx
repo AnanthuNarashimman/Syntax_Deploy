@@ -24,7 +24,7 @@ import StudentQuiz from "./Pages/StudentQuiz.jsx";
 import CodingContestPage from './Pages/CodingContestPage';
 import Codeground from './Pages/Codeground.jsx';
 
-
+import LandingPage from "./Pages/LandingPage.jsx";
 
 
 import './App.css';
@@ -38,7 +38,7 @@ function App() {
       <ContestProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Navigate to="/student-login" replace />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/student-login" element={<StudentLogPage />} />
             <Route path="/admin-login" element={<AdminLogPage />} />
             <Route path="/super-login" element={<SuperAdminLogPage />} />
@@ -67,6 +67,7 @@ function App() {
             <Route path="/super-profile" element={<SuperAdminProfile />} />
             <Route path="/contest/:problemId" element={<CodingContestPage />} />
             
+            <Route path="*" element={<LandingPage />} />
            </Routes>
         </Router>
       </ContestProvider>
