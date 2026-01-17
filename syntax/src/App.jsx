@@ -27,7 +27,7 @@ import Codeground from './Pages/Codeground.jsx';
 import LandingPage from "./Pages/LandingPage.jsx";
 import MobileBlocker from "./Components/MobileBlocker.jsx";
 
-import './App.css';
+import "./App.css";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ContestProvider } from './contexts/ContestContext';
 import { AlertProvider } from './contexts/AlertContext';
