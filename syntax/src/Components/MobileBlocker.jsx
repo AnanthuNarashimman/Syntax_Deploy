@@ -1,3 +1,4 @@
+import React from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
 
 export default function MobileBlocker({ children }) {
