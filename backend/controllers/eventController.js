@@ -297,12 +297,22 @@ const fetchEvents = async (req, res) => {
     eventsSnapShot.forEach((doc) => {
       const eventData = doc.data();
 
+      // SECURITY: Strip sensitive data from list API
+      // Questions/problems will be fetched only when user starts the contest via /api/student/events/:eventId
+      // This prevents students from viewing questions before starting via network tab inspection
+      
+      // Remove quiz questions (keep metadata only)
       if (eventData.questions && Array.isArray(eventData.questions)) {
-        eventData.questions = eventData.questions.map((question) => {
-          const { correctAnswer, ...questionWithoutAnswer } = question;
-          return questionWithoutAnswer;
-        });
+        delete eventData.questions;
       }
+
+      // Remove coding contest problems (keep metadata only)
+      if (eventData.problems && Array.isArray(eventData.problems)) {
+        delete eventData.problems;
+      }
+
+      // Keep all other metadata: title, description, duration, numberOfQuestions/Programs, 
+      // points, totalScore, topicsCovered, allowedDepartments, eventType, eventMode, status, etc.
 
       events.push({
         id: doc.id,
