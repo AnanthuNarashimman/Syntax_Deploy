@@ -25,7 +25,7 @@ import CodingContestPage from './Pages/CodingContestPage';
 import Codeground from './Pages/Codeground.jsx';
 
 import LandingPage from "./Pages/LandingPage.jsx";
-
+import MobileBlocker from "./components/MobileBlocker.jsx";
 
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -34,10 +34,11 @@ import { AlertProvider } from './contexts/AlertContext';
 
 function App() {
   return (
-    <AlertProvider>
-      <ContestProvider>
-        <Router>
-          <Routes>
+    <MobileBlocker>
+      <AlertProvider>
+        <ContestProvider>
+          <Router>
+            <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/student-login" element={<StudentLogPage />} />
             <Route path="/admin-login" element={<AdminLogPage />} />
@@ -68,10 +69,11 @@ function App() {
             <Route path="/contest/:problemId" element={<CodingContestPage />} />
             
             <Route path="*" element={<LandingPage />} />
-           </Routes>
-        </Router>
-      </ContestProvider>
-    </AlertProvider>
+            </Routes>
+          </Router>
+        </ContestProvider>
+      </AlertProvider>
+    </MobileBlocker>
   )
 }
 
