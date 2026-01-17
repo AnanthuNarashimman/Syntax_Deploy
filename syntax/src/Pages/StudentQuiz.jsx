@@ -54,12 +54,47 @@ const StudentQuiz = () => {
 
   // Store quiz data in sessionStorage when navigating with state (for refresh persistence)
   useEffect(() => {
-    if (navigationQuizData) {
-      sessionStorage.setItem('currentQuizData', JSON.stringify(navigationQuizData));
-      setQuizData(navigationQuizData);
-      setIsLoadingQuiz(false);
-    }
-  }, [navigationQuizData]);
+    const fetchAndStoreQuizData = async () => {
+      if (navigationQuizData) {
+        // Check if quiz data has questions - if not, fetch full data from API
+        if (!navigationQuizData.questions || navigationQuizData.questions.length === 0) {
+          console.log('📋 Quiz data missing questions, fetching from API...');
+          
+          try {
+            const response = await axios.get(
+              `${import.meta.env.VITE_API_URL}/api/student/events/${navigationQuizData.id}`,
+              { withCredentials: true }
+            );
+
+            if (response.data.event) {
+              const fullQuizData = {
+                ...navigationQuizData,
+                ...response.data.event,
+                id: navigationQuizData.id // Preserve the ID
+              };
+              
+              sessionStorage.setItem('currentQuizData', JSON.stringify(fullQuizData));
+              setQuizData(fullQuizData);
+              console.log('✅ Full quiz data fetched and stored');
+            }
+          } catch (error) {
+            console.error('Error fetching full quiz data:', error);
+            showError('Failed to load quiz questions. Please try again.');
+            navigate('/student-contests');
+            return;
+          }
+        } else {
+          // Quiz data already has questions
+          sessionStorage.setItem('currentQuizData', JSON.stringify(navigationQuizData));
+          setQuizData(navigationQuizData);
+        }
+        
+        setIsLoadingQuiz(false);
+      }
+    };
+
+    fetchAndStoreQuizData();
+  }, [navigationQuizData, navigate, showError]);
 
   // Restore quiz data from sessionStorage on page refresh
   useEffect(() => {
@@ -75,7 +110,38 @@ const StudentQuiz = () => {
         try {
           const parsed = JSON.parse(savedQuizData);
           console.log('📋 Restored quiz data from sessionStorage');
-          setQuizData(parsed);
+          
+          // If questions are missing, fetch full data from API
+          if (!parsed.questions || parsed.questions.length === 0) {
+            console.log('📋 Questions missing from saved data, fetching from API...');
+            
+            try {
+              const response = await axios.get(
+                `${import.meta.env.VITE_API_URL}/api/student/events/${parsed.id}`,
+                { withCredentials: true }
+              );
+
+              if (response.data.event) {
+                const fullQuizData = {
+                  ...parsed,
+                  ...response.data.event,
+                  id: parsed.id // Preserve the ID
+                };
+                
+                sessionStorage.setItem('currentQuizData', JSON.stringify(fullQuizData));
+                setQuizData(fullQuizData);
+                console.log('✅ Full quiz data fetched and stored');
+              }
+            } catch (error) {
+              console.error('Error fetching full quiz data:', error);
+              showError('Failed to load quiz questions. Please try again.');
+              sessionStorage.removeItem('currentQuizData');
+              navigate('/student-contests');
+              return;
+            }
+          } else {
+            setQuizData(parsed);
+          }
 
           // Fetch fresh server time data
           try {
