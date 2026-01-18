@@ -31,6 +31,7 @@ import "./App.css";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ContestProvider } from './contexts/ContestContext';
 import { AlertProvider } from './contexts/AlertContext';
+import { Analytics } from "@vercel/analytics/react";
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
           </Router>
         </ContestProvider>
       </AlertProvider>
+      <Analytics />
     </MobileBlocker>
   )
 }
