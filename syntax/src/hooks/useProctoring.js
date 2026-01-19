@@ -9,7 +9,7 @@ import axios from 'axios';
  * - Tab switching detection
  * - Navigation blocking
  * - Mouse tracking (detects DevTools & sidebars)
- * - Copy/paste blocking
+ * - Copy/paste/drag-drop blocking
  * - Keyboard shortcut blocking
  * - Right-click blocking
  * - Auto re-attachment of event listeners (counters simple bypass scripts)
@@ -293,7 +293,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       }
     };
 
-    // COPY/PASTE/CUT BLOCKING 
+    // COPY/PASTE/CUT BLOCKING
     const handleCopy = (e) => {
       e.preventDefault();
       recordViolation('Copy attempt blocked');
@@ -307,6 +307,19 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
     const handleCut = (e) => {
       e.preventDefault();
       recordViolation('Cut attempt blocked');
+    };
+
+    // DRAG AND DROP BLOCKING
+    // Prevents dragging content from external sources (like AI sidebars) into the editor
+    // Silently blocked - no violation recorded
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'none';
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      // Silently block - no violation recorded
     };
 
     // KEYBOARD SHORTCUTS BLOCKING 
@@ -388,6 +401,8 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       document.addEventListener('copy', handleCopy);
       document.addEventListener('paste', handlePaste);
       document.addEventListener('cut', handleCut);
+      document.addEventListener('dragover', handleDragOver);
+      document.addEventListener('drop', handleDrop);
       document.addEventListener('keydown', handleKeyDown);
       document.addEventListener('contextmenu', handleContextMenu);
       window.addEventListener('beforeunload', handleBeforeUnload);
@@ -425,6 +440,8 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       document.removeEventListener('copy', handleCopy);
       document.removeEventListener('paste', handlePaste);
       document.removeEventListener('cut', handleCut);
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('drop', handleDrop);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('contextmenu', handleContextMenu);
       window.removeEventListener('beforeunload', handleBeforeUnload);

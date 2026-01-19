@@ -234,11 +234,16 @@ function CodingContestPage() {
           serverClientOffsetRef.current = serverTimeData.serverCurrentTime - Date.now();
         }
 
-        // Clear old proctoring violations for fresh contest start
-        console.log('🧹 Fresh contest start - clearing old proctoring violations');
-        localStorage.removeItem(`proctoring_violations_${problemId}`);
-        localStorage.removeItem(`proctoring_log_${problemId}`);
-        localStorage.removeItem(`contest_start_${problemId}`);
+        // Only clear proctoring data if this is truly a fresh start (no existing violations)
+        // This preserves violation count when user resumes a contest
+        const existingViolations = localStorage.getItem(`proctoring_violations_${problemId}`);
+        if (!existingViolations) {
+          console.log('🧹 Fresh contest start - clearing old proctoring data');
+          localStorage.removeItem(`proctoring_log_${problemId}`);
+          localStorage.removeItem(`contest_start_${problemId}`);
+        } else {
+          console.log(`📋 Resuming contest - preserving ${existingViolations} existing violations`);
+        }
 
         const remaining = calculateRemainingTime();
         if (remaining !== null && remaining > 0) {
@@ -784,6 +789,10 @@ function CodingContestPage() {
         // Reset auto-submit flag if save failed
         isAutoSubmitting.current = false;
         showError('Failed to submit contest. Redirecting...');
+        // Clear proctoring data even on failure
+        localStorage.removeItem(`proctoring_violations_${problemId}`);
+        localStorage.removeItem(`proctoring_log_${problemId}`);
+        localStorage.removeItem(`contest_start_${problemId}`);
         // Still navigate away after failed submission to prevent user from being stuck
         setTimeout(() => {
           navigate('/student-contests');
@@ -794,6 +803,10 @@ function CodingContestPage() {
       // Reset auto-submit flag on error
       isAutoSubmitting.current = false;
       showError('Unexpected error during submission. Redirecting...');
+      // Clear proctoring data even on error
+      localStorage.removeItem(`proctoring_violations_${problemId}`);
+      localStorage.removeItem(`proctoring_log_${problemId}`);
+      localStorage.removeItem(`contest_start_${problemId}`);
       // Navigate away to prevent infinite loop
       setTimeout(() => {
         navigate('/student-contests');
@@ -878,7 +891,12 @@ function CodingContestPage() {
       }
 
       showError(errorMessage);
-      
+
+      // Clear proctoring data even on error to prevent stale data on retry
+      localStorage.removeItem(`proctoring_violations_${problemId}`);
+      localStorage.removeItem(`proctoring_log_${problemId}`);
+      localStorage.removeItem(`contest_start_${problemId}`);
+
       // Reset auto-submit flag to prevent infinite countdown loop
       isAutoSubmitting.current = false;
       return false;
