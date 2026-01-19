@@ -12,7 +12,8 @@ import axios from 'axios';
  * - Copy/paste blocking
  * - Keyboard shortcut blocking
  * - Right-click blocking
- * - Warning system with auto-submit after 3 violations
+ * - Auto re-attachment of event listeners (counters simple bypass scripts)
+ * - Warning system with auto-submit after max violations
  *
  * @param {string} contestId - Contest ID
  * @param {boolean} isStrictMode - Whether contest is in strict mode
@@ -29,6 +30,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
   const mouseOutsideTimer = useRef(null);
   const mouseOutsideStartTime = useRef(null);
   const devToolsCheckInterval = useRef(null);
+  const listenerReattachInterval = useRef(null);
   const isCleaningUp = useRef(false);
   const lastViolationTime = useRef(0);
   const lastViolationType = useRef('');
@@ -355,7 +357,7 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       recordViolation('Navigation attempt blocked');
     };
 
-    // DEVTOOLS DETECTION (SIZE-BASED) 
+    // DEVTOOLS DETECTION (SIZE-BASED)
     let lastInnerWidth = window.innerWidth;
     let lastInnerHeight = window.innerHeight;
 
@@ -374,26 +376,41 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
       }
     };
 
-    // Attach event listeners
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleWindowBlur);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseleave', handleMouseLeave);
-    document.addEventListener('mouseenter', handleMouseEnter);
-    document.addEventListener('copy', handleCopy);
-    document.addEventListener('paste', handlePaste);
-    document.addEventListener('cut', handleCut);
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('contextmenu', handleContextMenu);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
+    // Function to attach all event listeners
+    // Note: addEventListener is idempotent - calling it multiple times with same handler won't add duplicates
+    const attachAllListeners = () => {
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('blur', handleWindowBlur);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseleave', handleMouseLeave);
+      document.addEventListener('mouseenter', handleMouseEnter);
+      document.addEventListener('copy', handleCopy);
+      document.addEventListener('paste', handlePaste);
+      document.addEventListener('cut', handleCut);
+      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('contextmenu', handleContextMenu);
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('popstate', handlePopState);
+    };
+
+    // Attach listeners initially
+    attachAllListeners();
 
     // Push initial state to prevent back navigation
     window.history.pushState(null, '', window.location.href);
 
     // Start DevTools detection interval
     devToolsCheckInterval.current = setInterval(checkDevTools, 2000);
+
+    // LISTENER RE-ATTACHMENT INTERVAL
+    // Re-attach all listeners every 3 seconds to counter simple bypass scripts
+    // that remove event listeners once
+    listenerReattachInterval.current = setInterval(() => {
+      if (!isCleaningUp.current) {
+        attachAllListeners();
+      }
+    }, 3000);
 
     // Cleanup
     return () => {
@@ -419,6 +436,10 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
 
       if (devToolsCheckInterval.current) {
         clearInterval(devToolsCheckInterval.current);
+      }
+
+      if (listenerReattachInterval.current) {
+        clearInterval(listenerReattachInterval.current);
       }
 
       // Exit fullscreen when unmounting
