@@ -3,6 +3,7 @@
   background-color: #f8f9fa;
   min-height: 100vh;
   font-family: 'Nunito sans';
+  margin-left: 230px; /* Account for fixed sidebar */
 }
 
 .page-header h1 {
@@ -319,11 +320,13 @@
 }
 
 .createImg {
-  position: absolute;
+  position: fixed; /* Changed from absolute to fixed */
   right: 2%;
   bottom: 2%;
   width: 20%;
   height: auto;
+  z-index: 1; /* Ensure it doesn't cover interactive elements */
+  pointer-events: none; /* Make it non-interactive */
 }
 
 p {
@@ -334,6 +337,7 @@ p {
 @media (max-width: 768px) {
   .create-contest {
     padding: 16px;
+    margin-left: 0; /* Remove margin on mobile since navbar becomes relative */
   }
   
   .step-container {

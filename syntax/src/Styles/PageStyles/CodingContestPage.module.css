@@ -401,6 +401,7 @@
 
 .problemSection {
   margin-bottom: 2rem;
+  user-select: none;
 }
 
 .sectionTitle {

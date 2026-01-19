@@ -1394,24 +1394,10 @@ function CodingContestPage() {
               <div className={styles.editorActions}>
                 <button
                   className={styles.iconBtn}
-                  onClick={handleCopyCode}
-                  title="Copy code"
-                >
-                  {copied ? <Check size={16} /> : <Copy size={16} />}
-                </button>
-                <button
-                  className={styles.iconBtn}
                   onClick={handleResetCode}
                   title="Reset to starter code"
                 >
                   <RotateCcw size={16} />
-                </button>
-                <button
-                  className={styles.iconBtn}
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                >
-                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                 </button>
               </div>
             </div>
