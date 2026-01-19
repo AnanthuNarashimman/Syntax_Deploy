@@ -36,7 +36,7 @@ function SuperAdminLogPage() {
 
     const adminData = {
         question: "Are you a Student ?",
-        buttonText: "Click here",
+        buttonText: "Access",
     };
 
     const handleInputChange = (e) => {
