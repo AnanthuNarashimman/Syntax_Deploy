@@ -10,7 +10,7 @@ const createJudge0Request = (data, isBatch = false) => {
 
   return {
     method: 'POST',
-    url: `https://${process.env.JUDGE0_RAPIDAPI_HOST}${endpoint}`,
+    url: `http://${process.env.JUDGE0_HOST}${endpoint}`,
     params: {
       base64_encoded: 'false',
       wait: 'true', // Wait for the execution to complete
