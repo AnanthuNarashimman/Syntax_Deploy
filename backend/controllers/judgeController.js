@@ -16,9 +16,7 @@ const createJudge0Request = (data, isBatch = false) => {
       wait: 'true', // Wait for the execution to complete
     },
     headers: {
-      'content-type': 'application/json',
-      'X-RapidAPI-Key': process.env.JUDGE0_RAPIDAPI_KEY,
-      'X-RapidAPI-Host': process.env.JUDGE0_RAPIDAPI_HOST,
+      'content-type': 'application/json'
     },
     data: data,
   };
@@ -158,14 +156,12 @@ const handleContestSubmit = async (req, res) => {
 
     // Submit batch to Judge0 (without wait - we'll poll for results)
     const batchSubmitResponse = await axios.post(
-      `https://${process.env.JUDGE0_RAPIDAPI_HOST}/submissions/batch`,
+      `http://${process.env.JUDGE0_HOST}/submissions/batch`,
       { submissions },
       {
         params: { base64_encoded: 'false' },
         headers: {
-          'content-type': 'application/json',
-          'X-RapidAPI-Key': process.env.JUDGE0_RAPIDAPI_KEY,
-          'X-RapidAPI-Host': process.env.JUDGE0_RAPIDAPI_HOST,
+          'content-type': 'application/json'
         }
       }
     );
@@ -186,16 +182,12 @@ const handleContestSubmit = async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
 
       const resultsResponse = await axios.get(
-        `https://${process.env.JUDGE0_RAPIDAPI_HOST}/submissions/batch`,
+        `http://${process.env.JUDGE0_HOST}/submissions/batch`,
         {
           params: {
             tokens: tokenList,
             base64_encoded: 'false',
             fields: 'stdout,stderr,status,time,memory,compile_output'
-          },
-          headers: {
-            'X-RapidAPI-Key': process.env.JUDGE0_RAPIDAPI_KEY,
-            'X-RapidAPI-Host': process.env.JUDGE0_RAPIDAPI_HOST,
           }
         }
       );
@@ -338,14 +330,12 @@ const handleRunOpenTests = async (req, res) => {
 
     // Submit batch to Judge0
     const batchSubmitResponse = await axios.post(
-      `https://${process.env.JUDGE0_RAPIDAPI_HOST}/submissions/batch`,
+      `http://${process.env.JUDGE0_HOST}/submissions/batch`,
       { submissions },
       {
         params: { base64_encoded: 'false' },
         headers: {
-          'content-type': 'application/json',
-          'X-RapidAPI-Key': process.env.JUDGE0_RAPIDAPI_KEY,
-          'X-RapidAPI-Host': process.env.JUDGE0_RAPIDAPI_HOST,
+          'content-type': 'application/json'
         }
       }
     );
@@ -366,16 +356,12 @@ const handleRunOpenTests = async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       const resultsResponse = await axios.get(
-        `https://${process.env.JUDGE0_RAPIDAPI_HOST}/submissions/batch`,
+        `http://${process.env.JUDGE0_HOST}/submissions/batch`,
         {
           params: {
             tokens: tokenList,
             base64_encoded: 'false',
             fields: 'stdout,stderr,status,time,memory,compile_output'
-          },
-          headers: {
-            'X-RapidAPI-Key': process.env.JUDGE0_RAPIDAPI_KEY,
-            'X-RapidAPI-Host': process.env.JUDGE0_RAPIDAPI_HOST,
           }
         }
       );
