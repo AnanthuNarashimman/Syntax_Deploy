@@ -3,6 +3,7 @@
   background-color: #f8f9fa;
   min-height: 100vh;
   font-family: 'Nunito sans';
+  margin-left: 230px; /* Account for fixed sidebar */
 }
 
 .content-wrapper {
