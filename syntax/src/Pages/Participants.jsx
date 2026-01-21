@@ -113,20 +113,26 @@ function Participants() {
     const [pageCache, setPageCache] = useState({});
     const STUDENTS_PER_PAGE = 20;
 
-    // Fetch participants data from backend API with pagination
-    const fetchParticipants = async (page = 1, useCache = true) => {
-        // Check cache first
-        if (useCache && pageCache[page]) {
-            console.log(`Loading page ${page} from cache`);
-            setParticipants(pageCache[page].students);
+    // Fetch participants data from backend API with pagination and search
+    const fetchParticipants = async (page = 1, useCache = true, search = '') => {
+        // Create cache key that includes search query
+        const cacheKey = `${page}-${search}`;
+
+        // Check cache first (only if not searching or same search)
+        if (useCache && pageCache[cacheKey]) {
+            console.log(`Loading page ${page} with search "${search}" from cache`);
+            setParticipants(pageCache[cacheKey].students);
             setCurrentPage(page);
+            setTotalStudents(pageCache[cacheKey].total);
+            setTotalPages(pageCache[cacheKey].totalPages);
             setLoading(false);
             return;
         }
 
         try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/students?page=${page}&limit=${STUDENTS_PER_PAGE}`, {
+            const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/students?page=${page}&limit=${STUDENTS_PER_PAGE}${searchParam}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -148,11 +154,13 @@ function Participants() {
                 setTotalStudents(data.total || students.length);
                 setTotalPages(Math.ceil((data.total || students.length) / STUDENTS_PER_PAGE));
 
-                // Cache the page data
+                // Cache the page data with search key
                 setPageCache(prev => ({
                     ...prev,
-                    [page]: {
+                    [cacheKey]: {
                         students,
+                        total: data.total || students.length,
+                        totalPages: Math.ceil((data.total || students.length) / STUDENTS_PER_PAGE),
                         timestamp: Date.now()
                     }
                 }));
@@ -172,15 +180,28 @@ function Participants() {
     // Clear cache and refetch current page
     const refreshParticipants = () => {
         setPageCache({});
-        fetchParticipants(currentPage, false);
+        fetchParticipants(currentPage, false, searchQuery);
     };
 
     // Fetch data when authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            fetchParticipants(1, false);
+            fetchParticipants(1, false, '');
         }
     }, [isAuthenticated]);
+
+    // Debounced search effect - triggers API call when search query changes
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const debounceTimer = setTimeout(() => {
+            // Reset to page 1 when search changes and fetch with search query
+            setCurrentPage(1);
+            fetchParticipants(1, true, searchQuery);
+        }, 300); // 300ms debounce
+
+        return () => clearTimeout(debounceTimer);
+    }, [searchQuery, isAuthenticated]);
 
     const handleDeleteStudent = async (studentId) => {
         setConfirmMessage('Are you sure you want to delete this student? This action cannot be undone.');
@@ -499,13 +520,10 @@ function Participants() {
         }
     };
 
+    // Filter participants by status only (search is handled by backend)
     const filteredParticipants = participants.filter(participant => {
-        const name = participant.name || '';
-        const email = participant.email || '';
-        const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            email.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesFilter = activeFilter === 'all' || participant.status === activeFilter;
-        return matchesSearch && matchesFilter;
+        return matchesFilter;
     });
 
     const handleSelectParticipant = (participantId) => {
@@ -1311,7 +1329,7 @@ function Participants() {
                         <div className="pagination-container">
                             <button
                                 className="pagination-btn"
-                                onClick={() => fetchParticipants(currentPage - 1)}
+                                onClick={() => fetchParticipants(currentPage - 1, true, searchQuery)}
                                 disabled={currentPage === 1}
                             >
                                 Previous
@@ -1330,7 +1348,7 @@ function Participants() {
                                             <button
                                                 key={pageNumber}
                                                 className={`pagination-number ${currentPage === pageNumber ? 'active' : ''}`}
-                                                onClick={() => fetchParticipants(pageNumber)}
+                                                onClick={() => fetchParticipants(pageNumber, true, searchQuery)}
                                             >
                                                 {pageNumber}
                                             </button>
@@ -1347,7 +1365,7 @@ function Participants() {
 
                             <button
                                 className="pagination-btn"
-                                onClick={() => fetchParticipants(currentPage + 1)}
+                                onClick={() => fetchParticipants(currentPage + 1, true, searchQuery)}
                                 disabled={currentPage === totalPages}
                             >
                                 Next

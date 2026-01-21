@@ -89,14 +89,71 @@ const addStudent = async (req, res) => {
 
 // Fetching Student accounts
 // 1) Get Pagination limit and current page in pagination
-// 2) Fetches data accordingly
-// 3) Sends data back to the admin
-// 4) In case of errors or exceptions, logs will be printed
+// 2) Optionally accepts search query to filter by name or email
+// 3) Fetches data accordingly
+// 4) Sends data back to the admin
+// 5) In case of errors or exceptions, logs will be printed
 const fetchStudents = async (req, res) => {
   try {
     // Get pagination parameters from query string
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
+    const search = req.query.search ? req.query.search.trim().toLowerCase() : '';
+
+    // If search query is provided, we need to fetch all students and filter
+    // because Firestore doesn't support native text search
+    if (search) {
+      // Fetch all students for search
+      const snapshot = await db
+        .collection("users")
+        .where("isStudent", "==", true)
+        .get();
+
+      let allStudents = [];
+      snapshot.forEach((doc) => {
+        const studentData = doc.data();
+        const name = (studentData.userName || '').toLowerCase();
+        const email = (studentData.email || '').toLowerCase();
+
+        // Filter by search query (match name or email)
+        if (name.includes(search) || email.includes(search)) {
+          allStudents.push({
+            id: doc.id,
+            name: studentData.userName,
+            email: studentData.email,
+            department: studentData.department,
+            year: studentData.year,
+            section: studentData.section,
+            semester: studentData.semester,
+            batch: studentData.batch,
+            status: studentData.status || "active",
+            banReason: studentData.banReason || null,
+            contestsParticipated: studentData.contestsParticipated || 0,
+            totalScore: studentData.totalScore || 0,
+            joinDate: studentData.joinDate
+              ? studentData.joinDate.toDate().toISOString()
+              : new Date().toISOString(),
+            lastActive: studentData.lastActive || "Recently",
+            achievements: studentData.achievements || [],
+          });
+        }
+      });
+
+      // Apply pagination to filtered results
+      const total = allStudents.length;
+      const offset = (page - 1) * limit;
+      const paginatedStudents = allStudents.slice(offset, offset + limit);
+
+      return res.status(200).json({
+        students: paginatedStudents,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      });
+    }
+
+    // No search query - use regular pagination
     const offset = (page - 1) * limit;
 
     // Get total count of students
