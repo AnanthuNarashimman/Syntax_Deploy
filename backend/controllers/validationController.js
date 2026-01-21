@@ -34,12 +34,49 @@ const validateQuiz = async (req, res) => {
 
         const quizId = studentSubmission.quizId;
         const studentAnswers = studentSubmission.studentAnswers;
+        const submissionToken = studentSubmission.submissionToken; // Optional token to detect exact duplicates
 
         if (!quizId || !studentAnswers) {
             return res.status(400).json({
                 "message": "QuizId and studentAnswers are required"
             });
         }
+
+        // CRITICAL: Check if this quiz has already been submitted by this student
+        // This prevents duplicate document creation from race conditions or double-clicks
+        const existingResultQuery = await db.collection('eventResults')
+            .where("userId", "==", userId)
+            .where("eventId", "==", quizId)
+            .limit(1)
+            .get();
+
+        if (!existingResultQuery.empty) {
+            const existingDoc = existingResultQuery.docs[0];
+            const existingData = existingDoc.data();
+            console.log(`⚠️ Quiz ${quizId} already submitted by student ${userId}`);
+
+            // Check if submission token matches (if provided) - exact duplicate request
+            if (submissionToken && existingData.submissionToken === submissionToken) {
+                console.log('ℹ️ Exact duplicate request detected (same submission token) - returning existing result');
+                return res.status(200).json({
+                    "CorrectAnswerCount": existingData.correctAnswerCount || 0,
+                    "TotalQuestions": existingData.totalQuestions || 0,
+                    "Points": existingData.points,
+                    "message": "Quiz already submitted",
+                    "duplicate": true
+                });
+            }
+
+            // Different submission token or no token - this is a duplicate submission attempt
+            return res.status(409).json({
+                "success": false,
+                "message": "Quiz already submitted. Duplicate submission prevented.",
+                "existingScore": existingData.points,
+                "submittedAt": existingData.submittedAt
+            });
+        }
+
+        console.log(`✓ No existing submission found for quiz ${quizId} - proceeding with validation`);
 
         const result = await validationService.validateQuizAnswers(quizId, studentAnswers);
         console.log('Quiz validation result - Correct answers:', result.correctAnswerCount);
@@ -109,13 +146,14 @@ const validateQuiz = async (req, res) => {
                 userName = userData.userName || 'Unknown';
                 department = userData.department || 'Unknown';
 
+                // Track quizzesAttended separately from contestsAttended
                 await userDocRef.update({
                     totalScore: admin.firestore.FieldValue.increment(totalPoints),
-                    contestsParticipated: admin.firestore.FieldValue.increment(1)
+                    quizzesAttended: admin.firestore.FieldValue.increment(1)
                 });
             }
 
-            console.log("Updated Successfully");
+            console.log("Updated user stats successfully (quizzesAttended +1)");
         } catch (e) {
             console.log(e);
         }
@@ -126,30 +164,43 @@ const validateQuiz = async (req, res) => {
 
             if (userSubmissionSnapShot.empty) {
                 // OPTIMIZED: Store userName and department for faster leaderboard queries
+                // Track quizCount separately from contestCount
                 const newDocRef = await db.collection('userSubmissions').add({
                     "userId": userId,
                     "userName": userName,
                     "department": department,
                     "totalScore": totalPoints,
                     "submissions": [quizId],
-                    "submissionCount": 1
+                    "submissionCount": 1,
+                    "quizCount": 1,
+                    "contestCount": 0
                 });
             } else {
                 const submissionRef = userSubmissionSnapShot.docs[0].ref;
                 // OPTIMIZED: Update userName and department in case they changed
+                // Track quizCount separately from contestCount
                 await submissionRef.update({
                     userName: userName,
                     department: department,
                     submissions: admin.firestore.FieldValue.arrayUnion(quizId),
                     totalScore: admin.firestore.FieldValue.increment(totalPoints),
-                    submissionCount: admin.firestore.FieldValue.increment(1)
+                    submissionCount: admin.firestore.FieldValue.increment(1),
+                    quizCount: admin.firestore.FieldValue.increment(1)
                 });
             }
         } catch (e) {
             console.log(e);
         }
 
-        const submissionResult = await validationService.submitEvent(quizId, userId, totalPoints);
+        // Pass additional data to submitEvent for storing in eventResults
+        const submissionResult = await validationService.submitEvent(quizId, userId, totalPoints, {
+            eventType: 'quiz',
+            correctAnswerCount: result.correctAnswerCount,
+            totalQuestions: totalQuestions,
+            submissionToken: submissionToken,
+            userName: userName,
+            department: department
+        });
 
         if (submissionResult.success) {
             // OPTIMIZED: Invalidate leaderboard cache after successful submission

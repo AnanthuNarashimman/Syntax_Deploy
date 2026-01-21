@@ -602,14 +602,15 @@ const finishContest = async (req, res) => {
 
         // CRITICAL: Check if this contest has already been submitted by this student
         // This prevents duplicate document creation from race conditions
-        const existingResultRef = db.collection('eventResults')
-            .where("userID", "==", studentId)
+        const existingResultQuery = db.collection('eventResults')
+            .where("userId", "==", studentId)  // Fixed: was "userID" (wrong case)
             .where("eventId", "==", contestId)
+            .limit(1);
 
-        const existingResult = await existingResultRef.get();
+        const existingResult = await existingResultQuery.get();
 
-        if (existingResult.exists) {
-            const existingDoc = existingResult.docs[0]; 
+        if (!existingResult.empty) {  // Fixed: QuerySnapshot uses .empty, not .exists
+            const existingDoc = existingResult.docs[0];
             const existingData = existingDoc.data();
             console.log(`⚠️ Contest ${contestId} already submitted by student ${studentId}`);
             console.log(`Existing submission timestamp: ${existingData.completedAt || existingData.verifiedAt}`);
@@ -792,27 +793,30 @@ const finishContest = async (req, res) => {
                 .get();
 
             if (userSubmissionSnapshot.empty) {
-                // Create new submission record
+                // Create new submission record with separate quiz/contest counts
                 await db.collection('userSubmissions').add({
                     userId: studentId,
                     userName: userName,
                     department: department,
                     totalScore: totalScore,
                     submissions: [contestId],
-                    submissionCount: 1
+                    submissionCount: 1,
+                    quizCount: 0,
+                    contestCount: 1
                 });
                 console.log(`✓ Created new userSubmissions record for ${studentId}`);
             } else {
-                // Update existing submission record
+                // Update existing submission record with contestCount increment
                 const submissionRef = userSubmissionSnapshot.docs[0].ref;
                 await submissionRef.update({
                     userName: userName,
                     department: department,
                     submissions: admin.firestore.FieldValue.arrayUnion(contestId),
                     totalScore: admin.firestore.FieldValue.increment(totalScore),
-                    submissionCount: admin.firestore.FieldValue.increment(1)
+                    submissionCount: admin.firestore.FieldValue.increment(1),
+                    contestCount: admin.firestore.FieldValue.increment(1)
                 });
-                console.log(`✓ Updated userSubmissions for ${studentId}`);
+                console.log(`✓ Updated userSubmissions for ${studentId} (contestCount +1)`);
             }
         } catch (e) {
             console.error('Error updating userSubmissions:', e);

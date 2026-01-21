@@ -1321,7 +1321,8 @@
   padding: 0 8px;
   color: #a0aec0;
   font-weight: 500;
-} 
+}
+ 
  
 /* Duplicates Modal */
 .duplicate-modal {
@@ -1425,4 +1426,196 @@
 
 .duplicate-list::-webkit-scrollbar-thumb:hover {
   background: #a0aec0;
+}
+
+/* Bulk Import Loading Spinner */
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: btn-spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Bulk Import Loading Overlay */
+.bulk-import-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 12px;
+}
+
+.bulk-import-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loader-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #4299e1;
+  border-radius: 50%;
+  animation: loader-spin 1s linear infinite;
+}
+
+@keyframes loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.bulk-import-loader p {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.loader-subtext {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.participants-modal-content {
+  position: relative;
+}
+
+.participants-close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Delete All Button */
+.delete-all-btn {
+  background: #fff5f5;
+  border-color: #feb2b2;
+  color: #c53030;
+}
+
+.delete-all-btn:hover {
+  background: #fed7d7;
+  border-color: #fc8181;
+  color: #9b2c2c;
+}
+
+/* Delete All Modal */
+.delete-all-modal {
+  max-width: 500px;
+}
+
+.delete-all-header {
+  border-bottom-color: #fed7d7;
+}
+
+.delete-all-header h2 {
+  color: #c53030;
+}
+
+.delete-all-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.delete-all-warning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 12px;
+}
+
+.delete-all-warning .warning-icon {
+  width: 80px;
+  height: 80px;
+  background: #fed7d7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c53030;
+}
+
+.delete-all-warning h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #c53030;
+  margin: 0;
+}
+
+.delete-all-warning p {
+  font-size: 0.95rem;
+  color: #742a2a;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.delete-confirm-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 1rem;
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 1px;
+  transition: border-color 0.2s;
+}
+
+.delete-confirm-input:focus {
+  outline: none;
+  border-color: #c53030;
+}
+
+.delete-confirm-input::placeholder {
+  color: #a0aec0;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+.delete-all-confirm-btn {
+  background: #c53030;
+  color: white;
+}
+
+.delete-all-confirm-btn:hover:not(:disabled) {
+  background: #9b2c2c;
+}
+
+.delete-all-confirm-btn:disabled {
+  background: #e2e8f0;
+  color: #a0aec0;
+  cursor: not-allowed;
 }

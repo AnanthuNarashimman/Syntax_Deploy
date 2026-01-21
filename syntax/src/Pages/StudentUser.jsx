@@ -368,15 +368,6 @@ const StudentUser = () => {
               Edit Skills & Languages
             </button>
 
-            {isModalOpen && (
-              <SkillEditModal
-                initialLanguages={languages}
-                initialSkills={skillsData}
-                onSave={handleSaveSkills}
-                onClose={() => setIsModalOpen(false)}
-              />
-            )}
-
             <div className={styles.profileActions}>
               <button
                 className={styles.editButton}
@@ -671,6 +662,16 @@ const StudentUser = () => {
           </div>
         </main>
       </div>
+
+      {/* Skills Edit Modal */}
+      {isModalOpen && (
+        <SkillEditModal
+          initialLanguages={languages}
+          initialSkills={skillsData}
+          onSave={handleSaveSkills}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
 
       {/* Settings Modal */}
       {isSettingsModalOpen && (

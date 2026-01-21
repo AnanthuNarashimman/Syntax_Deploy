@@ -680,7 +680,10 @@ const getLeaderboard = async (req, res) => {
                 return {
                     ...submission,
                     userName,
-                    department
+                    department,
+                    // Include actual quiz/contest counts (default to 0 if not present)
+                    quizCount: submission.quizCount || 0,
+                    contestCount: submission.contestCount || 0
                 };
             });
 
@@ -739,6 +742,8 @@ const getLeaderboard = async (req, res) => {
                         totalScore: userScore,
                         userName: currentUserName,
                         department: currentUserDepartment,
+                        quizCount: userData.quizCount || 0,
+                        contestCount: userData.contestCount || 0,
                         ...userData
                     };
                 }

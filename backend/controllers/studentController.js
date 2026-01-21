@@ -62,6 +62,7 @@ const addStudent = async (req, res) => {
       isSuper: false,
       status: "active",
       contestsParticipated: 0,
+      quizzesAttended: 0,
       totalScore: 0,
       joinDate: admin.firestore.FieldValue.serverTimestamp(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -144,12 +145,18 @@ const fetchStudents = async (req, res) => {
       const offset = (page - 1) * limit;
       const paginatedStudents = allStudents.slice(offset, offset + limit);
 
+      // Calculate status counts
+      const activeCount = allStudents.filter(s => s.status === 'active').length;
+      const bannedCount = allStudents.filter(s => s.status === 'banned').length;
+
       return res.status(200).json({
         students: paginatedStudents,
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
+        activeCount,
+        bannedCount
       });
     }
 
@@ -196,12 +203,28 @@ const fetchStudents = async (req, res) => {
       });
     });
 
+    // Get status counts
+    const allStudentsSnapshot = await db
+      .collection("users")
+      .where("isStudent", "==", true)
+      .get();
+    
+    let activeCount = 0;
+    let bannedCount = 0;
+    allStudentsSnapshot.forEach((doc) => {
+      const status = doc.data().status || "active";
+      if (status === 'active') activeCount++;
+      if (status === 'banned') bannedCount++;
+    });
+
     res.status(200).json({
       students,
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
+      activeCount,
+      bannedCount
     });
   } catch (error) {
     console.error("Error fetching students:", error);
@@ -476,6 +499,7 @@ const bulkStudentAdd = async (req, res) => {
           isSuper: false,
           status: "active",
           contestsParticipated: 0,
+          quizzesAttended: 0,
           totalScore: 0,
           lastActive: "Never",
           joinDate: admin.firestore.FieldValue.serverTimestamp(),
@@ -546,6 +570,104 @@ const bulkStudentAdd = async (req, res) => {
     });
   }
 }
+
+
+// Delete All Students
+// 1) This is a destructive operation that removes all student accounts
+// 2) Queries all users where isStudent === true
+// 3) Uses batched writes for efficient bulk deletion (500 docs per batch - Firestore limit)
+// 4) Returns count of deleted students
+// 5) Clears related caches after deletion
+const deleteAllStudents = async (req, res) => {
+  try {
+    console.log('=== DELETE ALL STUDENTS STARTED ===');
+
+    // Get all student documents
+    const studentsSnapshot = await db
+      .collection("users")
+      .where("isStudent", "==", true)
+      .get();
+
+    if (studentsSnapshot.empty) {
+      return res.status(200).json({
+        success: true,
+        message: "No students found to delete.",
+        deletedCount: 0
+      });
+    }
+
+    const totalStudents = studentsSnapshot.size;
+    console.log(`Found ${totalStudents} students to delete`);
+
+    // Firestore batched writes are limited to 500 operations per batch
+    const batchSize = 500;
+    let deletedCount = 0;
+    let batch = db.batch();
+    let operationsInBatch = 0;
+
+    for (const doc of studentsSnapshot.docs) {
+      batch.delete(doc.ref);
+      operationsInBatch++;
+      deletedCount++;
+
+      // Commit batch when it reaches the limit
+      if (operationsInBatch >= batchSize) {
+        await batch.commit();
+        console.log(`Committed batch: ${deletedCount}/${totalStudents} students deleted`);
+        batch = db.batch();
+        operationsInBatch = 0;
+      }
+    }
+
+    // Commit any remaining operations
+    if (operationsInBatch > 0) {
+      await batch.commit();
+      console.log(`Final batch committed: ${deletedCount}/${totalStudents} students deleted`);
+    }
+
+    // Also delete related userSubmissions documents
+    const submissionsSnapshot = await db.collection("userSubmissions").get();
+    if (!submissionsSnapshot.empty) {
+      let subBatch = db.batch();
+      let subOps = 0;
+
+      for (const doc of submissionsSnapshot.docs) {
+        subBatch.delete(doc.ref);
+        subOps++;
+
+        if (subOps >= batchSize) {
+          await subBatch.commit();
+          subBatch = db.batch();
+          subOps = 0;
+        }
+      }
+
+      if (subOps > 0) {
+        await subBatch.commit();
+      }
+      console.log(`Deleted ${submissionsSnapshot.size} userSubmissions documents`);
+    }
+
+    // Clear leaderboard cache
+    cache.delete('leaderboard:top20');
+
+    console.log('=== DELETE ALL STUDENTS COMPLETED ===');
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully deleted ${deletedCount} student${deletedCount !== 1 ? 's' : ''}.`,
+      deletedCount
+    });
+
+  } catch (error) {
+    console.error("Error deleting all students:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete all students.",
+      error: error.message
+    });
+  }
+};
 
 
 // Contest Submission Recording (Called After Code Evaluation by Judge0)
@@ -686,6 +808,7 @@ module.exports = {
   addStudent,
   fetchStudents,
   deleteStudent,
+  deleteAllStudents,
   banStudent,
   unbanStudent,
   bulkStudentAdd,

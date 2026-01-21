@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Medal, Crown, TrendingUp, Users, Filter, Award, Star, Flame, RefreshCw, User, Shield, Zap, Sword, Diamond, Gem, Target } from 'lucide-react';
+import { Trophy, Medal, Crown, TrendingUp, Users, Filter, Award, Star, Flame, RefreshCw, User, Shield, Zap, Sword, Diamond, Target } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import Loader from '../Components/Loader';
 import styles from '../Styles/PageStyles/StudentLeader.module.css';
@@ -45,11 +45,7 @@ const StudentLeader = () => {
           rank: data.userPosition.position || 0,
           avatar: '👑',
           userId: data.userPosition.userId,
-          summary: {
-            codefusions: { count: data.userPosition.submissionCount || 0, points: Math.floor((data.userPosition.totalScore || 0) * 0.3) },
-            quizzes: { count: Math.floor((data.userPosition.submissionCount || 0) * 0.7), points: Math.floor((data.userPosition.totalScore || 0) * 0.5) },
-            practices: { count: Math.floor((data.userPosition.submissionCount || 0) * 0.5), points: Math.floor((data.userPosition.totalScore || 0) * 0.2) }
-          }
+          eventsAttended: data.userPosition.submissionCount || 0
         });
       } else {
         // No user position data - set default values
@@ -59,11 +55,7 @@ const StudentLeader = () => {
           rank: 0,
           avatar: '👑',
           userId: null,
-          summary: {
-            codefusions: { count: 0, points: 0 },
-            quizzes: { count: 0, points: 0 },
-            practices: { count: 0, points: 0 }
-          }
+          eventsAttended: 0
         });
       }
 
@@ -76,11 +68,8 @@ const StudentLeader = () => {
         points: 0,
         rank: 0,
         avatar: '👑',
-        summary: {
-          codefusions: { count: 0, points: 0 },
-          quizzes: { count: 0, points: 0 },
-          practices: { count: 0, points: 0 }
-        }
+        userId: null,
+        eventsAttended: 0
       });
     } finally {
       setLoading(false);
@@ -317,8 +306,7 @@ const StudentLeader = () => {
               <div className={styles.headerCell}>Student</div>
               <div className={styles.headerCell}>Department</div>
               <div className={styles.headerCell}>Tier</div>
-              <div className={styles.headerCell}>Contests</div>
-              <div className={styles.headerCell}>Quizzes</div>
+              <div className={styles.headerCell}>Events Attended</div>
               <div className={styles.headerCell}>Total Points</div>
             </div>
 
@@ -380,9 +368,6 @@ const StudentLeader = () => {
                       </div>
                       <div className={styles.tableCell}>
                         <span className={styles.activityCount}>{user.submissionCount || 0}</span>
-                      </div>
-                      <div className={styles.tableCell}>
-                        <span className={styles.activityCount}>{Math.floor((user.submissionCount || 0) * 0.7)}</span>
                       </div>
                       <div className={styles.tableCell}>
                         <div className={styles.pointsCell}>

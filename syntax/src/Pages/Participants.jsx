@@ -80,6 +80,7 @@ function Participants() {
     const [selectedParticipants, setSelectedParticipants] = useState([]);
     const [participants, setParticipants] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [initialLoad, setInitialLoad] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
     const [showBanModal, setShowBanModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
@@ -99,6 +100,7 @@ function Participants() {
     const [error, setError] = useState(null);
     const [bulkImportFile, setBulkImportFile] = useState(null);
     const [bulkImportPreview, setBulkImportPreview] = useState([]);
+    const [bulkImportLoading, setBulkImportLoading] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
     const [confirmMessage, setConfirmMessage] = useState('');
@@ -110,6 +112,8 @@ function Participants() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalStudents, setTotalStudents] = useState(0);
+    const [activeStudentsCount, setActiveStudentsCount] = useState(0);
+    const [bannedStudentsCount, setBannedStudentsCount] = useState(0);
     const [pageCache, setPageCache] = useState({});
     const STUDENTS_PER_PAGE = 20;
 
@@ -125,6 +129,8 @@ function Participants() {
             setCurrentPage(page);
             setTotalStudents(pageCache[cacheKey].total);
             setTotalPages(pageCache[cacheKey].totalPages);
+            setActiveStudentsCount(pageCache[cacheKey].activeCount || 0);
+            setBannedStudentsCount(pageCache[cacheKey].bannedCount || 0);
             setLoading(false);
             return;
         }
@@ -153,6 +159,8 @@ function Participants() {
                 setCurrentPage(page);
                 setTotalStudents(data.total || students.length);
                 setTotalPages(Math.ceil((data.total || students.length) / STUDENTS_PER_PAGE));
+                setActiveStudentsCount(data.activeCount || 0);
+                setBannedStudentsCount(data.bannedCount || 0);
 
                 // Cache the page data with search key
                 setPageCache(prev => ({
@@ -161,6 +169,8 @@ function Participants() {
                         students,
                         total: data.total || students.length,
                         totalPages: Math.ceil((data.total || students.length) / STUDENTS_PER_PAGE),
+                        activeCount: data.activeCount || 0,
+                        bannedCount: data.bannedCount || 0,
                         timestamp: Date.now()
                     }
                 }));
@@ -174,6 +184,7 @@ function Participants() {
             setError('Failed to load participants. Please try again.');
         } finally {
             setLoading(false);
+            setInitialLoad(false);
         }
     };
 
@@ -332,7 +343,7 @@ function Participants() {
 
     const handleBulkImport = async (e) => {
         e.preventDefault();
-        
+
         if (!bulkImportFile) {
             showWarning('Please select a file to import.');
             return;
@@ -341,7 +352,8 @@ function Participants() {
         try {
             console.log('Starting bulk import...');
             console.log('File:', bulkImportFile.name, bulkImportFile.type, bulkImportFile.size);
-            
+
+            setBulkImportLoading(true); // Start loading
             setError(null); // Clear any previous errors
             const formData = new FormData();
             formData.append('file', bulkImportFile);
@@ -359,8 +371,9 @@ function Participants() {
 
             if (response.ok && data.success) {
                 console.log('Bulk import successful:', data);
-                
+
                 // Close bulk import modal
+                setBulkImportLoading(false);
                 setShowBulkImportModal(false);
                 setBulkImportFile(null);
                 setBulkImportPreview([]);
@@ -390,10 +403,11 @@ function Participants() {
                 refreshParticipants();
             } else {
                 console.error('Bulk import failed:', data);
+                setBulkImportLoading(false);
                 // Show error with longer duration for critical failures
                 const errorMsg = data.message || 'Failed to import students';
                 showError(errorMsg, 8000); // 8 seconds for critical failures
-                
+
                 // If there are critical errors, show them
                 if (data.data?.criticalErrors && data.data.criticalErrors.length > 0) {
                     setTimeout(() => {
@@ -404,6 +418,7 @@ function Participants() {
             }
         } catch (error) {
             console.error('Error importing students:', error);
+            setBulkImportLoading(false);
             showError(error.message || 'Failed to import students. Please try again.');
         }
     };
@@ -579,7 +594,7 @@ function Participants() {
         return null; // Will redirect to login
     }
 
-    if (loading) {
+    if (initialLoad && loading) {
         return (
             <>
                 <AdminNavbar
@@ -639,7 +654,7 @@ function Participants() {
                         </div>
                         <div className="stat-content">
                             <h3>Active Students</h3>
-                            <span className="stat-number">{participants.filter(p => p.status === 'active').length}</span>
+                            <span className="stat-number">{activeStudentsCount}</span>
                         </div>
                     </div>
 
@@ -649,7 +664,7 @@ function Participants() {
                         </div>
                         <div className="stat-content">
                             <h3>Banned Students</h3>
-                            <span className="stat-number">{participants.filter(p => p.status === 'banned').length}</span>
+                            <span className="stat-number">{bannedStudentsCount}</span>
                         </div>
                     </div>
                 </div>
@@ -711,7 +726,7 @@ function Participants() {
                             <Plus className="btn-icon" />
                             Add Student
                         </button>
-                        <button 
+                        <button
                             className="bulk-action-btn bulk-import-btn"
                             onClick={() => setShowBulkImportModal(true)}
                         >
@@ -999,15 +1014,27 @@ function Participants() {
                 {showBulkImportModal && (
                     <div className="participants-add-student-modal">
                         <div className="participants-modal-content">
+                            {bulkImportLoading && (
+                                <div className="bulk-import-loading-overlay">
+                                    <div className="bulk-import-loader">
+                                        <div className="loader-spinner"></div>
+                                        <p>Importing students...</p>
+                                        <span className="loader-subtext">This may take a moment</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="participants-modal-header">
                                 <h2>Bulk Import Students</h2>
-                                <button 
+                                <button
                                     className="participants-close-btn"
                                     onClick={() => {
-                                        setShowBulkImportModal(false);
-                                        setBulkImportFile(null);
-                                        setBulkImportPreview([]);
+                                        if (!bulkImportLoading) {
+                                            setShowBulkImportModal(false);
+                                            setBulkImportFile(null);
+                                            setBulkImportPreview([]);
+                                        }
                                     }}
+                                    disabled={bulkImportLoading}
                                 >
                                     <X />
                                 </button>
@@ -1052,24 +1079,34 @@ function Participants() {
                                 )}
                                 
                                 <div className="form-actions">
-                                    <button 
-                                        type="button" 
-                                        className="cancel-btn" 
+                                    <button
+                                        type="button"
+                                        className="cancel-btn"
                                         onClick={() => {
                                             setShowBulkImportModal(false);
                                             setBulkImportFile(null);
                                             setBulkImportPreview([]);
                                         }}
+                                        disabled={bulkImportLoading}
                                     >
                                         Cancel
                                     </button>
-                                    <button 
-                                        type="submit" 
+                                    <button
+                                        type="submit"
                                         className="save-btn"
-                                        disabled={!bulkImportFile}
+                                        disabled={!bulkImportFile || bulkImportLoading}
                                     >
-                                        <FileSpreadsheet className="btn-icon" />
-                                        Import Students
+                                        {bulkImportLoading ? (
+                                            <>
+                                                <div className="btn-spinner"></div>
+                                                Importing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FileSpreadsheet className="btn-icon" />
+                                                Import Students
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </form>
@@ -1124,7 +1161,7 @@ function Participants() {
                         <div className="modal-content duplicate-modal">
                             <div className="modal-header">
                                 <h2>Duplicate Emails Found</h2>
-                                <button 
+                                <button
                                     className="close-btn"
                                     onClick={() => {
                                         setShowDuplicatesModal(false);
@@ -1153,8 +1190,8 @@ function Participants() {
                                     ))}
                                 </div>
                                 <div className="form-actions">
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         className="save-btn"
                                         onClick={() => {
                                             setShowDuplicatesModal(false);
@@ -1168,6 +1205,8 @@ function Participants() {
                         </div>
                     </div>
                 )}
+
+
 
                 <div className="participants-table-container">
                     <div className="participants-table-header">

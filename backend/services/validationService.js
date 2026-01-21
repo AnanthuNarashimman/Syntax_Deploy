@@ -131,11 +131,27 @@ async function startEvent(eventId, userId) {
     }
 }
 
-async function submitEvent(eventId, userId, points) {
+async function submitEvent(eventId, userId, points, additionalData = {}) {
     console.log("UserId:", userId);
     console.log("EventId:", eventId);
 
     try {
+        // CRITICAL: Check for existing submission to prevent duplicates
+        const existingResultQuery = await db.collection('eventResults')
+            .where('userId', '==', userId)
+            .where('eventId', '==', eventId)
+            .limit(1)
+            .get();
+
+        if (!existingResultQuery.empty) {
+            console.log(`⚠️ Duplicate submission prevented for user ${userId} on event ${eventId}`);
+            return {
+                "success": true,
+                "duplicate": true,
+                "message": "Submission already exists"
+            };
+        }
+
         const eventSnapshot = await db.collection('eventAttempts')
             .where('userId', '==', userId)
             .where('eventId', '==', eventId)
@@ -153,31 +169,20 @@ async function submitEvent(eventId, userId, points) {
             points: points  // Store points directly in attempt
         });
 
-        // Create result record
+        // Create result record with additional metadata
         const resultData = {
             "userId": userId,
             "eventId": eventId,
             "points": points,
-            "submittedAt": admin.firestore.FieldValue.serverTimestamp()
-        }
-
-        // try {
-
-        //     const userDocRef = db.collection("users").doc(userId);
-        //     const userSnapshot = await userDocRef.get();
-
-        //     if (userSnapshot.exists) {
-        //         await userDocRef.update({
-        //             Submissions: admin.firestore.FieldValue.arrayUnion(eventId),
-        //             contestsParticipated: admin.firestore.FieldValue.increment(1)
-        //         });
-        //     }
-
-        //     console.log("Updated Successfully");
-        // } catch (e) {
-        //     console.log(e);
-        // }
-
+            "submittedAt": admin.firestore.FieldValue.serverTimestamp(),
+            // Include additional data if provided (eventType, submissionToken, etc.)
+            ...(additionalData.eventType && { eventType: additionalData.eventType }),
+            ...(additionalData.submissionToken && { submissionToken: additionalData.submissionToken }),
+            ...(additionalData.userName && { userName: additionalData.userName }),
+            ...(additionalData.department && { department: additionalData.department }),
+            ...(additionalData.correctAnswerCount !== undefined && { correctAnswerCount: additionalData.correctAnswerCount }),
+            ...(additionalData.totalQuestions !== undefined && { totalQuestions: additionalData.totalQuestions })
+        };
 
         const resultRef = await db.collection('eventResults').add(resultData);
 
@@ -185,6 +190,8 @@ async function submitEvent(eventId, userId, points) {
         await attemptDoc.ref.update({
             result_ref: resultRef.id
         });
+
+        console.log(`✓ Event result created: ${resultRef.id} for user ${userId}`);
 
         return {
             "success": true
