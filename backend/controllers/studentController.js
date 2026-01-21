@@ -455,8 +455,8 @@ const bulkStudentAdd = async (req, res) => {
           continue;
         }
 
-        // Generate custom password in format "Name@YearBatch"
-        const customPassword = `${row.Name.trim()}@${row.Year.toString().trim()}${row.Batch.trim()}`;
+        // Generate custom password in format "Name@YearSection" (same as single add)
+        const customPassword = `${row.Name.trim().replace(/\s/g, "")}@${row.Year.toString().trim()}${row.Section.trim()}`;
 
         // Hash the custom password
         const hashedPassword = await passwordUtils.hashPasswords(customPassword);
