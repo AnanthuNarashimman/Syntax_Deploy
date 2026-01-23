@@ -34,8 +34,12 @@ const StudentLeader = () => {
 
       const data = await response.json();
 
-      // Set leaderboard data
-      setLeaderboardData(data.leaderboard || []);
+      // Set leaderboard data with field name mapping
+      setLeaderboardData((data.leaderboard || []).map(user => ({
+        ...user,
+        contestsParticipated: user.contestCount || 0,
+        quizzesAttended: user.quizCount || 0
+      })));
 
       // Set user profile from userPosition data
       if (data.userPosition) {
@@ -45,6 +49,8 @@ const StudentLeader = () => {
           rank: data.userPosition.position || 0,
           avatar: '👑',
           userId: data.userPosition.userId,
+          contestsParticipated: data.userPosition.contestCount || 0,
+          quizzesAttended: data.userPosition.quizCount || 0,
           eventsAttended: data.userPosition.submissionCount || 0
         });
       } else {
@@ -55,6 +61,8 @@ const StudentLeader = () => {
           rank: 0,
           avatar: '👑',
           userId: null,
+          contestsParticipated: 0,
+          quizzesAttended: 0,
           eventsAttended: 0
         });
       }
@@ -69,6 +77,8 @@ const StudentLeader = () => {
         rank: 0,
         avatar: '👑',
         userId: null,
+        contestsParticipated: 0,
+        quizzesAttended: 0,
         eventsAttended: 0
       });
     } finally {
@@ -177,7 +187,7 @@ const StudentLeader = () => {
         <div className={styles.leaderHeader}>
           <div className={styles.headerContent}>
             <div className={styles.headerIcon}>
-              <Trophy size={32} />
+              <Trophy size={32} color='#ff7043' />
             </div>
             <div className={styles.headerText}>
               <h1 className={styles.pageTitle}>Leaderboard & Rankings</h1>
@@ -203,6 +213,24 @@ const StudentLeader = () => {
               <div className={styles.statInfo}>
                 <h3 className={styles.statNumber}>Rank {userProfile?.rank || 0}</h3>
                 <p className={styles.statLabel}>Your Rank</p>
+              </div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statIcon}>
+                <Trophy size={24} color='#ff7043' />
+              </div>
+              <div className={styles.statInfo}>
+                <h3 className={styles.statNumber}>{userProfile?.contestsParticipated || 0}</h3>
+                <p className={styles.statLabel}>Contests</p>
+              </div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statIcon}>
+                <Award size={24} />
+              </div>
+              <div className={styles.statInfo}>
+                <h3 className={styles.statNumber}>{userProfile?.quizzesAttended || 0}</h3>
+                <p className={styles.statLabel}>Quizzes</p>
               </div>
             </div>
             <div className={styles.statCard}>
@@ -239,7 +267,7 @@ const StudentLeader = () => {
               <div className={styles.profileInfo}>
                 <h2 className={styles.profileName}>{userProfile?.name || 'Loading...'}</h2>
                 <div className={styles.pointsBadge}>
-                  <Trophy size={16} />
+                  <Trophy size={16} color='#ff7043' />
                   <span>{userProfile?.points || 0} points</span>
                 </div>
                 <div
@@ -306,7 +334,8 @@ const StudentLeader = () => {
               <div className={styles.headerCell}>Student</div>
               <div className={styles.headerCell}>Department</div>
               <div className={styles.headerCell}>Tier</div>
-              <div className={styles.headerCell}>Events Attended</div>
+              <div className={styles.headerCell}>Contests</div>
+              <div className={styles.headerCell}>Quizzes</div>
               <div className={styles.headerCell}>Total Points</div>
             </div>
 
@@ -314,7 +343,7 @@ const StudentLeader = () => {
               {paginatedData.length === 0 ? (
                 <div className={styles.emptyState}>
                   <div className={styles.emptyStateIcon}>
-                    <Trophy size={48} />
+                    <Trophy size={48} color='#ff7043' />
                   </div>
                   <h3 className={styles.emptyStateTitle}>No Rankings Yet</h3>
                   <p className={styles.emptyStateText}>
@@ -367,11 +396,14 @@ const StudentLeader = () => {
                         </div>
                       </div>
                       <div className={styles.tableCell}>
-                        <span className={styles.activityCount}>{user.submissionCount || 0}</span>
+                        <span className={styles.activityCount}>{user.contestsParticipated || 0}</span>
+                      </div>
+                      <div className={styles.tableCell}>
+                        <span className={styles.activityCount}>{user.quizzesAttended || 0}</span>
                       </div>
                       <div className={styles.tableCell}>
                         <div className={styles.pointsCell}>
-                          <Trophy size={14} />
+                          <Trophy size={14} color='#ff7043' />
                           <span className={styles.pointsValue}>{user.totalScore || 0}</span>
                         </div>
                       </div>

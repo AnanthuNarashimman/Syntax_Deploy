@@ -211,7 +211,7 @@ const fetchAdminEvents = async (req, res) => {
           .collection("eventAttempts")
           .where("eventId", "==", eventId)
           .get();
-        
+
         // Count unique participants (by userId)
         const uniqueParticipants = new Set();
         eventAttemptsSnapshot.forEach(doc => {
@@ -220,7 +220,7 @@ const fetchAdminEvents = async (req, res) => {
             uniqueParticipants.add(data.userId);
           }
         });
-        
+
         return {
           eventId,
           participantCount: uniqueParticipants.size
@@ -235,7 +235,7 @@ const fetchAdminEvents = async (req, res) => {
     });
 
     const participantCounts = await Promise.all(participantCountPromises);
-    
+
     // Create a map for quick lookup
     const participantCountMap = {};
     participantCounts.forEach(({ eventId, participantCount }) => {
@@ -300,7 +300,7 @@ const fetchEvents = async (req, res) => {
       // SECURITY: Strip sensitive data from list API
       // Questions/problems will be fetched only when user starts the contest via /api/student/events/:eventId
       // This prevents students from viewing questions before starting via network tab inspection
-      
+
       // Remove quiz questions (keep metadata only)
       if (eventData.questions && Array.isArray(eventData.questions)) {
         delete eventData.questions;
@@ -575,372 +575,372 @@ const getEventResults = async (req, res) => {
 // 8) Returns necessary data to the client
 // 9) In case of error or exception, appropriate logs are made
 const finishContest = async (req, res) => {
-    try {
-        const { contestId, submissions, totalProblems, completedAt, submissionToken } = req.body;
-        const token = req.cookies.auth_token;
+  try {
+    const { contestId, submissions, totalProblems, completedAt, submissionToken } = req.body;
+    const token = req.cookies.auth_token;
 
-        if (!token) {
-            return res.status(401).json({ message: "Unauthorized: Please log in." });
-        }
-
-        // Decode JWT to get student ID
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) {
-            throw new Error("JWT_SECRET is not configured on the server.");
-        }
-        const decoded = jwt.verify(token, jwtSecret);
-        const studentId = decoded.userId;
-
-        if (!studentId || !contestId || !submissions || !Array.isArray(submissions)) {
-            return res.status(400).json({
-                message: "Invalid request. Missing required fields."
-            });
-        }
-
-        console.log(`Processing contest finish for student ${studentId}, contest ${contestId}`);
-        console.log(`Received ${submissions.length} submissions (already verified by backend)`);
-
-        // CRITICAL: Check if this contest has already been submitted by this student
-        // This prevents duplicate document creation from race conditions
-        const existingResultQuery = db.collection('eventResults')
-            .where("userId", "==", studentId)  // Fixed: was "userID" (wrong case)
-            .where("eventId", "==", contestId)
-            .limit(1);
-
-        const existingResult = await existingResultQuery.get();
-
-        if (!existingResult.empty) {  // Fixed: QuerySnapshot uses .empty, not .exists
-            const existingDoc = existingResult.docs[0];
-            const existingData = existingDoc.data();
-            console.log(`⚠️ Contest ${contestId} already submitted by student ${studentId}`);
-            console.log(`Existing submission timestamp: ${existingData.completedAt || existingData.verifiedAt}`);
-
-            // Check if submission token matches (if provided)
-            if (submissionToken && existingData.submissionToken === submissionToken) {
-                console.log('ℹ️ Exact duplicate request detected (same submission token) - returning existing result');
-                return res.status(200).json({
-                    success: true,
-                    message: `Contest already submitted. Your score: ${existingData.totalScore}/${existingData.totalPossible}`,
-                    totalScore: existingData.totalScore,
-                    totalPossible: existingData.totalPossible,
-                    problemsAttempted: existingData.problemsAttempted,
-                    totalProblems: existingData.totalProblems,
-                    duplicate: true
-                });
-            }
-
-            // Different submission token or no token - this is a duplicate submission attempt
-            return res.status(409).json({
-                success: false,
-                message: "Contest already submitted. Duplicate submission prevented.",
-                existingScore: existingData.totalScore,
-                existingPossible: existingData.totalPossible,
-                submittedAt: existingData.completedAt || existingData.verifiedAt
-            });
-        }
-
-        console.log(`✓ No existing submission found - proceeding with new submission`);
-
-        // Fetch contest details
-        const contestRef = db.collection('events').doc(contestId);
-        const contestDoc = await contestRef.get();
-
-        if (!contestDoc.exists) {
-            return res.status(404).json({ message: "Contest not found" });
-        }
-
-        const contest = contestDoc.data();
-        const problems = contest.problems || [];
-
-        // SERVER-SIDE TIME VALIDATION: Check if submission is within allowed time
-        // This prevents users from manipulating the frontend timer
-        if (contest.eventMode === 'strict' && contest.durationMinutes) {
-            const eventAttemptQuery = await db.collection('eventAttempts')
-                .where('userId', '==', studentId)
-                .where('eventId', '==', contestId)
-                .limit(1)
-                .get();
-
-            if (!eventAttemptQuery.empty) {
-                const attemptData = eventAttemptQuery.docs[0].data();
-                const startTime = attemptData.started_at_ms ||
-                    (attemptData.started_at?._seconds ? attemptData.started_at._seconds * 1000 : null);
-
-                if (startTime) {
-                    const allowedDurationMs = contest.durationMinutes * 60 * 1000;
-                    // 60 second grace period accounts for:
-                    // - 10 second auto-submit countdown modal shown to user
-                    // - Network latency for submission
-                    // - Any processing delays
-                    const gracePeriodMs = 60 * 1000;
-                    const elapsedMs = Date.now() - startTime;
-
-                    if (elapsedMs > allowedDurationMs + gracePeriodMs) {
-                        console.warn(`⚠️ TIME EXCEEDED: Student ${studentId} submitted after time limit`);
-                        // console.warn(`   Elapsed: ${Math.floor(elapsedMs / 1000)}s, Allowed: ${contest.durationMinutes * 60}s (+60s grace)`);
-
-                        // Still accept the submission but mark it as late
-                        // You could also reject it entirely if you prefer strict enforcement
-                        return res.status(400).json({
-                            success: false,
-                            message: "Contest time limit exceeded. Submission rejected.",
-                            elapsedSeconds: Math.floor(elapsedMs / 1000),
-                            allowedSeconds: contest.durationMinutes * 60
-                        });
-                    } else {
-                        console.log(`✓ Submission within time limit (${Math.floor(elapsedMs / 1000)}s / ${contest.durationMinutes * 60}s)`);
-                    }
-                }
-            }
-        }
-
-        // Process verified submissions (already validated during submission via /api/judge/contest-submit)
-        const results = [];
-        let totalScore = 0;
-        let totalPossible = 0;
-
-        for (const submission of submissions) {
-            const problemIndex = submission.problemIndex;
-            console.log(`Processing submission for problem index: ${problemIndex}, pointsEarned: ${submission.pointsEarned}`);
-
-            const problem = problems[problemIndex];
-
-            if (!problem) {
-                console.error(`❌ Problem at index ${problemIndex} not found in problems array (length: ${problems.length})`);
-                continue;
-            }
-
-            const pointsEarned = submission.pointsEarned || 0;
-            totalPossible += problem.points;
-            totalScore += pointsEarned;
-
-            console.log(`✓ Problem ${problemIndex + 1}: ${submission.passedTests}/${submission.totalTests} tests passed, Score: ${pointsEarned}/${problem.points}`);
-
-            // Create result object, filtering out undefined values
-            const resultData = {
-                problemId: submission.problemId || problem.id || `problem_${problemIndex}`,
-                problemCode: submission.problemCode || problem.code || '',
-                problemTitle: submission.problemTitle || problem.title || 'Untitled Problem',
-                language: submission.language || 'unknown',
-                passedTests: submission.passedTests || 0,
-                totalTests: submission.totalTests || 0,
-                score: pointsEarned,
-                maxScore: submission.maxPoints || problem.points,
-                solved: submission.solved || false,
-                timestamp: submission.timestamp || admin.firestore.FieldValue.serverTimestamp()
-            };
-
-            // Remove any remaining undefined values
-            Object.keys(resultData).forEach(key => {
-                if (resultData[key] === undefined) {
-                    delete resultData[key];
-                }
-            });
-
-            results.push(resultData);
-        }
-
-        console.log(`📊 Total Score Calculation: ${totalScore}/${totalPossible}`);
-
-        // Store contest result in Firestore
-        const contestResultRef = db.collection('users')
-            .doc(studentId)
-            .collection('contestResults')
-            .doc(contestId);
-
-        await contestResultRef.set({
-            contestId,
-            contestTitle: contest.eventTitle,
-            studentId,
-            totalScore: totalScore,
-            totalPossible: totalPossible,
-            problemsAttempted: submissions.length,
-            totalProblems,
-            submissions: results,
-            completedAt: completedAt || admin.firestore.FieldValue.serverTimestamp(),
-            verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
-            submissionToken: submissionToken || null // Store token for duplicate detection
-        });
-
-        // Update user's total scores and contests participated
-        let userName = 'Unknown';
-        let department = 'Unknown';
-
-        try {
-            const userDocRef = db.collection("users").doc(studentId);
-            const userSnapshot = await userDocRef.get();
-
-            if (userSnapshot.exists) {
-                const userData = userSnapshot.data();
-                userName = userData.userName || 'Unknown';
-                department = userData.department || 'Unknown';
-
-                await userDocRef.update({
-                    totalScore: admin.firestore.FieldValue.increment(totalScore),
-                    contestsParticipated: admin.firestore.FieldValue.increment(1)
-                });
-
-                console.log(`✓ Updated user ${studentId} total scores (+${totalScore})`);
-            }
-        } catch (e) {
-            console.error('Error updating user scores:', e);
-        }
-
-        // Update userSubmissions collection
-        try {
-            const userSubmissionSnapshot = await db.collection("userSubmissions")
-                .where("userId", "==", studentId)
-                .get();
-
-            if (userSubmissionSnapshot.empty) {
-                // Create new submission record with separate quiz/contest counts
-                await db.collection('userSubmissions').add({
-                    userId: studentId,
-                    userName: userName,
-                    department: department,
-                    totalScore: totalScore,
-                    submissions: [contestId],
-                    submissionCount: 1,
-                    quizCount: 0,
-                    contestCount: 1
-                });
-                console.log(`✓ Created new userSubmissions record for ${studentId}`);
-            } else {
-                // Update existing submission record with contestCount increment
-                const submissionRef = userSubmissionSnapshot.docs[0].ref;
-                await submissionRef.update({
-                    userName: userName,
-                    department: department,
-                    submissions: admin.firestore.FieldValue.arrayUnion(contestId),
-                    totalScore: admin.firestore.FieldValue.increment(totalScore),
-                    submissionCount: admin.firestore.FieldValue.increment(1),
-                    contestCount: admin.firestore.FieldValue.increment(1)
-                });
-                console.log(`✓ Updated userSubmissions for ${studentId} (contestCount +1)`);
-            }
-        } catch (e) {
-            console.error('Error updating userSubmissions:', e);
-        }
-
-        // Update eventAttempts and eventResults
-        try {
-            // Find the event attempt
-            const eventSnapshot = await db.collection('eventAttempts')
-                .where('userId', '==', studentId)
-                .where('eventId', '==', contestId)
-                .get();
-
-            if (!eventSnapshot.empty) {
-                const attemptDoc = eventSnapshot.docs[0];
-
-                // Update attempt status
-                await attemptDoc.ref.update({
-                    status: 'completed',
-                    completed_at: admin.firestore.FieldValue.serverTimestamp(),
-                    points: totalScore
-                });
-
-                console.log(`✓ Updated eventAttempt ${attemptDoc.id}: status=completed, points=${totalScore}`);
-
-                // Create result record in eventResults
-                const resultData = {
-                    userId: studentId,
-                    userName: userName,
-                    department: department,
-                    eventId: contestId,
-                    eventTitle: contest.eventTitle || 'Unknown',
-                    points: totalScore,
-                    maxPoints: totalPossible,
-                    problemsAttempted: submissions.length,
-                    totalProblems: totalProblems,
-                    submittedAt: admin.firestore.FieldValue.serverTimestamp()
-                };
-
-                const resultRef = await db.collection('eventResults').add(resultData);
-
-                // Update attempt with result reference
-                await attemptDoc.ref.update({
-                    result_ref: resultRef.id
-                });
-
-                console.log(`✓ Created eventResult ${resultRef.id} with points=${totalScore}`);
-            } else {
-                console.warn(`⚠ No eventAttempt found for student ${studentId} and contest ${contestId}`);
-                console.log(`Creating new eventAttempt and eventResult...`);
-
-                // Create new eventAttempt if it doesn't exist
-                const newAttemptData = {
-                    userId: studentId,
-                    userName: userName,
-                    department: department,
-                    eventId: contestId,
-                    eventTitle: contest.eventTitle || 'Unknown',
-                    status: 'completed',
-                    started_at: admin.firestore.FieldValue.serverTimestamp(),
-                    completed_at: admin.firestore.FieldValue.serverTimestamp(),
-                    points: totalScore
-                };
-
-                const attemptRef = await db.collection('eventAttempts').add(newAttemptData);
-                console.log(`✓ Created new eventAttempt ${attemptRef.id} with points=${totalScore}`);
-
-                // Create result record in eventResults
-                const resultData = {
-                    userId: studentId,
-                    userName: userName,
-                    department: department,
-                    eventId: contestId,
-                    eventTitle: contest.eventTitle || 'Unknown',
-                    points: totalScore,
-                    maxPoints: totalPossible,
-                    problemsAttempted: submissions.length,
-                    totalProblems: totalProblems,
-                    submittedAt: admin.firestore.FieldValue.serverTimestamp()
-                };
-
-                const resultRef = await db.collection('eventResults').add(resultData);
-
-                // Update attempt with result reference
-                await attemptRef.update({
-                    result_ref: resultRef.id
-                });
-
-                console.log(`✓ Created eventResult ${resultRef.id} with points=${totalScore}`);
-            }
-
-            // Invalidate leaderboard cache
-            cache.delete('leaderboard:top20');
-        } catch (e) {
-            console.error('Error updating eventAttempts/eventResults:', e);
-            console.error('Error details:', e.message);
-        }
-
-        console.log(`✓ Contest ${contestId} completed by student ${studentId}. Final score: ${totalScore}/${totalPossible}`);
-
-        res.status(200).json({
-            success: true,
-            message: `Contest submitted successfully! Your final score: ${totalScore}/${totalPossible}`,
-            totalScore: totalScore,
-            totalPossible: totalPossible,
-            problemsAttempted: submissions.length,
-            totalProblems
-        });
-
-    } catch (error) {
-        console.error('Error in finishContest:', error);
-
-        let errorMessage = 'Failed to submit contest';
-        if (error.name === 'JsonWebTokenError') {
-            errorMessage = 'Invalid authentication token';
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: Please log in." });
     }
+
+    // Decode JWT to get student ID
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET is not configured on the server.");
+    }
+    const decoded = jwt.verify(token, jwtSecret);
+    const studentId = decoded.userId;
+
+    if (!studentId || !contestId || !submissions || !Array.isArray(submissions)) {
+      return res.status(400).json({
+        message: "Invalid request. Missing required fields."
+      });
+    }
+
+    console.log(`Processing contest finish for student ${studentId}, contest ${contestId}`);
+    console.log(`Received ${submissions.length} submissions (already verified by backend)`);
+
+    // CRITICAL: Check if this contest has already been submitted by this student
+    // This prevents duplicate document creation from race conditions
+    const existingResultQuery = db.collection('eventResults')
+      .where("userId", "==", studentId)  // Fixed: was "userID" (wrong case)
+      .where("eventId", "==", contestId)
+      .limit(1);
+
+    const existingResult = await existingResultQuery.get();
+
+    if (!existingResult.empty) {  // Fixed: QuerySnapshot uses .empty, not .exists
+      const existingDoc = existingResult.docs[0];
+      const existingData = existingDoc.data();
+      console.log(`⚠️ Contest ${contestId} already submitted by student ${studentId}`);
+      console.log(`Existing submission timestamp: ${existingData.completedAt || existingData.verifiedAt}`);
+
+      // Check if submission token matches (if provided)
+      if (submissionToken && existingData.submissionToken === submissionToken) {
+        console.log('ℹ️ Exact duplicate request detected (same submission token) - returning existing result');
+        return res.status(200).json({
+          success: true,
+          message: `Contest already submitted. Your score: ${existingData.totalScore}/${existingData.totalPossible}`,
+          totalScore: existingData.totalScore,
+          totalPossible: existingData.totalPossible,
+          problemsAttempted: existingData.problemsAttempted,
+          totalProblems: existingData.totalProblems,
+          duplicate: true
+        });
+      }
+
+      // Different submission token or no token - this is a duplicate submission attempt
+      return res.status(409).json({
+        success: false,
+        message: "Contest already submitted. Duplicate submission prevented.",
+        existingScore: existingData.totalScore,
+        existingPossible: existingData.totalPossible,
+        submittedAt: existingData.completedAt || existingData.verifiedAt
+      });
+    }
+
+    console.log(`✓ No existing submission found - proceeding with new submission`);
+
+    // Fetch contest details
+    const contestRef = db.collection('events').doc(contestId);
+    const contestDoc = await contestRef.get();
+
+    if (!contestDoc.exists) {
+      return res.status(404).json({ message: "Contest not found" });
+    }
+
+    const contest = contestDoc.data();
+    const problems = contest.problems || [];
+
+    // SERVER-SIDE TIME VALIDATION: Check if submission is within allowed time
+    // This prevents users from manipulating the frontend timer
+    if (contest.eventMode === 'strict' && contest.durationMinutes) {
+      const eventAttemptQuery = await db.collection('eventAttempts')
+        .where('userId', '==', studentId)
+        .where('eventId', '==', contestId)
+        .limit(1)
+        .get();
+
+      if (!eventAttemptQuery.empty) {
+        const attemptData = eventAttemptQuery.docs[0].data();
+        const startTime = attemptData.started_at_ms ||
+          (attemptData.started_at?._seconds ? attemptData.started_at._seconds * 1000 : null);
+
+        if (startTime) {
+          const allowedDurationMs = contest.durationMinutes * 60 * 1000;
+          // 60 second grace period accounts for:
+          // - 10 second auto-submit countdown modal shown to user
+          // - Network latency for submission
+          // - Any processing delays
+          const gracePeriodMs = 60 * 1000;
+          const elapsedMs = Date.now() - startTime;
+
+          if (elapsedMs > allowedDurationMs + gracePeriodMs) {
+            console.warn(`⚠️ TIME EXCEEDED: Student ${studentId} submitted after time limit`);
+            // console.warn(`   Elapsed: ${Math.floor(elapsedMs / 1000)}s, Allowed: ${contest.durationMinutes * 60}s (+60s grace)`);
+
+            // Still accept the submission but mark it as late
+            // You could also reject it entirely if you prefer strict enforcement
+            return res.status(400).json({
+              success: false,
+              message: "Contest time limit exceeded. Submission rejected.",
+              elapsedSeconds: Math.floor(elapsedMs / 1000),
+              allowedSeconds: contest.durationMinutes * 60
+            });
+          } else {
+            console.log(`✓ Submission within time limit (${Math.floor(elapsedMs / 1000)}s / ${contest.durationMinutes * 60}s)`);
+          }
+        }
+      }
+    }
+
+    // Process verified submissions (already validated during submission via /api/judge/contest-submit)
+    const results = [];
+    let totalScore = 0;
+    let totalPossible = 0;
+
+    for (const submission of submissions) {
+      const problemIndex = submission.problemIndex;
+      console.log(`Processing submission for problem index: ${problemIndex}, pointsEarned: ${submission.pointsEarned}`);
+
+      const problem = problems[problemIndex];
+
+      if (!problem) {
+        console.error(`❌ Problem at index ${problemIndex} not found in problems array (length: ${problems.length})`);
+        continue;
+      }
+
+      const pointsEarned = submission.pointsEarned || 0;
+      totalPossible += problem.points;
+      totalScore += pointsEarned;
+
+      console.log(`✓ Problem ${problemIndex + 1}: ${submission.passedTests}/${submission.totalTests} tests passed, Score: ${pointsEarned}/${problem.points}`);
+
+      // Create result object, filtering out undefined values
+      const resultData = {
+        problemId: submission.problemId || problem.id || `problem_${problemIndex}`,
+        problemCode: submission.problemCode || problem.code || '',
+        problemTitle: submission.problemTitle || problem.title || 'Untitled Problem',
+        language: submission.language || 'unknown',
+        passedTests: submission.passedTests || 0,
+        totalTests: submission.totalTests || 0,
+        score: pointsEarned,
+        maxScore: submission.maxPoints || problem.points,
+        solved: submission.solved || false,
+        timestamp: submission.timestamp || admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      // Remove any remaining undefined values
+      Object.keys(resultData).forEach(key => {
+        if (resultData[key] === undefined) {
+          delete resultData[key];
+        }
+      });
+
+      results.push(resultData);
+    }
+
+    console.log(`📊 Total Score Calculation: ${totalScore}/${totalPossible}`);
+
+    // Store contest result in Firestore
+    const contestResultRef = db.collection('users')
+      .doc(studentId)
+      .collection('contestResults')
+      .doc(contestId);
+
+    await contestResultRef.set({
+      contestId,
+      contestTitle: contest.eventTitle,
+      studentId,
+      totalScore: totalScore,
+      totalPossible: totalPossible,
+      problemsAttempted: submissions.length,
+      totalProblems,
+      submissions: results,
+      completedAt: completedAt || admin.firestore.FieldValue.serverTimestamp(),
+      verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+      submissionToken: submissionToken || null // Store token for duplicate detection
+    });
+
+    // Update user's total scores and contests participated
+    let userName = 'Unknown';
+    let department = 'Unknown';
+
+    try {
+      const userDocRef = db.collection("users").doc(studentId);
+      const userSnapshot = await userDocRef.get();
+
+      if (userSnapshot.exists) {
+        const userData = userSnapshot.data();
+        userName = userData.userName || 'Unknown';
+        department = userData.department || 'Unknown';
+
+        await userDocRef.update({
+          totalScore: admin.firestore.FieldValue.increment(totalScore),
+          contestsParticipated: admin.firestore.FieldValue.increment(1)
+        });
+
+        console.log(`✓ Updated user ${studentId} total scores (+${totalScore})`);
+      }
+    } catch (e) {
+      console.error('Error updating user scores:', e);
+    }
+
+    // Update userSubmissions collection
+    try {
+      const userSubmissionSnapshot = await db.collection("userSubmissions")
+        .where("userId", "==", studentId)
+        .get();
+
+      if (userSubmissionSnapshot.empty) {
+        // Create new submission record with separate quiz/contest counts
+        await db.collection('userSubmissions').add({
+          userId: studentId,
+          userName: userName,
+          department: department,
+          totalScore: totalScore,
+          submissions: [contestId],
+          submissionCount: 1,
+          quizCount: 0,
+          contestCount: 1
+        });
+        console.log(`✓ Created new userSubmissions record for ${studentId}`);
+      } else {
+        // Update existing submission record with contestCount increment
+        const submissionRef = userSubmissionSnapshot.docs[0].ref;
+        await submissionRef.update({
+          userName: userName,
+          department: department,
+          submissions: admin.firestore.FieldValue.arrayUnion(contestId),
+          totalScore: admin.firestore.FieldValue.increment(totalScore),
+          submissionCount: admin.firestore.FieldValue.increment(1),
+          contestCount: admin.firestore.FieldValue.increment(1)
+        });
+        console.log(`✓ Updated userSubmissions for ${studentId} (contestCount +1)`);
+      }
+    } catch (e) {
+      console.error('Error updating userSubmissions:', e);
+    }
+
+    // Update eventAttempts and eventResults
+    try {
+      // Find the event attempt
+      const eventSnapshot = await db.collection('eventAttempts')
+        .where('userId', '==', studentId)
+        .where('eventId', '==', contestId)
+        .get();
+
+      if (!eventSnapshot.empty) {
+        const attemptDoc = eventSnapshot.docs[0];
+
+        // Update attempt status
+        await attemptDoc.ref.update({
+          status: 'completed',
+          completed_at: admin.firestore.FieldValue.serverTimestamp(),
+          points: totalScore
+        });
+
+        console.log(`✓ Updated eventAttempt ${attemptDoc.id}: status=completed, points=${totalScore}`);
+
+        // Create result record in eventResults
+        const resultData = {
+          userId: studentId,
+          userName: userName,
+          department: department,
+          eventId: contestId,
+          eventTitle: contest.eventTitle || 'Unknown',
+          points: totalScore,
+          maxPoints: totalPossible,
+          problemsAttempted: submissions.length,
+          totalProblems: totalProblems,
+          submittedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        const resultRef = await db.collection('eventResults').add(resultData);
+
+        // Update attempt with result reference
+        await attemptDoc.ref.update({
+          result_ref: resultRef.id
+        });
+
+        console.log(`✓ Created eventResult ${resultRef.id} with points=${totalScore}`);
+      } else {
+        console.warn(`⚠ No eventAttempt found for student ${studentId} and contest ${contestId}`);
+        console.log(`Creating new eventAttempt and eventResult...`);
+
+        // Create new eventAttempt if it doesn't exist
+        const newAttemptData = {
+          userId: studentId,
+          userName: userName,
+          department: department,
+          eventId: contestId,
+          eventTitle: contest.eventTitle || 'Unknown',
+          status: 'completed',
+          started_at: admin.firestore.FieldValue.serverTimestamp(),
+          completed_at: admin.firestore.FieldValue.serverTimestamp(),
+          points: totalScore
+        };
+
+        const attemptRef = await db.collection('eventAttempts').add(newAttemptData);
+        console.log(`✓ Created new eventAttempt ${attemptRef.id} with points=${totalScore}`);
+
+        // Create result record in eventResults
+        const resultData = {
+          userId: studentId,
+          userName: userName,
+          department: department,
+          eventId: contestId,
+          eventTitle: contest.eventTitle || 'Unknown',
+          points: totalScore,
+          maxPoints: totalPossible,
+          problemsAttempted: submissions.length,
+          totalProblems: totalProblems,
+          submittedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        const resultRef = await db.collection('eventResults').add(resultData);
+
+        // Update attempt with result reference
+        await attemptRef.update({
+          result_ref: resultRef.id
+        });
+
+        console.log(`✓ Created eventResult ${resultRef.id} with points=${totalScore}`);
+      }
+
+      // Invalidate leaderboard cache
+      cache.delete('leaderboard:top20');
+    } catch (e) {
+      console.error('Error updating eventAttempts/eventResults:', e);
+      console.error('Error details:', e.message);
+    }
+
+    console.log(`✓ Contest ${contestId} completed by student ${studentId}. Final score: ${totalScore}/${totalPossible}`);
+
+    res.status(200).json({
+      success: true,
+      message: `Contest submitted successfully! Your final score: ${totalScore}/${totalPossible}`,
+      totalScore: totalScore,
+      totalPossible: totalPossible,
+      problemsAttempted: submissions.length,
+      totalProblems
+    });
+
+  } catch (error) {
+    console.error('Error in finishContest:', error);
+
+    let errorMessage = 'Failed to submit contest';
+    if (error.name === 'JsonWebTokenError') {
+      errorMessage = 'Invalid authentication token';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    res.status(500).json({
+      success: false,
+      message: errorMessage
+    });
+  }
 };
 
 // Reopen contest for a specific user (Admin only)
@@ -952,140 +952,191 @@ const finishContest = async (req, res) => {
 // 6) Updates userSubmissions collection
 // 7) Allows the user to retake the contest with a fresh start
 const reopenContest = async (req, res) => {
-    try {
-        const { userId, eventId } = req.body;
+  try {
+    const { userId, eventId } = req.body;
 
-        if (!userId || !eventId) {
-            return res.status(400).json({
-                success: false,
-                message: "userId and eventId are required"
-            });
-        }
-
-        console.log(`🔄 Reopening contest ${eventId} for user ${userId}`);
-
-        // Get user data before deletion (to restore scores)
-        const contestResultRef = db.collection('users')
-            .doc(userId)
-            .collection('contestResults')
-            .doc(eventId);
-
-        const contestResultDoc = await contestResultRef.get();
-        let scoresToRevert = 0;
-
-        if (contestResultDoc.exists) {
-            scoresToRevert = contestResultDoc.data().totalScore || 0;
-            console.log(`Reverting ${scoresToRevert} points from user total score`);
-        }
-
-        // 1) Delete from eventResults collection
-        const eventResultsQuery = await db.collection('eventResults')
-            .where('userId', '==', userId)
-            .where('eventId', '==', eventId)
-            .get();
-
-        const deletePromises = [];
-
-        if (!eventResultsQuery.empty) {
-            eventResultsQuery.forEach(doc => {
-                deletePromises.push(doc.ref.delete());
-                console.log(`✓ Deleting eventResult document: ${doc.id}`);
-            });
-        }
-
-        // 2) Delete from eventAttempts collection
-        const eventAttemptsQuery = await db.collection('eventAttempts')
-            .where('userId', '==', userId)
-            .where('eventId', '==', eventId)
-            .get();
-
-        if (!eventAttemptsQuery.empty) {
-            eventAttemptsQuery.forEach(doc => {
-                deletePromises.push(doc.ref.delete());
-                console.log(`✓ Deleting eventAttempt document: ${doc.id}`);
-            });
-        }
-
-        // 3) Delete from users/{userId}/contestResults/{eventId} subcollection
-        if (contestResultDoc.exists) {
-            deletePromises.push(contestResultRef.delete());
-            console.log(`✓ Deleting contestResult from user subcollection`);
-        }
-
-        // Execute all deletions in parallel
-        await Promise.all(deletePromises);
-
-        // 4) Update user's total scores and contests participated count
-        if (scoresToRevert > 0) {
-            const userRef = db.collection('users').doc(userId);
-            await userRef.update({
-                totalScore: admin.firestore.FieldValue.increment(-scoresToRevert),
-                contestsParticipated: admin.firestore.FieldValue.increment(-1)
-            });
-            console.log(`✓ Reverted user scores: -${scoresToRevert} points, -1 contest`);
-        }
-
-        // 5) Update userSubmissions collection
-        try {
-            const userSubmissionQuery = await db.collection('userSubmissions')
-                .where('userId', '==', userId)
-                .get();
-
-            if (!userSubmissionQuery.empty) {
-                const submissionDoc = userSubmissionQuery.docs[0];
-                const submissionData = submissionDoc.data();
-
-                // Remove this contest from submissions array
-                const updatedSubmissions = (submissionData.submissions || []).filter(
-                    id => id !== eventId
-                );
-
-                await submissionDoc.ref.update({
-                    submissions: updatedSubmissions,
-                    totalScore: admin.firestore.FieldValue.increment(-scoresToRevert),
-                    submissionCount: admin.firestore.FieldValue.increment(-1)
-                });
-                console.log(`✓ Updated userSubmissions collection`);
-            }
-        } catch (err) {
-            console.error('Error updating userSubmissions:', err);
-            // Non-critical, continue
-        }
-
-        // 6) Clear proctoring logs for this user-event combination
-        try {
-            const proctoringLogId = `${userId}_${eventId}`;
-            const proctoringLogRef = db.collection('proctoringLogs').doc(proctoringLogId);
-            const proctoringLogDoc = await proctoringLogRef.get();
-
-            if (proctoringLogDoc.exists) {
-                await proctoringLogRef.delete();
-                console.log(`✓ Deleted proctoring logs`);
-            }
-        } catch (err) {
-            console.error('Error deleting proctoring logs:', err);
-            // Non-critical, continue
-        }
-
-        // Invalidate leaderboard cache
-        cache.delete('leaderboard:top20');
-
-        console.log(`✅ Successfully reopened contest ${eventId} for user ${userId}`);
-
-        res.status(200).json({
-            success: true,
-            message: "Contest reopened successfully. User can now retake the contest.",
-            revertedScore: scoresToRevert
-        });
-
-    } catch (error) {
-        console.error('Error reopening contest:', error);
-        res.status(500).json({
-            success: false,
-            message: "Failed to reopen contest",
-            error: error.message
-        });
+    if (!userId || !eventId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId and eventId are required"
+      });
     }
+
+    console.log(`🔄 Reopening contest ${eventId} for user ${userId}`);
+
+    // Get user's submission score BEFORE deletion
+    const eventResultsQuery = await db.collection('eventResults')
+      .where('userId', '==', userId)
+      .where('eventId', '==', eventId)
+      .get();
+
+    let scoresToRevert = 0;
+
+    // Extract the points from the submission in eventResults
+    if (!eventResultsQuery.empty) {
+      const submissionData = eventResultsQuery.docs[0].data();
+      scoresToRevert = submissionData.points || 0;
+      console.log(`Found submission with ${scoresToRevert} points to revert`);
+    }
+
+    // Also check contestResults subcollection as fallback
+    const contestResultRef = db.collection('users')
+      .doc(userId)
+      .collection('contestResults')
+      .doc(eventId);
+
+    const contestResultDoc = await contestResultRef.get();
+
+    if (contestResultDoc.exists && scoresToRevert === 0) {
+      // Use subcollection score if eventResults didn't have it
+      scoresToRevert = contestResultDoc.data().totalScore || 0;
+      console.log(`Using contestResults score: ${scoresToRevert} points`);
+    }
+
+    console.log(`Total points to revert from user totalScore: ${scoresToRevert}`);
+
+    // 1) Delete from eventResults collection
+
+    const deletePromises = [];
+
+    if (!eventResultsQuery.empty) {
+      eventResultsQuery.forEach(doc => {
+        deletePromises.push(doc.ref.delete());
+        console.log(`✓ Deleting eventResult document: ${doc.id}`);
+      });
+    }
+
+    // 2) Delete from eventAttempts collection
+    const eventAttemptsQuery = await db.collection('eventAttempts')
+      .where('userId', '==', userId)
+      .where('eventId', '==', eventId)
+      .get();
+
+    if (!eventAttemptsQuery.empty) {
+      eventAttemptsQuery.forEach(doc => {
+        deletePromises.push(doc.ref.delete());
+        console.log(`✓ Deleting eventAttempt document: ${doc.id}`);
+      });
+    }
+
+    // 3) Delete from users/{userId}/contestResults/{eventId} subcollection
+    if (contestResultDoc.exists) {
+      deletePromises.push(contestResultRef.delete());
+      console.log(`✓ Deleting contestResult from user subcollection`);
+    }
+
+    // Execute all deletions in parallel
+    await Promise.all(deletePromises);
+
+    // 4) Fetch event to determine if it's a quiz or contest
+    const eventDoc = await db.collection('events').doc(eventId).get();
+    const eventType = eventDoc.exists ? eventDoc.data().eventType : 'contest';
+    console.log(`Event type detected: ${eventType}`);
+
+    // 5) Update user's total scores and appropriate participation count in users collection
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (userDoc.exists) {
+      const updateData = {};
+
+      // Decrement appropriate field based on event type
+      if (eventType === 'quiz') {
+        updateData.quizzesAttended = admin.firestore.FieldValue.increment(-1);
+        console.log(`✓ Decrementing quizzesAttended by 1`);
+      } else {
+        updateData.contestsParticipated = admin.firestore.FieldValue.increment(-1);
+        console.log(`✓ Decrementing contestsParticipated by 1`);
+      }
+
+      // Only decrement totalScore if there was a score to revert
+      if (scoresToRevert > 0) {
+        updateData.totalScore = admin.firestore.FieldValue.increment(-scoresToRevert);
+        console.log(`✓ Decrementing totalScore by ${scoresToRevert} points`);
+      }
+
+      await userRef.update(updateData);
+      console.log(`✓ Updated user document: -${scoresToRevert} points, -1 ${eventType === 'quiz' ? 'quiz' : 'contest'}`);
+    } else {
+      console.warn(`⚠ User document ${userId} not found, skipping updates`);
+    }
+
+    // 5) Update userSubmissions collection
+    try {
+      const userSubmissionQuery = await db.collection('userSubmissions')
+        .where('userId', '==', userId)
+        .get();
+
+      if (!userSubmissionQuery.empty) {
+        const submissionDoc = userSubmissionQuery.docs[0];
+        const submissionData = submissionDoc.data();
+
+        // Remove this contest from submissions array
+        const updatedSubmissions = (submissionData.submissions || []).filter(
+          id => id !== eventId
+        );
+
+        if (eventType === 'quiz') {
+          await submissionDoc.ref.update({
+            submissions: updatedSubmissions,
+            totalScore: admin.firestore.FieldValue.increment(-scoresToRevert),
+            submissionCount: admin.firestore.FieldValue.increment(-1),
+            quizCount: admin.firestore.FieldValue.increment(-1)
+          });
+          console.log(`✓ Updated userSubmissions collection for quiz`);
+        }
+
+        else {
+          await submissionDoc.ref.update({
+            submissions: updatedSubmissions,
+            totalScore: admin.firestore.FieldValue.increment(-scoresToRevert),
+            submissionCount: admin.firestore.FieldValue.increment(-1),
+            contestCount: admin.firestore.FieldValue.increment(-1)
+          });
+          console.log(`✓ Updated userSubmissions collection for contest`);
+        }
+
+
+      }
+    } catch (err) {
+      console.error('Error updating userSubmissions:', err);
+      // Non-critical, continue
+    }
+
+    // 6) Clear proctoring logs for this user-event combination
+    try {
+      const proctoringLogId = `${userId}_${eventId}`;
+      const proctoringLogRef = db.collection('proctoringLogs').doc(proctoringLogId);
+      const proctoringLogDoc = await proctoringLogRef.get();
+
+      if (proctoringLogDoc.exists) {
+        await proctoringLogRef.delete();
+        console.log(`✓ Deleted proctoring logs`);
+      }
+    } catch (err) {
+      console.error('Error deleting proctoring logs:', err);
+      // Non-critical, continue
+    }
+
+    // Invalidate leaderboard cache
+    cache.delete('leaderboard:top20');
+
+    console.log(`✅ Successfully reopened contest ${eventId} for user ${userId}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Contest reopened successfully. User can now retake the contest.",
+      revertedScore: scoresToRevert
+    });
+
+  } catch (error) {
+    console.error('Error reopening contest:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to reopen contest",
+      error: error.message
+    });
+  }
 };
 
 module.exports = {
