@@ -811,6 +811,8 @@
 }
 
 .code-block {
+  width: 100%;
+  box-sizing: border-box;
   margin: 0;
   padding: 1rem;
   background: #2d3748;
@@ -1157,6 +1159,8 @@
 }
 
 .code-textarea {
+  width: 100%;
+  box-sizing: border-box;
   margin: 0;
   padding: 1rem;
   background: #2d3748;

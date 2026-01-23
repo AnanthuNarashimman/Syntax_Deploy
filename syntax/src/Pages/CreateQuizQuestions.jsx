@@ -351,13 +351,15 @@ function CreateQuizQuestions() {
             <AdminNavbar />
             <div className="content-wrapper">
                 <div className="page-header">
-                    <button
-                        className="back-to-create"
-                        onClick={() => {navigate(-1)}}
-                    >
-                        <ChevronLeft size={16} />
-                        Back to Create Contest
-                    </button>
+                    <div className="header-top">
+                        <button
+                            className="back-to-create"
+                            onClick={() => {navigate(-1)}}
+                        >
+                            <ChevronLeft size={16} />
+                            Back to Create Contest
+                        </button>
+                    </div>
                     <h1>Create Quiz Questions</h1>
                 </div>
 
