@@ -122,7 +122,7 @@ const createContest = async (req, res) => {
 // 2) Delete the createdBy, createdAt and id from the data to be updated as these always needs to be same
 // 3) Checks if the event exists and is created by the requested user
 // 4) Updates the data in firebase
-// 5) In case of errors or exceptions appropriate logs are made
+// 5) In case of errors or exceptions appropriate logs are made.
 const updateContest = async (req, res) => {
   try {
     const { eventId } = req.params;
