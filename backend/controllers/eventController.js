@@ -117,7 +117,7 @@ const createContest = async (req, res) => {
 };
 
 
-// Upddating contests before starting
+// Upddating contests before starting 
 // 1) Gets the eventID and the data to be updated from the request
 // 2) Delete the createdBy, createdAt and id from the data to be updated as these always needs to be same
 // 3) Checks if the event exists and is created by the requested user
