@@ -826,7 +826,7 @@ function ManageContest() {
 
         {/* End Event Confirmation Modal */}
         {showEndConfirm && (
-          <div className="modal-overlay">
+          <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) cancelEndEvent(); }}>
             <div className="modal-content">
               <h3>End Event</h3>
               <p>
@@ -847,7 +847,7 @@ function ManageContest() {
 
         {/* Reopen Contest Confirmation Modal */}
         {showReopenConfirm && reopenData && (
-          <div className="modal-overlay reopen-modal-overlay">
+          <div className="modal-overlay reopen-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) cancelReopenContest(); }}>
             <div className="modal-content reopen-confirm-modal">
               <div className="modal-header">
                 <h3>
@@ -892,7 +892,7 @@ function ManageContest() {
 
         {/* Leaderboard / Participants Modal */}
         {showLeaderboardModal && (
-          <div className="modal-overlay">
+          <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeLeaderboardModal(); }}>
             <div className="modal-content event-details-modal participants-modal">
               <div className="modal-header">
                 <h3>Participants for: {selectedEvent?.eventTitle}</h3>
@@ -1168,7 +1168,7 @@ function ManageContest() {
 
         {/* Proctoring Logs Modal */}
         {showProctoringLogsModal && (
-          <div className="modal-overlay">
+          <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeProctoringLogsModal(); }}>
             <div className="modal-content proctoring-logs-modal">
               <div className="modal-header">
                 <h3>
@@ -1300,7 +1300,7 @@ function ManageContest() {
 
         {/* Event Details View Modal */}
         {showViewModal && selectedEvent && (
-          <div className="modal-overlay">
+          <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeViewModal(); }}>
             <div className="modal-content event-details-modal">
               <div className="modal-header">
                 <h3>{selectedEvent.eventTitle}</h3>
@@ -1538,7 +1538,7 @@ function ManageContest() {
 
         {/* Start Event Modal */}
         {showStartModal && editingEvent && (
-          <div className="modal-overlay">
+          <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !startEventLoading) cancelStartEvent(); }}>
             <div className="modal-content start-event-modal">
               <div className="modal-header">
                 <h3>Start Event: {editingEvent.eventTitle}</h3>

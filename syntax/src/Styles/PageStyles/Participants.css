@@ -467,8 +467,14 @@
 }
 
 .ban-btn:hover:not(:disabled) {
-  border-color: #f56565;
+  border: 1px solid #f56565 !important;
   color: #f56565;
+  background: #fff5f5;
+}
+
+.modal-ban-btn:hover:not(:disabled) {
+  border: 1px solid #f56565 !important;
+  color: #fff;
   background: #fff5f5;
 }
 
@@ -481,6 +487,12 @@
 .delete-btn:hover:not(:disabled) {
   border-color: #e53e3e;
   color: #e53e3e;
+  background: #fff5f5;
+}
+
+.modal-delete-btn:hover:not(:disabled) {
+  border-color: #e53e3e;
+  color: #fff;
   background: #fff5f5;
 }
 
@@ -1322,8 +1334,7 @@
   color: #a0aec0;
   font-weight: 500;
 }
- 
- 
+
 /* Duplicates Modal */
 .duplicate-modal {
   max-width: 700px;

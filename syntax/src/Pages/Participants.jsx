@@ -738,7 +738,7 @@ function Participants() {
 
                 {/* Add Student Modal */}
                 {showAddForm && (
-                    <div className="participants-add-student-modal">
+                    <div className="participants-add-student-modal" onClick={(e) => { if (e.target === e.currentTarget) setShowAddForm(false); }}>
                         <div className="participants-modal-content">
                             <div className="participants-modal-header">
                                 <h2>Add New Student</h2>
@@ -862,7 +862,7 @@ function Participants() {
 
                 {/* Ban Student Modal */}
                 {showBanModal && selectedStudent && (
-                    <div className="add-student-modal">
+                    <div className="add-student-modal" onClick={(e) => { if (e.target === e.currentTarget) { setShowBanModal(false); setBanReason(''); setSelectedStudent(null); } }}>
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h2>Ban Student</h2>
@@ -905,7 +905,7 @@ function Participants() {
                                     </button>
                                     <button 
                                         type="button" 
-                                        className="ban-btn"
+                                        className="ban-btn modal-ban-btn"
                                         onClick={handleBanStudent}
                                     >
                                         <Ban className="btn-icon" />
@@ -919,7 +919,7 @@ function Participants() {
 
                 {/* View Student Modal */}
                 {showViewModal && selectedStudent && (
-                    <div className="add-student-modal">
+                    <div className="add-student-modal" onClick={(e) => { if (e.target === e.currentTarget) { setShowViewModal(false); setSelectedStudent(null); } }}>
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h2>Student Details</h2>
@@ -1012,7 +1012,7 @@ function Participants() {
 
                 {/* Bulk Import Modal */}
                 {showBulkImportModal && (
-                    <div className="participants-add-student-modal">
+                    <div className="participants-add-student-modal" onClick={(e) => { if (e.target === e.currentTarget && !bulkImportLoading) { setShowBulkImportModal(false); setBulkImportFile(null); setBulkImportPreview([]); } }}>
                         <div className="participants-modal-content">
                             {bulkImportLoading && (
                                 <div className="bulk-import-loading-overlay">
@@ -1116,7 +1116,7 @@ function Participants() {
 
                  {/* Confirmation Modal */}
                  {showConfirmModal && (
-                     <div className="add-student-modal">
+                     <div className="add-student-modal" onClick={(e) => { if (e.target === e.currentTarget) setShowConfirmModal(false); }}>
                          <div className="modal-content">
                              <div className="modal-header">
                                  <h2>Confirm Action</h2>
@@ -1139,7 +1139,7 @@ function Participants() {
                                      </button>
                                      <button 
                                          type="button" 
-                                         className="delete-btn"
+                                         className="delete-btn modal-delete-btn"
                                          onClick={() => {
                                              if (confirmAction) {
                                                  confirmAction();
@@ -1157,7 +1157,7 @@ function Participants() {
 
                 {/* Duplicates Modal */}
                 {showDuplicatesModal && (
-                    <div className="add-student-modal">
+                    <div className="add-student-modal" onClick={(e) => { if (e.target === e.currentTarget) { setShowDuplicatesModal(false); setDuplicateData([]); } }}>
                         <div className="modal-content duplicate-modal">
                             <div className="modal-header">
                                 <h2>Duplicate Emails Found</h2>

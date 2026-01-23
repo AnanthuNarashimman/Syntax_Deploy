@@ -485,7 +485,7 @@
 .event-details-modal {
   max-width: 90vw;
   max-height: 90vh;
-  width: 1200px;
+  width: 95%;
   overflow-y: auto;
 }
 
