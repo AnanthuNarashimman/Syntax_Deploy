@@ -21,7 +21,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: 
+    origin:
       process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   })
@@ -56,6 +56,7 @@ const superRoutes = require('./routes/superRoutes');
 const validationRoutes = require('./routes/validationRoutes');
 const judgeRoutes = require('./routes/judgeRoutes');
 const proctoringRoutes = require('./routes/proctoringRoutes');
+const problemBankRoutes = require('./routes/problemBankRoutes');
 
 
 app.use('/api/auth', authRoutes);
@@ -67,6 +68,7 @@ app.use('/api/super-admin', superRoutes);
 app.use('/api/student', validationRoutes);
 app.use('/api/judge', judgeRoutes);
 app.use('/api/proctoring', proctoringRoutes);
+app.use('/api/problem-bank', problemBankRoutes);
 
 // Health check endpoint (for Cloud Run probes and warming)
 app.get('/health', (req, res) => {

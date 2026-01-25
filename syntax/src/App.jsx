@@ -9,6 +9,7 @@ import Participants from "./Pages/Participants.jsx";
 import AdminProfile from "./Pages/AdminProfile.jsx";
 import CreateQuizQuestions from "./Pages/CreateQuizQuestions.jsx";
 import CreateContestQuestions from "./Pages/CreateContestQuestions.jsx";
+import ProblemBank from "./Pages/ProblemBank.jsx";
 import Articles from "./Pages/Articles.jsx";
 import SuperAdminDashboard from "./Pages/SuperAdminDashboard.jsx";
 import SuperManageUsers from "./Pages/SuperManageUsers.jsx";
@@ -53,6 +54,7 @@ function App() {
             <Route path="/admin-profile" element={<AdminProfile />} />
             <Route path="/create-quiz-questions" element={<CreateQuizQuestions />} />
             <Route path="/create-contest-questions" element={<CreateContestQuestions />} />
+            <Route path="/problem-bank" element={<ProblemBank />} />
             <Route path="/student-contests" element={<StudentContests />} />
             <Route path="/student-contests-preview" element={<ContestsPreview />} />
             <Route path="/student-quiz" element={<StudentQuiz />} />

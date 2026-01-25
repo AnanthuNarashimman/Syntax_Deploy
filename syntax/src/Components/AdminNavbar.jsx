@@ -1,11 +1,12 @@
-import { 
-  Home, 
-  Plus, 
-  Settings, 
-  User, 
-  Users, 
+import {
+  Home,
+  Plus,
+  Settings,
+  User,
+  Users,
   TrendingUp,
-  BookOpen
+  BookOpen,
+  Database
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../Styles/ComponentStyles/AdminNavbar.css';
@@ -14,6 +15,7 @@ import { Button } from './Button';
 const sidebarItems = [
   { id: 'home', label: 'Dashboard', icon: Home, route: '/admin-dashboard' },
   { id: 'create', label: 'Create Contest', icon: Plus, route: '/create-contest' },
+  { id: 'problems', label: 'Problem Bank', icon: Database, route: '/problem-bank' },
   { id: 'manage', label: 'Manage Events', icon: Settings, route: '/manage-contest' },
   { id: 'participants', label: 'Students', icon: Users, route: '/manage-participants' },
   // { id: 'analytics', label: 'Analytics', icon: TrendingUp, route: '/analytics' }, // Under development
