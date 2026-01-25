@@ -1,28 +1,28 @@
 import { useState, useEffect } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Calculator,
-  Home,
-  Plus,
-  Settings,
-  MessageSquare,
-  User,
-  Users,
-  Trophy,
-  Clock,
-  TrendingUp,
-  Calendar,
-  Award,
-  Activity,
-  Upload,
-  Download,
-  Copy,
-  Trash2,
-  FileSpreadsheet,
-  Sparkles,
-  AlertCircle
+    ChevronLeft,
+    ChevronRight,
+    Check,
+    Calculator,
+    Home,
+    Plus,
+    Settings,
+    MessageSquare,
+    User,
+    Users,
+    Trophy,
+    Clock,
+    TrendingUp,
+    Calendar,
+    Award,
+    Activity,
+    Upload,
+    Download,
+    Copy,
+    Trash2,
+    FileSpreadsheet,
+    Sparkles,
+    AlertCircle
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import '../Styles/PageStyles/CreateQuizQuestions.css';
@@ -84,20 +84,20 @@ function CreateQuizQuestions() {
     ];
 
     const setActiveTab = (tab) => {
-    setActiveTabState(tab);
-    // Map tab id to route
-    const tabRoutes = {
-      home: '/admin-dashboard',
-      create: '/create-contest',
-      manage: '/manage-contest',
-      participants: '/manage-participants',
-      analytics: '/analytics',
-      profile: '/admin-profile',
+        setActiveTabState(tab);
+        // Map tab id to route
+        const tabRoutes = {
+            home: '/admin-dashboard',
+            create: '/create-contest',
+            manage: '/manage-contest',
+            participants: '/manage-participants',
+            analytics: '/analytics',
+            profile: '/admin-profile',
+        };
+        if (tabRoutes[tab]) {
+            navigate(tabRoutes[tab]);
+        }
     };
-    if (tabRoutes[tab]) {
-      navigate(tabRoutes[tab]);
-    }
-  };
 
     const handleQuestionCountSubmit = (e) => {
         e.preventDefault();
@@ -148,7 +148,7 @@ function CreateQuizQuestions() {
     const handleScoreSubmit = async () => {
         // Get contest general data from localStorage
         let contestGeneralData = {};
-        
+
         try {
             const stored = localStorage.getItem('contestFormData');
             if (stored) {
@@ -206,15 +206,15 @@ function CreateQuizQuestions() {
             const result = await response.json();
             showSuccess('Quiz created successfully!');
             console.log('Quiz creation success:', result);
-            
+
             // Add the new event to the context
             if (result.event) {
                 addNewEvent(result.event);
             }
-            
+
             // Clear localStorage
             localStorage.removeItem('contestFormData');
-            
+
             // Reset form
             setTotalQuestions(0);
             setCurrentQuestion(0);
@@ -388,13 +388,14 @@ ${focusSubtopics.trim() ? `FOCUS on these subtopics: ${focusSubtopics}` : ''}
 ${avoidSubtopics.trim() ? `AVOID these subtopics: ${avoidSubtopics}` : ''}
 
 CRITICAL INSTRUCTIONS:
-1. Output ONLY valid JSON - no markdown, no code blocks, no explanations, no extra text
+1. Output valid JSON wrapped in a code block using triple backticks
 2. Do NOT use Canvas, Artifacts, or any interactive features
-3. Start your response with [ and end with ] - nothing else before or after
+3. Format your response as: \`\`\`json followed by the JSON array, then closing \`\`\`
 4. Each question must have exactly 4 unique options
 5. The correctAnswer must exactly match one of the options word-for-word
 
-Required JSON format:
+Required JSON format inside code block:
+\`\`\`json
 [
   {
     "question": "Your question text here?",
@@ -402,8 +403,9 @@ Required JSON format:
     "correctAnswer": "Option B text"
   }
 ]
+\`\`\`
 
-Generate ${numberOfQuestions} questions now. Remember: ONLY output the JSON array, nothing else.`;
+Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a code block with triple backticks.`;
 
         setGeneratedPrompt(prompt);
     };

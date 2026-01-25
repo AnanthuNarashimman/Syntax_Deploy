@@ -82,16 +82,19 @@ function CreateContest() {
 
   const handleModeSelection = (mode) => {
     setSelectedMode(mode);
-    if (selectedType === 'quiz') {
-      setStep(4); // Go to import method selection for quiz
-    } else {
-      setStep(3); // Go to form for contest
-    }
+    setStep(3); // Always go to form after mode selection
   };
 
   const handleImportMethodSelection = (method) => {
     setSelectedImportMethod(method);
-    setStep(3); // Go to form after selecting import method
+    // Save to localStorage and navigate to quiz questions
+    localStorage.setItem('contestFormData', JSON.stringify({
+      ...formData,
+      type: selectedType,
+      mode: selectedMode,
+      importMethod: method
+    }));
+    navigate('/create-quiz-questions');
   };
 
   const handleBack = () => {
@@ -102,16 +105,13 @@ function CreateContest() {
       if (selectedType === 'article') {
         setStep(1);
         setSelectedType('');
-      } else if (selectedType === 'quiz') {
-        setStep(4); // Go back to import method selection
-        setSelectedImportMethod('');
       } else {
         setStep(2);
         setSelectedMode('');
       }
     } else if (step === 4) {
-      setStep(2);
-      setSelectedMode('');
+      // Go back to form from import method selection
+      setStep(3);
       setSelectedImportMethod('');
     }
   };
@@ -195,15 +195,18 @@ function CreateContest() {
       showError('Please fill in all required fields');
       return;
     }
-    localStorage.setItem('contestFormData', JSON.stringify({
-      ...formData,
-      type: selectedType,
-      mode: selectedMode,
-      importMethod: selectedType === 'quiz' ? selectedImportMethod : 'manual'
-    }));
+
     if (selectedType === 'quiz') {
-      navigate('/create-quiz-questions');
+      // For quiz, go to import method selection
+      setStep(4);
     } else if (selectedType === 'contest') {
+      // For contest, save and navigate directly
+      localStorage.setItem('contestFormData', JSON.stringify({
+        ...formData,
+        type: selectedType,
+        mode: selectedMode,
+        importMethod: 'manual'
+      }));
       navigate('/create-contest-questions');
     }
   };
@@ -482,7 +485,7 @@ function CreateContest() {
             Back
           </button>
           <button className="create-button" onClick={handleCreate}>
-            Create {selectedType === 'article' ? 'Article' : selectedType === 'quiz' ? 'Quiz' : 'Contest'}
+            {selectedType === 'quiz' ? 'Continue' : `Create ${selectedType === 'article' ? 'Article' : 'Contest'}`}
           </button>
         </div>
       </div>
@@ -548,7 +551,7 @@ function CreateContest() {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
-        Back to Mode Selection
+        Back
       </button>
     </div>
   );
@@ -570,16 +573,16 @@ function CreateContest() {
               <span>Mode</span>
             </div>
           )}
+          <div className={`progress-step ${step >= 3 ? 'active' : ''}`}>
+            <div className="step-number">{selectedType === 'article' ? '2' : '3'}</div>
+            <span>Configure</span>
+          </div>
           {selectedType === 'quiz' && (
             <div className={`progress-step ${step >= 4 ? 'active' : ''}`}>
-              <div className="step-number">3</div>
+              <div className="step-number">4</div>
               <span>Import</span>
             </div>
           )}
-          <div className={`progress-step ${step >= 3 ? 'active' : ''}`}>
-            <div className="step-number">{selectedType === 'article' ? '2' : selectedType === 'quiz' ? '4' : '3'}</div>
-            <span>Configure</span>
-          </div>
         </div>
 
         {step === 1 && renderStepOne()}
