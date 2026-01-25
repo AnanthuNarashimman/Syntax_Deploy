@@ -81,15 +81,40 @@ const validateQuiz = async (req, res) => {
         const result = await validationService.validateQuizAnswers(quizId, studentAnswers);
         console.log('Quiz validation result - Correct answers:', result.correctAnswerCount);
 
-        const totalQuestions = studentSubmission.totalQuestions || (result.QuizResult ? result.QuizResult.length : 0);
+        const totalQuestions = studentSubmission.totalQuestions || (result.QuizResult ? Object.keys(result.QuizResult).length : 0);
         const totalPoints = result.pointsPerQuestion * result.correctAnswerCount;
+
+        // Fetch quiz data for time validation and building questionDetails
+        const quizDoc = await db.collection('events').doc(quizId).get();
+        const quizData = quizDoc.exists ? quizDoc.data() : null;
+
+        // Build questionDetails server-side with correct answer info
+        // This ensures correct answers are properly stored (frontend doesn't have them)
+        let serverQuestionDetails = [];
+        if (quizData && quizData.questions) {
+            serverQuestionDetails = quizData.questions.map((question, index) => {
+                const studentAnswer = studentAnswers[index]; // This is the answer TEXT
+                const correctAnswer = question.correctAnswer; // This is also the answer TEXT
+                const selectedIndex = question.options.indexOf(studentAnswer);
+                const correctIndex = question.options.indexOf(correctAnswer);
+
+                return {
+                    questionIndex: index,
+                    question: question.question,
+                    options: question.options,
+                    selectedAnswer: selectedIndex >= 0 ? selectedIndex : null,
+                    selectedAnswerText: studentAnswer || null,
+                    correctAnswer: correctIndex,
+                    correctAnswerText: correctAnswer,
+                    isCorrect: studentAnswer === correctAnswer
+                };
+            });
+        }
 
         // SERVER-SIDE TIME VALIDATION: Check if submission is within allowed time
         // This prevents users from manipulating the frontend timer
         try {
-            const quizDoc = await db.collection('events').doc(quizId).get();
-            if (quizDoc.exists) {
-                const quizData = quizDoc.data();
+            if (quizData) {
 
                 if (quizData.eventMode === 'strict' && quizData.durationMinutes) {
                     const eventAttemptQuery = await db.collection('eventAttempts')
@@ -193,13 +218,15 @@ const validateQuiz = async (req, res) => {
         }
 
         // Pass additional data to submitEvent for storing in eventResults
+        // Use server-built questionDetails which has correct answer info
         const submissionResult = await validationService.submitEvent(quizId, userId, totalPoints, {
             eventType: 'quiz',
             correctAnswerCount: result.correctAnswerCount,
             totalQuestions: totalQuestions,
             submissionToken: submissionToken,
             userName: userName,
-            department: department
+            department: department,
+            questionDetails: serverQuestionDetails
         });
 
         if (submissionResult.success) {

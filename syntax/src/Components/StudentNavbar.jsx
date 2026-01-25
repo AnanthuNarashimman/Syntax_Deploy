@@ -52,9 +52,7 @@ const StudentNavbar = () => {
           <NavLink to="/student-practice" className={({ isActive }) => `${styles['nav-link']} ${isActive ? styles['active'] : ''}`}>Practice</NavLink>
           <NavLink to="/student-contests" className={({ isActive }) => `${styles['nav-link']} ${isActive ? styles['active'] : ''}`}>Contests</NavLink>
           <NavLink to="/student-leader" className={({ isActive }) => `${styles['nav-link']} ${isActive ? styles['active'] : ''}`}>Leaderboard</NavLink>
-          
-          {/* --- MODIFICATION 1 --- */}
-          {/* Changed this from a <span> to a NavLink */}
+          <NavLink to="/student-submissions" className={({ isActive }) => `${styles['nav-link']} ${isActive ? styles['active'] : ''}`}>Submissions</NavLink>
           <NavLink to="/codeground" className={({ isActive }) => `${styles['nav-link']} ${isActive ? styles['active'] : ''}`}>Codeground</NavLink>
           {/* ---------------------- */}
 
@@ -93,7 +91,7 @@ const StudentNavbar = () => {
           <NavLink to="/student-practice" className={styles['mobile-nav-link']} onClick={toggleMenu}>Practice</NavLink>
           <NavLink to="/student-contests" className={styles['mobile-nav-link']} onClick={toggleMenu}>Contests</NavLink>
           <NavLink to="/student-leader" className={styles['mobile-nav-link']} onClick={toggleMenu}>Leaderboard</NavLink>
-          
+          <NavLink to="/student-submissions" className={styles['mobile-nav-link']} onClick={toggleMenu}>My Submissions</NavLink>
           <NavLink to="/codeground" className={styles['mobile-nav-link']} onClick={toggleMenu}>Codeground</NavLink>
           {/* ---------------------- */}
 

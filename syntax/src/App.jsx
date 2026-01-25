@@ -20,6 +20,7 @@ import StudentHome from "./Pages/StudentHome.jsx";
 import StudentLeader from "./Pages/StudentLeader.jsx";  
 import StudentPractice from"./Pages/StudentPractice.jsx";
 import StudentUser from "./Pages/StudentUser.jsx";
+import StudentSubmissions from "./Pages/StudentSubmissions.jsx";
 import ContestsPreview from "./Pages/ContestsPreview.jsx";
 import StudentQuiz from "./Pages/StudentQuiz.jsx";
 import CodingContestPage from './Pages/CodingContestPage';
@@ -62,6 +63,7 @@ function App() {
             <Route path="/student-leader" element={<StudentLeader />} />
             <Route path="/student-practice" element={<StudentPractice />} />
             <Route path="/student-user" element={<StudentUser />} />
+            <Route path="/student-submissions" element={<StudentSubmissions />} />
             <Route path="/codeground" element={<Codeground/>}/>
             
             {/* Super Admin Routes */}

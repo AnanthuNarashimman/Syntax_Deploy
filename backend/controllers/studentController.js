@@ -804,6 +804,159 @@ const submitContest = async (req, res) => {
   }
 };
 
+// Get Student Submissions List
+// 1) Gets authenticated user ID from request
+// 2) Queries eventResults collection for all submissions by this user
+// 3) For each result, fetches event details (title, type, status) from events collection
+// 4) Returns array of submissions with metadata for display in submissions page
+const getStudentSubmissions = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Query all submissions for this user
+    // Note: Ordering removed to avoid composite index requirement - sorting done client-side
+    const resultsSnapshot = await db.collection("eventResults")
+      .where("userId", "==", userId)
+      .get();
+
+    if (resultsSnapshot.empty) {
+      return res.status(200).json({
+        success: true,
+        submissions: []
+      });
+    }
+
+    // Fetch event details for each submission
+    const submissions = [];
+    for (const doc of resultsSnapshot.docs) {
+      const resultData = doc.data();
+
+      // Fetch event details
+      const eventDoc = await db.collection("events").doc(resultData.eventId).get();
+      let eventData = {};
+
+      if (eventDoc.exists) {
+        eventData = eventDoc.data();
+      }
+
+      submissions.push({
+        submissionId: doc.id,
+        eventId: resultData.eventId,
+        eventTitle: eventData.eventTitle || resultData.eventTitle || "Unknown Event",
+        eventType: resultData.eventType || eventData.eventType || "quiz",
+        points: resultData.points || 0,
+        correctAnswerCount: resultData.correctAnswerCount || 0,
+        totalQuestions: resultData.totalQuestions || 0,
+        submittedAt: resultData.submittedAt,
+        eventStatus: eventData.status || "active",
+        hasDetailedResults: !!resultData.questionDetails
+      });
+    }
+
+    // Sort by submittedAt descending (newest first) - client-side sorting
+    submissions.sort((a, b) => {
+      const timeA = a.submittedAt?._seconds || 0;
+      const timeB = b.submittedAt?._seconds || 0;
+      return timeB - timeA;
+    });
+
+    res.status(200).json({
+      success: true,
+      submissions
+    });
+
+  } catch (error) {
+    console.error("Error fetching student submissions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch submissions",
+      error: error.message
+    });
+  }
+};
+
+
+// Get Detailed Submission Results
+// 1) Gets eventId from params and userId from auth
+// 2) Fetches the event to check its status
+// 3) If event status is not "ended", returns 403 (results not available)
+// 4) If ended, fetches the eventResult with questionDetails
+// 5) Returns full details including question-by-question breakdown
+const getSubmissionResults = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { eventId } = req.params;
+
+    if (!eventId) {
+      return res.status(400).json({
+        success: false,
+        message: "Event ID is required"
+      });
+    }
+
+    // Fetch event to check status
+    const eventDoc = await db.collection("events").doc(eventId).get();
+
+    if (!eventDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found"
+      });
+    }
+
+    const eventData = eventDoc.data();
+
+    // Check if event has ended
+    if (eventData.status !== "ended") {
+      return res.status(403).json({
+        success: false,
+        message: "Results are not available until the quiz has ended",
+        eventStatus: eventData.status
+      });
+    }
+
+    // Fetch the submission result for this user and event
+    const resultSnapshot = await db.collection("eventResults")
+      .where("userId", "==", userId)
+      .where("eventId", "==", eventId)
+      .limit(1)
+      .get();
+
+    if (resultSnapshot.empty) {
+      return res.status(404).json({
+        success: false,
+        message: "Submission not found for this event"
+      });
+    }
+
+    const resultData = resultSnapshot.docs[0].data();
+
+    res.status(200).json({
+      success: true,
+      result: {
+        submissionId: resultSnapshot.docs[0].id,
+        eventId: resultData.eventId,
+        eventTitle: eventData.eventTitle || "Quiz",
+        eventType: resultData.eventType || eventData.eventType || "quiz",
+        points: resultData.points || 0,
+        correctAnswerCount: resultData.correctAnswerCount || 0,
+        totalQuestions: resultData.totalQuestions || 0,
+        submittedAt: resultData.submittedAt,
+        questionDetails: resultData.questionDetails || []
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching submission results:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch submission results",
+      error: error.message
+    });
+  }
+};
+
+
 module.exports = {
   addStudent,
   fetchStudents,
@@ -812,5 +965,7 @@ module.exports = {
   banStudent,
   unbanStudent,
   bulkStudentAdd,
-  submitContest
+  submitContest,
+  getStudentSubmissions,
+  getSubmissionResults
 }

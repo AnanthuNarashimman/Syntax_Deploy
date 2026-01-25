@@ -7,8 +7,12 @@ const articleCounter = require('../controllers/articleController');
 const studentController = require('../controllers/studentController');
 
 router.get('/events', middleware.requireStudentAuth, eventController.fetchEvents);
-router.get('/events/:eventId', middleware.requireStudentAuth, eventController.fetchStudentEvent); 
+router.get('/events/:eventId', middleware.requireStudentAuth, eventController.fetchStudentEvent);
 router.get('/articles', middleware.requireStudentAuth, articleCounter.getStudentArticles);
 router.post('/submit-contest', middleware.requireStudentAuth, studentController.submitContest);
+
+// Student submissions routes
+router.get('/submissions', middleware.requireStudentAuth, studentController.getStudentSubmissions);
+router.get('/submissions/:eventId/results', middleware.requireStudentAuth, studentController.getSubmissionResults);
 
 module.exports = router;
