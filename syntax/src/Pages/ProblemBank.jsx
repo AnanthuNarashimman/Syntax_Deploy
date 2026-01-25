@@ -1,5 +1,6 @@
 // /syntax/src/Pages/ProblemBank.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -12,114 +13,31 @@ import {
   ChevronLeft,
   Save,
   X,
-  Filter
+  Filter,
+  Loader
 } from 'lucide-react';
 import styles from '../Styles/PageStyles/ProblemBank.module.css';
 import AdminNavbar from "../Components/AdminNavbar";
 import { useAlert } from '../contexts/AlertContext';
 
-// Mock data for existing problems
-const MOCK_PROBLEMS = [
-  {
-    id: '1',
-    title: 'Two Sum',
-    description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.',
-    inputFormat: 'First line contains n (size of array) and target. Second line contains n space-separated integers.',
-    outputFormat: 'Print two space-separated indices.',
-    constraints: '2 <= nums.length <= 10^4\n-10^9 <= nums[i] <= 10^9\n-10^9 <= target <= 10^9',
-    exampleIO: [
-      { input: '4 9\n2 7 11 15', output: '0 1', explanation: 'nums[0] + nums[1] = 2 + 7 = 9' }
-    ],
-    openTestCases: [
-      { input: '4 9\n2 7 11 15', output: '0 1' },
-      { input: '3 6\n3 2 4', output: '1 2' }
-    ],
-    hiddenTestCases: [
-      { input: '2 6\n3 3', output: '0 1' },
-      { input: '5 10\n1 2 3 4 6', output: '3 4' }
-    ],
-    starterCode: {
-      python: 'def two_sum(nums, target):\n    # Your code here\n    pass',
-      java: 'public class Main {\n    public static int[] twoSum(int[] nums, int target) {\n        // Your code here\n        return new int[]{};\n    }\n}',
-      javascript: 'function twoSum(nums, target) {\n    // Your code here\n}'
-    },
-    difficulty: 'Easy',
-    topics: ['Arrays', 'Hash Table'],
-    createdAt: '2024-01-15'
-  },
-  {
-    id: '2',
-    title: 'Palindrome Check',
-    description: 'Given a string s, return true if it is a palindrome, or false otherwise. A palindrome is a word that reads the same backward as forward.',
-    inputFormat: 'A single line containing the string s.',
-    outputFormat: 'Print "true" if palindrome, "false" otherwise.',
-    constraints: '1 <= s.length <= 2 * 10^5\ns consists only of printable ASCII characters.',
-    exampleIO: [
-      { input: 'racecar', output: 'true', explanation: 'racecar reads the same forwards and backwards.' },
-      { input: 'hello', output: 'false', explanation: 'hello is not the same when reversed.' }
-    ],
-    openTestCases: [
-      { input: 'racecar', output: 'true' },
-      { input: 'hello', output: 'false' }
-    ],
-    hiddenTestCases: [
-      { input: 'a', output: 'true' },
-      { input: 'abba', output: 'true' },
-      { input: 'ab', output: 'false' }
-    ],
-    starterCode: {
-      python: 'def is_palindrome(s):\n    # Your code here\n    pass',
-      java: 'public class Main {\n    public static boolean isPalindrome(String s) {\n        // Your code here\n        return false;\n    }\n}',
-      javascript: 'function isPalindrome(s) {\n    // Your code here\n}'
-    },
-    difficulty: 'Easy',
-    topics: ['Strings'],
-    createdAt: '2024-01-20'
-  },
-  {
-    id: '3',
-    title: 'Binary Search',
-    description: 'Given a sorted array of integers and a target value, implement binary search to find the target. Return the index if found, otherwise return -1.',
-    inputFormat: 'First line contains n (size of array) and target. Second line contains n sorted space-separated integers.',
-    outputFormat: 'Print the index of target or -1 if not found.',
-    constraints: '1 <= n <= 10^4\n-10^4 <= nums[i], target <= 10^4\nAll integers in nums are unique.\nnums is sorted in ascending order.',
-    exampleIO: [
-      { input: '6 9\n-1 0 3 5 9 12', output: '4', explanation: '9 exists in nums at index 4' }
-    ],
-    openTestCases: [
-      { input: '6 9\n-1 0 3 5 9 12', output: '4' },
-      { input: '6 2\n-1 0 3 5 9 12', output: '-1' }
-    ],
-    hiddenTestCases: [
-      { input: '1 5\n5', output: '0' },
-      { input: '3 1\n1 2 3', output: '0' },
-      { input: '3 3\n1 2 3', output: '2' }
-    ],
-    starterCode: {
-      python: 'def binary_search(nums, target):\n    # Your code here\n    pass',
-      java: 'public class Main {\n    public static int binarySearch(int[] nums, int target) {\n        // Your code here\n        return -1;\n    }\n}',
-      javascript: 'function binarySearch(nums, target) {\n    // Your code here\n}'
-    },
-    difficulty: 'Easy',
-    topics: ['Arrays', 'Binary Search'],
-    createdAt: '2024-02-01'
-  }
-];
-
 const DIFFICULTY_OPTIONS = ['Easy', 'Medium', 'Hard'];
 const TOPIC_OPTIONS = ['Arrays', 'Strings', 'Hash Table', 'Binary Search', 'Linked List', 'Trees', 'Graphs', 'Dynamic Programming', 'Recursion', 'Sorting'];
 
 function ProblemBank() {
-  const [problems, setProblems] = useState(MOCK_PROBLEMS);
+  const navigate = useNavigate();
+  const { showError, showSuccess } = useAlert();
+
+  // All useState hooks must be at the top, before any conditional returns
+  const [problems, setProblems] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProblem, setEditingProblem] = useState(null);
   const [viewingProblem, setViewingProblem] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const { showError, showSuccess } = useAlert();
-
-  // Form state
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -137,6 +55,55 @@ function ProblemBank() {
       javascript: 'function solution() {\n    // Your code here\n}'
     }
   });
+
+  // Fetch problems from API
+  const fetchProblems = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/problem-bank`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProblems(data.problems || []);
+      } else {
+        showError('Failed to fetch problems');
+      }
+    } catch (error) {
+      console.error('Error fetching problems:', error);
+      showError('Failed to fetch problems');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/profile`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          setAuthLoading(false);
+          fetchProblems();
+        } else {
+          navigate('/admin-login');
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        navigate('/admin-login');
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
 
   // Filter problems
   const filteredProblems = problems.filter(problem => {
@@ -327,32 +294,75 @@ function ProblemBank() {
     return true;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateForm()) return;
 
-    if (editingProblem) {
-      setProblems(prev => prev.map(p =>
-        p.id === editingProblem.id
-          ? { ...formData, id: editingProblem.id, createdAt: editingProblem.createdAt }
-          : p
-      ));
-      showSuccess('Problem updated successfully!');
-    } else {
-      const newProblem = {
-        ...formData,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      setProblems(prev => [newProblem, ...prev]);
-      showSuccess('Problem created successfully!');
+    setSaving(true);
+    try {
+      if (editingProblem) {
+        // Update existing problem
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/problem-bank/${editingProblem.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          showSuccess('Problem updated successfully!');
+          fetchProblems();
+          closeForm();
+        } else {
+          const data = await response.json();
+          showError(data.message || 'Failed to update problem');
+        }
+      } else {
+        // Create new problem
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/problem-bank`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          showSuccess('Problem created successfully!');
+          fetchProblems();
+          closeForm();
+        } else {
+          const data = await response.json();
+          showError(data.message || 'Failed to create problem');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving problem:', error);
+      showError('Failed to save problem');
+    } finally {
+      setSaving(false);
     }
-    closeForm();
   };
 
-  const handleDelete = (problemId) => {
-    setProblems(prev => prev.filter(p => p.id !== problemId));
-    setDeleteConfirm(null);
-    showSuccess('Problem deleted successfully!');
+  const handleDelete = async (problemId) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/problem-bank/${problemId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        showSuccess('Problem deleted successfully!');
+        fetchProblems();
+      } else {
+        const data = await response.json();
+        showError(data.message || 'Failed to delete problem');
+      }
+    } catch (error) {
+      console.error('Error deleting problem:', error);
+      showError('Failed to delete problem');
+    } finally {
+      setDeleteConfirm(null);
+    }
   };
 
   const getDifficultyClass = (difficulty) => {
@@ -420,9 +430,14 @@ function ProblemBank() {
           </h2>
         </div>
 
-        {filteredProblems.length === 0 ? (
+        {loading ? (
           <div className={styles.emptyState}>
-            <p>No problems found. Create your first problem!</p>
+            <Loader size={24} className={styles.spinner} />
+            <p>Loading problems...</p>
+          </div>
+        ) : filteredProblems.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>{searchQuery || filterDifficulty !== 'all' ? 'No problems match your search criteria.' : 'No problems available. Create your first problem!'}</p>
           </div>
         ) : (
           <div className={styles.problemsGrid}>
@@ -832,18 +847,35 @@ function ProblemBank() {
 
         {/* Form Actions */}
         <div className={styles.formActions}>
-          <button className={styles.backButton} onClick={closeForm}>
+          <button className={styles.backButton} onClick={closeForm} disabled={saving}>
             <ChevronLeft size={16} />
             Cancel
           </button>
-          <button className={styles.saveButton} onClick={handleSave}>
-            <Save size={16} />
-            {editingProblem ? 'Update Problem' : 'Save Problem'}
+          <button className={styles.saveButton} onClick={handleSave} disabled={saving}>
+            {saving ? <Loader size={16} className={styles.spinner} /> : <Save size={16} />}
+            {saving ? 'Saving...' : (editingProblem ? 'Update Problem' : 'Save Problem')}
           </button>
         </div>
       </div>
     </div>
   );
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className={styles.wrapper}>
+        <AdminNavbar />
+        <div className={styles.content}>
+          <div className={styles.listPage}>
+            <div className={styles.emptyState}>
+              <Loader size={32} className={styles.spinner} />
+              <p>Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.wrapper}>
