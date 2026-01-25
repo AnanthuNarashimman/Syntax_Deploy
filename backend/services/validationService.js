@@ -181,7 +181,8 @@ async function submitEvent(eventId, userId, points, additionalData = {}) {
             ...(additionalData.userName && { userName: additionalData.userName }),
             ...(additionalData.department && { department: additionalData.department }),
             ...(additionalData.correctAnswerCount !== undefined && { correctAnswerCount: additionalData.correctAnswerCount }),
-            ...(additionalData.totalQuestions !== undefined && { totalQuestions: additionalData.totalQuestions })
+            ...(additionalData.totalQuestions !== undefined && { totalQuestions: additionalData.totalQuestions }),
+            ...(additionalData.questionDetails && { questionDetails: additionalData.questionDetails })
         };
 
         const resultRef = await db.collection('eventResults').add(resultData);
