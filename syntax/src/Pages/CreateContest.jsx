@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { 
-  Home, 
-  Plus, 
-  Settings, 
-  MessageSquare, 
-  User, 
-  Users, 
-  Trophy, 
-  Clock, 
+import {
+  Home,
+  Plus,
+  Settings,
+  MessageSquare,
+  User,
+  Users,
+  Trophy,
+  Clock,
   TrendingUp,
   Calendar,
   Award,
-  Activity
+  Activity,
+  PenLine,
+  FileSpreadsheet,
+  Sparkles
 } from 'lucide-react';
 import '../Styles/PageStyles/CreateContest.css';
 import AdminNavbar from "../Components/AdminNavbar";
@@ -24,6 +27,7 @@ function CreateContest() {
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState('');
   const [selectedMode, setSelectedMode] = useState('');
+  const [selectedImportMethod, setSelectedImportMethod] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -78,7 +82,19 @@ function CreateContest() {
 
   const handleModeSelection = (mode) => {
     setSelectedMode(mode);
-    setStep(3);
+    setStep(3); // Always go to form after mode selection
+  };
+
+  const handleImportMethodSelection = (method) => {
+    setSelectedImportMethod(method);
+    // Save to localStorage and navigate to quiz questions
+    localStorage.setItem('contestFormData', JSON.stringify({
+      ...formData,
+      type: selectedType,
+      mode: selectedMode,
+      importMethod: method
+    }));
+    navigate('/create-quiz-questions');
   };
 
   const handleBack = () => {
@@ -93,6 +109,10 @@ function CreateContest() {
         setStep(2);
         setSelectedMode('');
       }
+    } else if (step === 4) {
+      // Go back to form from import method selection
+      setStep(3);
+      setSelectedImportMethod('');
     }
   };
 
@@ -175,14 +195,18 @@ function CreateContest() {
       showError('Please fill in all required fields');
       return;
     }
-    localStorage.setItem('contestFormData', JSON.stringify({
-      ...formData,
-      type: selectedType,
-      mode: selectedMode
-    }));
+
     if (selectedType === 'quiz') {
-      navigate('/create-quiz-questions');
+      // For quiz, go to import method selection
+      setStep(4);
     } else if (selectedType === 'contest') {
+      // For contest, save and navigate directly
+      localStorage.setItem('contestFormData', JSON.stringify({
+        ...formData,
+        type: selectedType,
+        mode: selectedMode,
+        importMethod: 'manual'
+      }));
       navigate('/create-contest-questions');
     }
   };
@@ -461,10 +485,74 @@ function CreateContest() {
             Back
           </button>
           <button className="create-button" onClick={handleCreate}>
-            Create {selectedType === 'article' ? 'Article' : selectedType === 'quiz' ? 'Quiz' : 'Contest'}
+            {selectedType === 'quiz' ? 'Continue' : `Create ${selectedType === 'article' ? 'Article' : 'Contest'}`}
           </button>
         </div>
       </div>
+    </div>
+  );
+
+  const renderStepFour = () => (
+    <div className="step-container">
+      <h2 className="step-title">How would you like to add questions?</h2>
+      <p className="step-subtitle">Choose your preferred method to add quiz questions</p>
+
+      <div className="options-grid three-column">
+        <div
+          className="option-card import-card"
+          onClick={() => handleImportMethodSelection('manual')}
+        >
+          <div className="option-icon manual">
+            <PenLine size={24} />
+          </div>
+          <h3>Manual Entry</h3>
+          <p>Add questions one by one using the form</p>
+          <ul className="import-features">
+            <li>Full control over each question</li>
+            <li>Best for small quizzes</li>
+            <li>Edit as you go</li>
+          </ul>
+        </div>
+
+        <div
+          className="option-card import-card"
+          onClick={() => handleImportMethodSelection('excel')}
+        >
+          <div className="option-icon excel">
+            <FileSpreadsheet size={24} />
+          </div>
+          <h3>Import from Excel</h3>
+          <p>Upload an Excel file with your questions</p>
+          <ul className="import-features">
+            <li>Bulk import questions</li>
+            <li>Download template provided</li>
+            <li>Edit after import</li>
+          </ul>
+        </div>
+
+        <div
+          className="option-card import-card"
+          onClick={() => handleImportMethodSelection('smart')}
+        >
+          <div className="option-icon smart">
+            <Sparkles size={24} />
+          </div>
+          <h3>Smart Import</h3>
+          <p>Generate questions using AI prompts</p>
+          <ul className="import-features">
+            <li>AI-powered generation</li>
+            <li>Customizable topics</li>
+            <li>Review and edit results</li>
+          </ul>
+        </div>
+      </div>
+
+      <button className="back-button" onClick={handleBack}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        Back
+      </button>
     </div>
   );
 
@@ -489,11 +577,18 @@ function CreateContest() {
             <div className="step-number">{selectedType === 'article' ? '2' : '3'}</div>
             <span>Configure</span>
           </div>
+          {selectedType === 'quiz' && (
+            <div className={`progress-step ${step >= 4 ? 'active' : ''}`}>
+              <div className="step-number">4</div>
+              <span>Import</span>
+            </div>
+          )}
         </div>
 
         {step === 1 && renderStepOne()}
         {step === 2 && renderStepTwo()}
         {step === 3 && renderStepThree()}
+        {step === 4 && renderStepFour()}
       </div>
     </div>
 

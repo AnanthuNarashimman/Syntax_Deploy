@@ -573,6 +573,467 @@
   cursor: not-allowed;
 }
 
+/* Import Method Badge */
+.import-method-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 12px;
+}
+
+/* ============== EXCEL IMPORT STYLES ============== */
+.excel-import-container {
+  background: white;
+  border-radius: 12px;
+  padding: 48px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.template-download {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+}
+
+.template-download p {
+  margin: 0 0 12px 0;
+  color: #166534;
+  font-size: 14px;
+}
+
+.template-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #059669;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.template-button:hover {
+  background-color: #047857;
+}
+
+.excel-dropzone {
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  background-color: #f7fafc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 24px;
+}
+
+.excel-dropzone:hover {
+  border-color: #e85a4f;
+  background-color: #fef2f2;
+}
+
+.excel-dropzone.has-file {
+  border-color: #059669;
+  background-color: #f0fdf4;
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.dropzone-icon {
+  color: #718096;
+}
+
+.excel-dropzone:hover .dropzone-icon {
+  color: #e85a4f;
+}
+
+.excel-dropzone.has-file .dropzone-icon {
+  color: #059669;
+}
+
+.dropzone-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #2d3748;
+  margin: 0;
+}
+
+.dropzone-hint {
+  font-size: 14px;
+  color: #718096;
+  margin: 0;
+}
+
+/* ============== SMART IMPORT STYLES ============== */
+.smart-import-container {
+  background: white;
+  border-radius: 12px;
+  padding: 48px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.smart-import-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.smart-import-form .input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.smart-import-form .input-group label {
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.smart-import-form .input-group input,
+.smart-import-form .input-group textarea {
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
+}
+
+.smart-import-form .input-group input:focus,
+.smart-import-form .input-group textarea:focus {
+  outline: none;
+  border-color: #e85a4f;
+}
+
+.generate-prompt-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: opacity 0.3s ease, transform 0.2s ease;
+  margin-top: 8px;
+}
+
+.generate-prompt-button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.generate-prompt-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Prompt Section */
+.prompt-section {
+  margin-bottom: 32px;
+}
+
+.prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.prompt-header label {
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.copy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.copy-button:hover {
+  background-color: #cbd5e0;
+}
+
+.copy-button.copied {
+  background-color: #059669;
+  color: white;
+}
+
+.prompt-display {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  padding: 16px;
+  border-radius: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.prompt-display pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* JSON Input Section */
+.json-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.json-input-section label {
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.json-textarea {
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+.json-textarea:focus {
+  outline: none;
+  border-color: #e85a4f;
+}
+
+.json-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.back-button-small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 2px solid #e2e8f0;
+  color: #718096;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.back-button-small:hover {
+  border-color: #cbd5e0;
+  color: #4a5568;
+}
+
+.parse-button {
+  background-color: #e85a4f;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.parse-button:hover:not(:disabled) {
+  background-color: #dc2626;
+}
+
+.parse-button:disabled {
+  background-color: #fed7d7;
+  cursor: not-allowed;
+}
+
+/* ============== PARSE ERRORS & WARNINGS ============== */
+.parse-errors {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.error-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.parse-errors ul {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.parse-errors li {
+  color: #b91c1c;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.error-note {
+  margin: 12px 0 0 0;
+  font-size: 13px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.json-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.json-error pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.parse-warnings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* ============== IMPORT PREVIEW ============== */
+.import-preview {
+  text-align: center;
+  padding: 32px;
+  background: #f0fdf4;
+  border-radius: 12px;
+  border: 1px solid #bbf7d0;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.success-icon {
+  color: #059669;
+}
+
+.preview-header span {
+  font-size: 18px;
+  font-weight: 600;
+  color: #166534;
+}
+
+/* ============== QUESTION ACTIONS ============== */
+.question-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.add-question-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #059669;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.add-question-btn:hover {
+  background-color: #047857;
+}
+
+.delete-question-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.delete-question-btn:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.delete-question-btn:disabled {
+  background-color: #fca5a5;
+  cursor: not-allowed;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .create-quiz-questions {
@@ -640,5 +1101,42 @@
   
   .total-score-value {
     font-size: 28px;
+  }
+
+  /* Excel Import Responsive */
+  .excel-import-container {
+    padding: 24px;
+  }
+
+  .excel-dropzone {
+    padding: 32px 16px;
+  }
+
+  /* Smart Import Responsive */
+  .smart-import-container {
+    padding: 24px;
+  }
+
+  .prompt-display {
+    max-height: 200px;
+  }
+
+  .json-actions {
+    flex-direction: column;
+  }
+
+  .json-actions button {
+    width: 100%;
+  }
+
+  /* Question Actions Responsive */
+  .question-actions {
+    flex-direction: column;
+  }
+
+  .add-question-btn,
+  .delete-question-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
