@@ -55,6 +55,7 @@ function ProblemBank() {
       javascript: 'function solution() {\n    // Your code here\n}'
     }
   });
+  const [customTopic, setCustomTopic] = useState('');
 
   // Fetch problems from API
   const fetchProblems = async () => {
@@ -163,6 +164,24 @@ function ProblemBank() {
         ? prev.topics.filter(t => t !== topic)
         : [...prev.topics, topic]
     }));
+  };
+
+  const handleAddCustomTopic = () => {
+    const trimmedTopic = customTopic.trim();
+    if (trimmedTopic && !formData.topics.includes(trimmedTopic)) {
+      setFormData(prev => ({
+        ...prev,
+        topics: [...prev.topics, trimmedTopic]
+      }));
+      setCustomTopic('');
+    }
+  };
+
+  const handleCustomTopicKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddCustomTopic();
+    }
   };
 
   // Example I/O handlers
@@ -599,6 +618,34 @@ function ProblemBank() {
                   {topic}
                 </button>
               ))}
+              {/* Show custom topics that aren't in predefined list */}
+              {formData.topics.filter(t => !TOPIC_OPTIONS.includes(t)).map(topic => (
+                <button
+                  key={topic}
+                  type="button"
+                  className={`${styles.topicBtn} ${styles.topicBtnSelected}`}
+                  onClick={() => handleTopicToggle(topic)}
+                >
+                  {topic}
+                </button>
+              ))}
+            </div>
+            <div className={styles.customTopicInput}>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="Add custom topic..."
+                value={customTopic}
+                onChange={(e) => setCustomTopic(e.target.value)}
+                onKeyDown={handleCustomTopicKeyDown}
+              />
+              <button
+                type="button"
+                className={styles.addTopicBtn}
+                onClick={handleAddCustomTopic}
+              >
+                <Plus size={16} /> Add
+              </button>
             </div>
           </div>
         </div>

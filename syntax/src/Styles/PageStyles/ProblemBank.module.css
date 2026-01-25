@@ -643,6 +643,38 @@
   color: white;
 }
 
+/* Custom Topic Input */
+.customTopicInput {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  width: 100%;
+}
+
+.customTopicInput .input {
+  flex: 1;
+  max-width: 250px;
+}
+
+.addTopicBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.addTopicBtn:hover {
+  background: #c53030;
+}
+
 /* IO Format Section */
 .ioFormatSection {
   margin-bottom: 2rem;
