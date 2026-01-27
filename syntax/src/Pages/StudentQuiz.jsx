@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Clock, CheckCircle, Home, AlertCircle } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
@@ -8,6 +8,40 @@ import { useAlert } from '../contexts/AlertContext';
 import useProctoring from '../hooks/useProctoring';
 import ProctoringWarning from '../Components/ProctoringWarning';
 import StartProctoringModal from '../Components/StartProctoringModal';
+
+// Seeded random number generator for consistent shuffling per student
+const seededRandom = (seed) => {
+  const x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+};
+
+// Fisher-Yates shuffle with seeded random for reproducible results
+const shuffleArrayWithSeed = (array, seed) => {
+  const shuffled = [...array];
+  let currentSeed = seed;
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const randomValue = seededRandom(currentSeed++);
+    const j = Math.floor(randomValue * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled;
+};
+
+// Generate or retrieve a unique student seed for consistent shuffling
+const getStudentSeed = (quizId) => {
+  const seedKey = `quiz_shuffle_seed_${quizId}`;
+  let seed = localStorage.getItem(seedKey);
+
+  if (!seed) {
+    // Generate a new random seed for this student's quiz session
+    seed = Math.floor(Math.random() * 1000000).toString();
+    localStorage.setItem(seedKey, seed);
+  }
+
+  return parseInt(seed, 10);
+};
 
 const StudentQuiz = () => {
   const location = useLocation();
@@ -30,6 +64,10 @@ const StudentQuiz = () => {
   const [quizResults, setQuizResults] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingTimer, setIsLoadingTimer] = useState(true);
+
+  // Shuffled questions state - each student sees questions in different order
+  const [shuffledQuestions, setShuffledQuestions] = useState([]);
+  const [shuffleMap, setShuffleMap] = useState([]); // Maps shuffled index -> original index
 
   // Auto-submit modal state
   const [showAutoSubmitModal, setShowAutoSubmitModal] = useState(false);
@@ -182,6 +220,26 @@ const StudentQuiz = () => {
 
     loadQuizData();
   }, [navigationQuizData, navigate, showInfo]);
+
+  // Shuffle questions when quiz data is loaded - each student gets unique order
+  useEffect(() => {
+    if (!quizData?.questions || quizData.questions.length === 0) return;
+
+    const originalQuestions = quizData.questions;
+    const studentSeed = getStudentSeed(quizData.id);
+
+    // Create an array of indices and shuffle them
+    const indices = originalQuestions.map((_, index) => index);
+    const shuffledIndices = shuffleArrayWithSeed(indices, studentSeed);
+
+    // Create shuffled questions array and the mapping
+    const shuffled = shuffledIndices.map(originalIndex => originalQuestions[originalIndex]);
+
+    setShuffledQuestions(shuffled);
+    setShuffleMap(shuffledIndices); // shuffleMap[shuffledIndex] = originalIndex
+
+    console.log('🔀 Questions shuffled for student with seed:', studentSeed);
+  }, [quizData?.questions, quizData?.id]);
 
   // Auto-submit handler for proctoring violations
   const handleProctoringAutoSubmit = useCallback(async (reason) => {
@@ -449,8 +507,9 @@ const StudentQuiz = () => {
     }
   }, [selectedAnswers, currentQuestion, quizData]);
 
-  // Get questions array from quiz data
-  const questions = quizData?.questions || [];
+  // Get questions array - use shuffled questions for display
+  const questions = shuffledQuestions.length > 0 ? shuffledQuestions : (quizData?.questions || []);
+  const originalQuestions = quizData?.questions || [];
 
   // Utility functions
   const formatTime = (seconds) => {
@@ -459,10 +518,13 @@ const StudentQuiz = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleAnswerSelect = (questionIndex, optionIndex) => {
+  const handleAnswerSelect = (shuffledIndex, optionIndex) => {
+    // Map shuffled index to original index for storage
+    // This ensures answers are stored and submitted with original question indices
+    const originalIndex = shuffleMap.length > 0 ? shuffleMap[shuffledIndex] : shuffledIndex;
     const newAnswers = {
       ...selectedAnswers,
-      [questionIndex]: optionIndex
+      [originalIndex]: optionIndex
     };
     setSelectedAnswers(newAnswers);
   };
@@ -500,24 +562,26 @@ const StudentQuiz = () => {
 
     try {
       // Convert selectedAnswers indices to actual answer values
+      // Note: selectedAnswers keys are original question indices
       const studentAnswerValues = {};
       Object.keys(selectedAnswers).forEach(questionIndex => {
         const answerIndex = selectedAnswers[questionIndex];
-        studentAnswerValues[questionIndex] = questions[questionIndex].options[answerIndex];
+        // Use originalQuestions since selectedAnswers is stored by original index
+        studentAnswerValues[questionIndex] = originalQuestions[questionIndex].options[answerIndex];
       });
 
-      // Create studentSubmission data structure
+      // Create studentSubmission data structure using original questions order
       const studentSubmission = {
         quizId: quizData.id,
         quizTitle: quizData.eventTitle || quizData.title || 'Quiz',
         studentAnswers: studentAnswerValues, // Now contains the actual answer text values
         submittedAt: new Date().toISOString(),
         timeTaken: timeTakenSeconds,
-        totalQuestions: questions.length,
+        totalQuestions: originalQuestions.length,
         answeredQuestions: Object.keys(selectedAnswers).length,
         disqualified: isDisqualified,
         disqualificationReason: disqualificationReason,
-        questionDetails: questions.map((question, index) => ({
+        questionDetails: originalQuestions.map((question, index) => ({
           questionIndex: index,
           question: question.question,
           options: question.options,
@@ -545,9 +609,10 @@ const StudentQuiz = () => {
       // Store the quiz results
       setQuizResults(response.data);
 
-      // Clear localStorage (quiz answers)
+      // Clear localStorage (quiz answers and shuffle seed)
       localStorage.removeItem(`quiz_${quizData.id}_answers`);
       localStorage.removeItem(`quiz_${quizData.id}_current`);
+      localStorage.removeItem(`quiz_shuffle_seed_${quizData.id}`);
 
       // Clear proctoring data from localStorage
       localStorage.removeItem(`proctoring_violations_${quizData.id}`);
@@ -574,9 +639,10 @@ const StudentQuiz = () => {
       // Fallback to local calculation if API fails
       alert('There was an error submitting your quiz. Showing local results.');
 
-      // Clear localStorage (quiz answers)
+      // Clear localStorage (quiz answers and shuffle seed)
       localStorage.removeItem(`quiz_${quizData.id}_answers`);
       localStorage.removeItem(`quiz_${quizData.id}_current`);
+      localStorage.removeItem(`quiz_shuffle_seed_${quizData.id}`);
 
       // Clear proctoring data from localStorage
       localStorage.removeItem(`proctoring_violations_${quizData.id}`);
@@ -661,16 +727,16 @@ const StudentQuiz = () => {
       };
     }
 
-    // Fallback to local calculation
+    // Fallback to local calculation using original questions order
     let correct = 0;
-    questions.forEach((question, index) => {
+    originalQuestions.forEach((question, index) => {
       if (selectedAnswers[index] === question.correctAnswer) {
         correct++;
       }
     });
     return {
       correct: correct,
-      total: questions.length
+      total: originalQuestions.length
     };
   };
 
@@ -854,25 +920,29 @@ const StudentQuiz = () => {
               </div>
 
               <div className={styles.optionsContainer}>
-                {currentQ.options.map((option, index) => (
-                  <div
-                    key={index}
-                    className={`${styles.option} ${
-                      selectedAnswers[currentQuestion] === index ? styles.selected : ''
-                    }`}
-                    onClick={() => handleAnswerSelect(currentQuestion, index)}
-                  >
-                    <div className={styles.optionIndicator}>
-                      {String.fromCharCode(65 + index)}
+                {currentQ.options.map((option, index) => {
+                  // Get the original index to check if this option is selected
+                  const originalIndex = shuffleMap.length > 0 ? shuffleMap[currentQuestion] : currentQuestion;
+                  const isSelected = selectedAnswers[originalIndex] === index;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`${styles.option} ${isSelected ? styles.selected : ''}`}
+                      onClick={() => handleAnswerSelect(currentQuestion, index)}
+                    >
+                      <div className={styles.optionIndicator}>
+                        {String.fromCharCode(65 + index)}
+                      </div>
+                      <div className={styles.optionText}>
+                        {option}
+                      </div>
+                      {isSelected && (
+                        <CheckCircle className={styles.selectedIcon} size={20} />
+                      )}
                     </div>
-                    <div className={styles.optionText}>
-                      {option}
-                    </div>
-                    {selectedAnswers[currentQuestion] === index && (
-                      <CheckCircle className={styles.selectedIcon} size={20} />
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Navigation Controls */}
@@ -920,22 +990,28 @@ const StudentQuiz = () => {
               </div>
               
               <div className={styles.questionsGrid}>
-                {questions.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`${styles.questionNumberBtn} ${
-                      index === currentQuestion ? styles.currentQuestion :
-                      selectedAnswers[index] !== undefined ? styles.answeredQuestion : styles.unansweredQuestion
-                    }`}
-                    onClick={() => handleQuestionJump(index)}
-                    title={`Question ${index + 1} ${
-                      index === currentQuestion ? '(Current)' :
-                      selectedAnswers[index] !== undefined ? '(Answered)' : '(Unanswered)'
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
+                {questions.map((_, index) => {
+                  // Get the original index to check if this question is answered
+                  const originalIndex = shuffleMap.length > 0 ? shuffleMap[index] : index;
+                  const isAnswered = selectedAnswers[originalIndex] !== undefined;
+
+                  return (
+                    <button
+                      key={index}
+                      className={`${styles.questionNumberBtn} ${
+                        index === currentQuestion ? styles.currentQuestion :
+                        isAnswered ? styles.answeredQuestion : styles.unansweredQuestion
+                      }`}
+                      onClick={() => handleQuestionJump(index)}
+                      title={`Question ${index + 1} ${
+                        index === currentQuestion ? '(Current)' :
+                        isAnswered ? '(Answered)' : '(Unanswered)'
+                      }`}
+                    >
+                      {index + 1}
+                    </button>
+                  );
+                })}
               </div>
               
               <div className={styles.navigationSummary}>
