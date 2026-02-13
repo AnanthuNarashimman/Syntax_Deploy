@@ -13,11 +13,13 @@ import {
   Code,
   FileText,
   TestTube,
-  Eye,       // <-- Import Eye icon
-  EyeOff     // <-- Import EyeOff icon
+  Eye,       
+  EyeOff,   
+  BookOpen   
 } from 'lucide-react';
 import '../Styles/PageStyles/CreateContestQuestions.css';
 import AdminNavbar from "../Components/AdminNavbar";
+import ProblemBankSelector from "../Components/ProblemBankSelector";
 import { useNavigate } from 'react-router-dom';
 import { useContestContext } from '../contexts/ContestContext';
 import { useAlert } from '../contexts/AlertContext';
@@ -29,6 +31,7 @@ function CreateContestQuestions() {
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [questions, setQuestions] = useState({});
   const [activeTab, setActiveTabState] = useState('create');
+  const [showProblemBankModal, setShowProblemBankModal] = useState(false);
   const navigate = useNavigate();
   const { addNewEvent } = useContestContext();
   const { showError, showSuccess } = useAlert();
@@ -301,6 +304,29 @@ function CreateContestQuestions() {
     }
   };
 
+  const handleProblemSelect = (selectedProblem) => {
+    // Map the selected problem from bank to the current question
+    setQuestions(prev => ({
+      ...prev,
+      [currentQuestion]: {
+        title: selectedProblem.title,
+        description: selectedProblem.description,
+        inputFormat: selectedProblem.inputFormat,
+        outputFormat: selectedProblem.outputFormat,
+        constraints: selectedProblem.constraints,
+        exampleIO: selectedProblem.exampleIO,
+        openTestCases: selectedProblem.openTestCases,
+        hiddenTestCases: selectedProblem.hiddenTestCases,
+        starterCode: selectedProblem.starterCode,
+        // Store reference to original problem for tracking
+        importedFromId: selectedProblem.id,
+        importedFrom: 'problem-bank'
+      }
+    }));
+    setShowProblemBankModal(false);
+    showSuccess(`Problem "${selectedProblem.title}" imported successfully!`);
+  };
+
   const handleSaveContest = async () => {
     // Full Contest Validation - all new fields
     for (let i = 1; i <= parseInt(numberOfQuestions); i++) {
@@ -513,8 +539,14 @@ function CreateContestQuestions() {
   const renderQuestionStep = () => (
     <div className="step-container">
       <div className="question-header">
-        <h2 className="step-title">Question {currentQuestion} of {numberOfQuestions}</h2>
-        <p className="step-subtitle">Create your coding problem</p>
+        <div className="question-title-wrapper">
+          <h2 className="step-title">Question {currentQuestion} of {numberOfQuestions}</h2>
+          <p className="step-subtitle">Create your coding problem or import from Problem Bank</p>
+        </div>
+        <button className="use-problem-bank-btn" onClick={() => setShowProblemBankModal(true)}>
+          <BookOpen size={18} />
+          Use Problem from Bank
+        </button>
       </div>
 
       <div className="question-progress">
@@ -833,6 +865,14 @@ function CreateContestQuestions() {
         {step === 1 && renderConfigStep()}
         {step === 2 && renderQuestionStep()}
       </div>
+
+      {/* Problem Bank Selector Modal */}
+      {showProblemBankModal && (
+        <ProblemBankSelector
+          onSelect={handleProblemSelect}
+          onClose={() => setShowProblemBankModal(false)}
+        />
+      )}
     </div>
   );
 }
