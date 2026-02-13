@@ -19,10 +19,47 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.config-header,
-.question-header {
+.config-header {
   text-align: center;
   margin-bottom: 32px;
+}
+
+.question-header {
+  text-align: left;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.question-title-wrapper {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.create-contest-questions .question-header .use-problem-bank-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #e85a4f;
+  color: white;
+  border: none;
+  padding: 11px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(232, 90, 79, 0.2);
+}
+
+.create-contest-questions .question-header .use-problem-bank-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(232, 90, 79, 0.3);
+}
+
+.create-contest-questions .question-header .use-problem-bank-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(232, 90, 79, 0.2);
 }
 
 .step-title {
@@ -30,6 +67,7 @@
   font-weight: 600;
   color: #2d3748;
   margin: 0 0 8px 0;
+  text-align: left;
 }
 
 .step-subtitle {
@@ -212,6 +250,52 @@
   margin: 0;
 }
 
+.section-subtitle {
+  color: #718096;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+/* IO Format and Starter Code Sections */
+.io-format-section,
+.starter-code-section {
+  margin-bottom: 32px;
+}
+
+.io-format-section h3,
+.starter-code-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 16px 0;
+}
+
+.io-format-section .io-format-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.starter-code-section .starter-code-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.form-group .label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
 .add-test-case-btn {
   display: flex;
   align-items: center;
@@ -371,6 +455,11 @@
   .test-case-grid {
     grid-template-columns: 1fr;
   }
+
+  .io-format-section .io-format-grid,
+  .starter-code-section .starter-code-grid {
+    grid-template-columns: 1fr;
+  }
   
   .form-actions {
     flex-direction: column;
@@ -395,5 +484,11 @@
   
   .progress-bar {
     width: 100%;
+  }
+
+  .create-contest-questions .question-header .use-problem-bank-btn {
+    width: auto;
+    padding: 10px 18px;
+    font-size: 13px;
   }
 }
