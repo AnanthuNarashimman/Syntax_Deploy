@@ -14,7 +14,12 @@ import {
   Save,
   X,
   Filter,
-  Loader
+  Loader,
+  Check,
+  Tag,
+  Lock,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 import styles from '../Styles/PageStyles/ProblemBank.module.css';
 import AdminNavbar from "../Components/AdminNavbar";
@@ -56,6 +61,25 @@ function ProblemBank() {
     }
   });
   const [customTopic, setCustomTopic] = useState('');
+  const [showSmartImport, setShowSmartImport] = useState(false);
+  const [smartImportMode, setSmartImportMode] = useState('general'); // 'general' or 'specific'
+  const [smartImportData, setSmartImportData] = useState({
+    // General mode fields
+    topic: '',
+    numberOfProblems: 3,
+    difficulty: 'Mixed',
+    focusSubtopics: '',
+    avoidSubtopics: '',
+    // Specific mode fields
+    problemStatement: '',
+    customDifficulty: 'Medium'
+  });
+  const [generatedPrompt, setGeneratedPrompt] = useState('');
+  const [jsonInput, setJsonInput] = useState('');
+  const [jsonParseError, setJsonParseError] = useState('');
+  const [promptCopied, setPromptCopied] = useState(false);
+  const [previewProblems, setPreviewProblems] = useState([]);
+  const [isFromPreview, setIsFromPreview] = useState(false);
 
   // Fetch problems from API
   const fetchProblems = async () => {
@@ -151,6 +175,45 @@ function ProblemBank() {
     setIsFormOpen(false);
     setEditingProblem(null);
     resetForm();
+    
+    // If form was opened from preview, restore the smart import modal
+    if (isFromPreview) {
+      setShowSmartImport(true);
+      setIsFromPreview(false);
+    }
+  };
+
+  const openSmartImport = () => {
+    setShowSmartImport(true);
+    setGeneratedPrompt('');
+    setJsonInput('');
+    setJsonParseError('');
+  };
+
+  const openPreviewProblemInForm = (problem) => {
+    setFormData({ ...problem });
+    setEditingProblem(null); // Not editing existing, this is from smart import
+    setIsFromPreview(true); // Track that we're opening from preview
+    setIsFormOpen(true);
+    setShowSmartImport(false);
+  };
+
+  const closeSmartImport = () => {
+    setShowSmartImport(false);
+    setGeneratedPrompt('');
+    setJsonInput('');
+    setJsonParseError('');
+    setPreviewProblems([]);
+    setIsFromPreview(false);
+    setSmartImportData({
+      topic: '',
+      numberOfProblems: 3,
+      difficulty: 'Mixed',
+      focusSubtopics: '',
+      avoidSubtopics: '',
+      problemStatement: '',
+      customDifficulty: 'Medium'
+    });
   };
 
   const handleFormChange = (field, value) => {
@@ -347,6 +410,21 @@ function ProblemBank() {
         if (response.ok) {
           showSuccess('Problem created successfully!');
           fetchProblems();
+          
+          // If saving from preview, remove this problem from preview list
+          if (isFromPreview) {
+            const updatedPreview = previewProblems.filter(p => p.title !== formData.title);
+            setPreviewProblems(updatedPreview);
+            
+            // If no more problems to preview, close everything
+            if (updatedPreview.length === 0) {
+              closeSmartImport();
+              setIsFormOpen(false);
+              resetForm();
+              return; // Exit early
+            }
+          }
+          
           closeForm();
         } else {
           const data = await response.json();
@@ -356,6 +434,295 @@ function ProblemBank() {
     } catch (error) {
       console.error('Error saving problem:', error);
       showError('Failed to save problem');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Smart Import handlers
+  const generateSmartPrompt = () => {
+    if (smartImportMode === 'general') {
+      const { topic, numberOfProblems, difficulty, focusSubtopics, avoidSubtopics } = smartImportData;
+
+      if (!topic.trim()) {
+        showError('Please enter a topic');
+        return;
+      }
+
+      const difficultyInstruction = difficulty === 'Mixed' 
+        ? 'Include a mix of Easy, Medium, and Hard problems'
+        : `All problems should be ${difficulty} difficulty`;
+
+      const prompt = `Generate exactly ${numberOfProblems} coding problems about "${topic}".
+
+${difficultyInstruction}
+${focusSubtopics.trim() ? `FOCUS on these subtopics: ${focusSubtopics}` : ''}
+${avoidSubtopics.trim() ? `AVOID these subtopics: ${avoidSubtopics}` : ''}
+
+CRITICAL INSTRUCTIONS:
+1. Output valid JSON wrapped in a code block using triple backticks
+2. Do NOT use Canvas, Artifacts, or any interactive features
+3. Format your response as: \`\`\`json followed by the JSON array, then closing \`\`\`
+4. Each problem must include all required fields
+5. Provide realistic test cases with actual values - MINIMUM 4 open test cases and 4 hidden test cases
+6. Starter code should be functional templates
+
+Required JSON format inside code block:
+\`\`\`json
+[
+  {
+    "title": "Problem Title",
+    "description": "Full problem statement describing what to solve",
+    "inputFormat": "Description of input structure",
+    "outputFormat": "Description of output structure",
+    "constraints": "e.g., 1 ≤ n ≤ 10^5, -10^9 ≤ arr[i] ≤ 10^9",
+    "difficulty": "Easy|Medium|Hard",
+    "topics": ["Topic1", "Topic2"],
+    "exampleIO": [
+      {
+        "input": "example input",
+        "output": "expected output",
+        "explanation": "why this output is correct"
+      }
+    ],
+    "openTestCases": [
+      { "input": "test input 1", "output": "expected output 1" },
+      { "input": "test input 2", "output": "expected output 2" },
+      { "input": "test input 3", "output": "expected output 3" },
+      { "input": "test input 4", "output": "expected output 4" }
+    ],
+    "hiddenTestCases": [
+      { "input": "hidden test 1", "output": "expected output 1" },
+      { "input": "hidden test 2", "output": "expected output 2" },
+      { "input": "hidden test 3", "output": "expected output 3" },
+      { "input": "hidden test 4", "output": "expected output 4" }
+    ],
+    "starterCode": {
+      "python": "def solution():\n    # Your code here\n    pass",
+      "java": "public class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}",
+      "javascript": "function solution() {\n    // Your code here\n}"
+    }
+  }
+]
+\`\`\`
+
+Generate ${numberOfProblems} problems now. Remember: wrap the JSON array in a code block with triple backticks.`;
+
+      setGeneratedPrompt(prompt);
+    } else {
+      // Specific mode
+      const { problemStatement, customDifficulty } = smartImportData;
+
+      if (!problemStatement.trim()) {
+        showError('Please enter a problem statement');
+        return;
+      }
+
+      const prompt = `I have this coding problem statement:
+
+"${problemStatement}"
+
+Please structure it into a complete coding problem with all necessary details.
+Difficulty level: ${customDifficulty}
+
+CRITICAL INSTRUCTIONS:
+1. Output valid JSON wrapped in a code block using triple backticks
+2. Do NOT use Canvas, Artifacts, or any interactive features  
+3. Format your response as: \`\`\`json followed by the JSON object, then closing \`\`\`
+4. Infer appropriate input/output formats from the problem statement
+5. Generate realistic test cases based on the problem
+6. Create functional starter code templates
+7. Suggest relevant topics/categories
+
+Required JSON format inside code block:
+\`\`\`json
+{
+  "title": "Concise problem title",
+  "description": "${problemStatement.trim()}",
+  "inputFormat": "Description of input structure",
+  "outputFormat": "Description of output structure",
+  "constraints": "e.g., 1 ≤ n ≤ 10^5",
+  "difficulty": "${customDifficulty}",
+  "topics": ["Topic1", "Topic2"],
+  "exampleIO": [
+    {
+      "input": "example input",
+      "output": "expected output",
+      "explanation": "why this output is correct"
+    }
+  ],
+  "openTestCases": [
+    { "input": "test input 1", "output": "expected output 1" },
+    { "input": "test input 2", "output": "expected output 2" },
+    { "input": "test input 3", "output": "expected output 3" },
+    { "input": "test input 4", "output": "expected output 4" }
+  ],
+  "hiddenTestCases": [
+    { "input": "hidden test 1", "output": "expected output 1" },
+    { "input": "hidden test 2", "output": "expected output 2" },
+    { "input": "hidden test 3", "output": "expected output 3" },
+    { "input": "hidden test 4", "output": "expected output 4" }
+  ],
+  "starterCode": {
+    "python": "def solution():\n    # Your code here\n    pass",
+    "java": "public class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}",
+    "javascript": "function solution() {\n    // Your code here\n}"
+  }
+}
+\`\`\`
+
+Generate the structured problem now. Remember: wrap the JSON in a code block with triple backticks.`;
+
+      setGeneratedPrompt(prompt);
+    }
+  };
+
+  const copyPromptToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedPrompt);
+      setPromptCopied(true);
+      showSuccess('Prompt copied to clipboard!');
+      setTimeout(() => setPromptCopied(false), 2000);
+    } catch (err) {
+      showError('Failed to copy prompt');
+    }
+  };
+
+  const parseSmartImportJson = () => {
+    try {
+      let cleaned = jsonInput.trim();
+
+      // Remove markdown code blocks if present
+      if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      }
+
+      // Try to find JSON array/object in the text
+      const jsonMatch = cleaned.match(/[\[{][\s\S]*[\]}]/);
+      if (jsonMatch) {
+        cleaned = jsonMatch[0];
+      }
+
+      const parsed = JSON.parse(cleaned);
+
+      // Handle both single object (specific mode) and array (general mode)
+      const problemsArray = Array.isArray(parsed) ? parsed : [parsed];
+
+      if (problemsArray.length === 0) {
+        setJsonParseError('No problems found in JSON');
+        return;
+      }
+
+      // Validate and transform problems
+      const errors = [];
+      const validProblems = [];
+
+      problemsArray.forEach((p, i) => {
+        if (!p.title) errors.push(`Problem ${i + 1}: Missing title`);
+        if (!p.description) errors.push(`Problem ${i + 1}: Missing description`);
+        if (!p.inputFormat) errors.push(`Problem ${i + 1}: Missing inputFormat`);
+        if (!p.outputFormat) errors.push(`Problem ${i + 1}: Missing outputFormat`);
+        if (!p.exampleIO || p.exampleIO.length === 0) errors.push(`Problem ${i + 1}: Missing examples`);
+        if (!p.openTestCases || p.openTestCases.length < 4) errors.push(`Problem ${i + 1}: Need at least 4 open test cases (found ${p.openTestCases?.length || 0})`);
+        if (!p.hiddenTestCases || p.hiddenTestCases.length < 4) errors.push(`Problem ${i + 1}: Need at least 4 hidden test cases (found ${p.hiddenTestCases?.length || 0})`);
+        
+        // Still add the problem even if there are issues (user can fix in editor)
+        validProblems.push({
+          title: p.title || 'Untitled Problem',
+          description: p.description || '',
+          inputFormat: p.inputFormat || '',
+          outputFormat: p.outputFormat || '',
+          constraints: p.constraints || '',
+          difficulty: p.difficulty || 'Medium',
+          topics: Array.isArray(p.topics) ? p.topics : [],
+          exampleIO: Array.isArray(p.exampleIO) && p.exampleIO.length > 0 
+            ? p.exampleIO 
+            : [{ input: '', output: '', explanation: '' }],
+          openTestCases: Array.isArray(p.openTestCases) && p.openTestCases.length >= 4
+            ? p.openTestCases
+            : [
+                { input: '', output: '' },
+                { input: '', output: '' },
+                { input: '', output: '' },
+                { input: '', output: '' }
+              ],
+          hiddenTestCases: Array.isArray(p.hiddenTestCases) && p.hiddenTestCases.length >= 4
+            ? p.hiddenTestCases
+            : [
+                { input: '', output: '' },
+                { input: '', output: '' },
+                { input: '', output: '' },
+                { input: '', output: '' }
+              ],
+          starterCode: p.starterCode || {
+            python: 'def solution():\n    # Your code here\n    pass',
+            java: 'public class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}',
+            javascript: 'function solution() {\n    // Your code here\n}'
+          }
+        });
+      });
+
+      if (errors.length > 0) {
+        setJsonParseError(`Found ${errors.length} issue(s). Review problems before saving:\n${errors.slice(0, 5).join('\n')}`);
+      } else {
+        setJsonParseError('');
+      }
+
+      // Set problems for preview
+      if (validProblems.length > 0) {
+        setPreviewProblems(validProblems);
+      }
+    } catch (err) {
+      setJsonParseError(`Invalid JSON: ${err.message}`);
+    }
+  };
+
+  const saveImportedProblems = async () => {
+    if (previewProblems.length === 0) return;
+    
+    setSaving(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      // Save each problem sequentially
+      for (const problem of previewProblems) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/problem-bank`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(problem)
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+        }
+      }
+
+      // Close modal and refresh
+      setShowSmartImport(false);
+      setJsonInput('');
+      setJsonParseError('');
+      setPreviewProblems([]);
+      fetchProblems();
+
+      // Show result message
+      if (successCount > 0 && failCount === 0) {
+        showSuccess(`Successfully imported all ${successCount} problem(s)!`);
+      } else if (successCount > 0 && failCount > 0) {
+        showError(`Imported ${successCount} problem(s), but ${failCount} failed. Please try again.`);
+      } else {
+        showError('Failed to import problems. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving imported problems:', error);
+      showError('Failed to import problems');
     } finally {
       setSaving(false);
     }
@@ -401,10 +768,16 @@ function ProblemBank() {
           <h1 className={styles.pageTitle}>Problem Bank</h1>
           <p className={styles.pageSubtitle}>Manage your coding problems library</p>
         </div>
-        <button className={styles.createBtn} onClick={openCreateForm}>
-          <Plus size={20} />
-          Create Problem
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className={styles.createBtn} onClick={openCreateForm}>
+            <Plus size={20} />
+            Create Problem
+          </button>
+          <button className={styles.smartImportBtn} onClick={openSmartImport}>
+            <Code size={20} />
+            Smart Import
+          </button>
+        </div>
       </div>
 
       <div className={styles.controlsSection}>
@@ -570,9 +943,11 @@ function ProblemBank() {
       <div className={styles.formHeader}>
         <button className={styles.backButton} onClick={closeForm}>
           <ChevronLeft size={16} />
-          Back to Problems
+          {isFromPreview ? 'Back to Preview' : 'Back to Problems'}
         </button>
-        <h2 className={styles.formTitle}>{editingProblem ? 'Edit Problem' : 'Create New Problem'}</h2>
+        <h2 className={styles.formTitle}>
+          {isFromPreview ? 'Preview Problem' : (editingProblem ? 'Edit Problem' : 'Create New Problem')}
+        </h2>
       </div>
 
       <div className={styles.formContainer}>
@@ -900,7 +1275,7 @@ function ProblemBank() {
           </button>
           <button className={styles.saveButton} onClick={handleSave} disabled={saving}>
             {saving ? <Loader size={16} className={styles.spinner} /> : <Save size={16} />}
-            {saving ? 'Saving...' : (editingProblem ? 'Update Problem' : 'Save Problem')}
+            {saving ? 'Saving...' : (isFromPreview ? 'Save to Problem Bank' : (editingProblem ? 'Update Problem' : 'Save Problem'))}
           </button>
         </div>
       </div>
@@ -924,12 +1299,262 @@ function ProblemBank() {
     );
   }
 
+  // Render Smart Import Modal
+  const renderSmartImport = () => (
+    <div className={styles.modalOverlay} onClick={closeSmartImport}>
+      <div className={`${styles.modalContent} ${styles.smartImportModal}`} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h3 className={styles.modalTitle}>Smart Import Problems</h3>
+          <button className={styles.closeButton} onClick={closeSmartImport}>
+            <X size={20} />
+          </button>
+        </div>
+
+        {!generatedPrompt ? (
+          // Step 1: Configure prompt
+          <div className={styles.smartImportConfig}>
+            {/* Mode Selector */}
+            <div className={styles.modeSelector}>
+              <button
+                className={`${styles.modeBtn} ${smartImportMode === 'general' ? styles.modeBtnActive : ''}`}
+                onClick={() => setSmartImportMode('general')}
+              >
+                <FileText size={18} />
+                General: Random Problems
+              </button>
+              <button
+                className={`${styles.modeBtn} ${smartImportMode === 'specific' ? styles.modeBtnActive : ''}`}
+                onClick={() => setSmartImportMode('specific')}
+              >
+                <Code size={18} />
+                Specific: Structure My Problem
+              </button>
+            </div>
+
+            {smartImportMode === 'general' ? (
+              // General Mode Form
+              <div className={styles.importForm}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Topic/Domain *</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="e.g., Dynamic Programming, Binary Search, Graphs"
+                    value={smartImportData.topic}
+                    onChange={(e) => setSmartImportData(prev => ({ ...prev, topic: e.target.value }))}
+                  />
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Number of Problems</label>
+                    <input
+                      type="number"
+                      className={styles.input}
+                      min="1"
+                      max="10"
+                      value={smartImportData.numberOfProblems}
+                      onChange={(e) => setSmartImportData(prev => ({ ...prev, numberOfProblems: parseInt(e.target.value) || 1 }))}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Difficulty</label>
+                    <select
+                      className={styles.select}
+                      value={smartImportData.difficulty}
+                      onChange={(e) => setSmartImportData(prev => ({ ...prev, difficulty: e.target.value }))}
+                    >
+                      <option value="Mixed">Mixed</option>
+                      <option value="Easy">Easy</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Focus Subtopics (Optional)</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="e.g., Memoization, Tabulation"
+                    value={smartImportData.focusSubtopics}
+                    onChange={(e) => setSmartImportData(prev => ({ ...prev, focusSubtopics: e.target.value }))}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Avoid Subtopics (Optional)</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="e.g., Matrix problems, Bit manipulation"
+                    value={smartImportData.avoidSubtopics}
+                    onChange={(e) => setSmartImportData(prev => ({ ...prev, avoidSubtopics: e.target.value }))}
+                  />
+                </div>
+              </div>
+            ) : (
+              // Specific Mode Form
+              <div className={styles.importForm}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Problem Statement *</label>
+                  <textarea
+                    className={styles.textarea}
+                    rows="8"
+                    placeholder="Paste or type your problem statement here...\n\nExample: Write a function to find the longest common subsequence of two strings."
+                    value={smartImportData.problemStatement}
+                    onChange={(e) => setSmartImportData(prev => ({ ...prev, problemStatement: e.target.value }))}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Difficulty Level</label>
+                  <select
+                    className={styles.select}
+                    value={smartImportData.customDifficulty}
+                    onChange={(e) => setSmartImportData(prev => ({ ...prev, customDifficulty: e.target.value }))}
+                  >
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.modalActions}>
+              <button className={styles.btnSecondary} onClick={closeSmartImport}>Cancel</button>
+              <button className={styles.btnPrimary} onClick={generateSmartPrompt}>
+                Generate Prompt
+              </button>
+            </div>
+          </div>
+        ) : previewProblems.length === 0 ? (
+          // Step 2: Show prompt and await JSON
+          <div className={styles.promptStep}>
+            <div className={styles.promptSection}>
+              <div className={styles.sectionHeader}>
+                <h4>Step 1: Copy this prompt</h4>
+                <button className={styles.copyBtn} onClick={copyPromptToClipboard}>
+                  {promptCopied ? <><Check size={16} /> Copied!</> : <><Code size={16} /> Copy Prompt</>}
+                </button>
+              </div>
+              <pre className={styles.promptBox}>{generatedPrompt}</pre>
+            </div>
+
+            <div className={styles.instructionsBox}>
+              <h4>Step 2: Get AI Response</h4>
+              <ol>
+                <li>Copy the prompt above</li>
+                <li>Paste it into ChatGPT or Claude</li>
+                <li>Copy the entire JSON response (including backticks)</li>
+                <li>Paste it below</li>
+              </ol>
+            </div>
+
+            <div className={styles.jsonInputSection}>
+              <div className={styles.sectionHeader}>
+                <h4>Step 3: Paste AI Response</h4>
+              </div>
+              <textarea
+                className={styles.jsonTextarea}
+                rows="12"
+                placeholder="Paste the entire AI response here (including ```json and ``` markers)..."
+                value={jsonInput}
+                onChange={(e) => setJsonInput(e.target.value)}
+              />
+              {jsonParseError && (
+                <div className={styles.errorBox}>
+                  <code>{jsonParseError}</code>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.modalActions}>
+              <button className={styles.btnSecondary} onClick={() => setGeneratedPrompt('')}>Back</button>
+              <button 
+                className={styles.btnPrimary} 
+                onClick={parseSmartImportJson}
+                disabled={!jsonInput.trim()}
+              >
+                Preview Problems
+              </button>
+            </div>
+          </div>
+        ) : (
+          // Step 3: Preview problems before saving
+          <div className={styles.previewStep}>
+            <div className={styles.previewHeader}>
+              <h4>Preview {previewProblems.length} Problem{previewProblems.length !== 1 ? 's' : ''}</h4>
+              <p>Review these problems before saving to your problem bank</p>
+            </div>
+
+            <div className={styles.previewList}>
+              {previewProblems.map((problem, index) => (
+                <div key={index} className={styles.previewCard}>
+                  <div className={styles.previewCardHeader}>
+                    <h5>#{index + 1}: {problem.title}</h5>
+                    <span className={`${styles.difficultyBadge} ${getDifficultyClass(problem.difficulty)}`}>
+                      {problem.difficulty}
+                    </span>
+                  </div>
+                  <p className={styles.previewDescription}>{problem.description.substring(0, 200)}{problem.description.length > 200 ? '...' : ''}</p>
+                  <div className={styles.previewMeta}>
+                    <span><Tag size={14} /> {problem.topics.length} topic{problem.topics.length !== 1 ? 's' : ''}</span>
+                    <span><FileText size={14} /> {problem.exampleIO.length} example{problem.exampleIO.length !== 1 ? 's' : ''}</span>
+                    <span><CheckCircle size={14} /> {problem.openTestCases.length} open tests</span>
+                    <span><Lock size={14} /> {problem.hiddenTestCases.length} hidden tests</span>
+                  </div>
+                  <div className={styles.previewTopics}>
+                    {problem.topics.map((topic, i) => (
+                      <span key={i} className={styles.topicTag}>{topic}</span>
+                    ))}
+                  </div>
+                  <div className={styles.previewActions}>
+                    <button 
+                      className={styles.btnPreviewView} 
+                      onClick={() => openPreviewProblemInForm(problem)}
+                    >
+                      <Eye size={16} /> View & Edit
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {jsonParseError && (
+              <div className={styles.warningBox}>
+                <strong><AlertTriangle size={16} /> Issues Found:</strong>
+                <pre>{jsonParseError}</pre>
+              </div>
+            )}
+
+            <div className={styles.modalActions}>
+              <button className={styles.btnSecondary} onClick={() => setPreviewProblems([])} disabled={saving}>
+                Edit JSON
+              </button>
+              <button 
+                className={styles.btnPrimary} 
+                onClick={saveImportedProblems}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : `Save All ${previewProblems.length} Problem${previewProblems.length !== 1 ? 's' : ''}`}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className={styles.wrapper}>
       <AdminNavbar />
       <div className={styles.content}>
         {isFormOpen ? renderFormView() : renderListView()}
       </div>
+      {showSmartImport && renderSmartImport()}
     </div>
   );
 }
