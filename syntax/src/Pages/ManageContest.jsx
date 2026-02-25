@@ -514,7 +514,7 @@ function ManageContest() {
         Email: user.userEmail,
         Department: user.userDepartment,
         Year: user.userYear,
-        Section: user.userSection,
+        College: user.userSection,
         Score: user.points,
         "Submitted At": new Date(user.submittedAt).toLocaleString(),
       }));
@@ -1034,7 +1034,7 @@ function ManageContest() {
                             <th>Email</th>
                             <th>Department</th>
                             <th>Year</th>
-                            <th>Section</th>
+                            <th>College</th>
                             <th>
                               <button
                                 onClick={() => requestSort("points")}

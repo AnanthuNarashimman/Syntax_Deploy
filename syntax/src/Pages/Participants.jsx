@@ -471,7 +471,7 @@ function Participants() {
         if (!formData.email.trim()) errors.email = 'Email is required';
         if (!formData.department.trim()) errors.department = 'Department is required';
         if (!formData.year.trim()) errors.year = 'Year is required';
-        if (!formData.section.trim()) errors.section = 'Section is required';
+        if (!formData.section.trim()) errors.section = 'College is required';
         if (!formData.semester.trim()) errors.semester = 'Semester is required';
         if (!formData.batch.trim()) errors.batch = 'Batch is required';
 
@@ -806,14 +806,14 @@ function Participants() {
                                 </div>
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <p>Section *</p>
+                                        <p>College *</p>
                                         <input
                                             type="text"
                                             name="section"
                                             value={formData.section}
                                             onChange={handleInputChange}
                                             className={formErrors.section ? 'error' : ''}
-                                            placeholder="e.g., A, B, C"
+                                            placeholder="e.g., Engineering College"
                                         />
                                         {formErrors.section && <span className="error-message">{formErrors.section}</span>}
                                     </div>
@@ -959,7 +959,7 @@ function Participants() {
                                             <span>{selectedStudent.year}</span>
                                         </div>
                                         <div className="detail-item">
-                                            <span className="detail-label">Section:</span>
+                                            <span className="detail-label">College:</span>
                                             <span>{selectedStudent.section}</span>
                                         </div>
                                         <div className="detail-item">
@@ -1244,7 +1244,7 @@ function Participants() {
                         <div className="table-col-name-email">Name / Email</div>
                         <div className="table-col-dept">Department</div>
                         <div className="table-col-year">Year</div>
-                        <div className="table-col-section">Section</div>
+                        <div className="table-col-section">College</div>
                         <div className="table-col-semester">Semester</div>
                         <div className="table-col-status">Status</div>
                         <div className="table-col-actions">Actions</div>
