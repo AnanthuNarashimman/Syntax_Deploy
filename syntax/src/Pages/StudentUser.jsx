@@ -312,7 +312,7 @@ const StudentUser = () => {
               </div>
               <div className={styles.detailItem}>
                 <User size={16} />
-                <span className={styles.detailLabel}>Section:</span>
+                <span className={styles.detailLabel}>College:</span>
                 <span className={styles.detailValue}>
                   {studentData.section}
                 </span>
