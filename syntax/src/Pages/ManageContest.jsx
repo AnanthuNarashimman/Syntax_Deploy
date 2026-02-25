@@ -68,6 +68,7 @@ function ManageContest() {
   // Reopen contest confirmation state
   const [showReopenConfirm, setShowReopenConfirm] = useState(false);
   const [reopenData, setReopenData] = useState(null);
+  const [reopeningUserId, setReopeningUserId] = useState(null);
 
   // Use ContestContext
   const {
@@ -600,6 +601,7 @@ function ManageContest() {
 
     try {
       setShowReopenConfirm(false);
+      setReopeningUserId(userId);
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/reopen-contest`, {
         method: 'POST',
         headers: {
@@ -627,6 +629,7 @@ function ManageContest() {
       showError(`Failed to reopen contest: ${error.message}`);
     } finally {
       setReopenData(null);
+      setReopeningUserId(null);
     }
   };
 
@@ -1106,10 +1109,20 @@ function ManageContest() {
                                       selectedEventId
                                     )
                                   }
+                                  disabled={reopeningUserId === user.userId}
                                   title="Reopen contest for this student"
                                 >
-                                  <Activity size={16} />
-                                  Reopen
+                                  {reopeningUserId === user.userId ? (
+                                    <>
+                                      <div className="spinner-small"></div>
+                                      Reopening...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Activity size={16} />
+                                      Reopen
+                                    </>
+                                  )}
                                 </button>
                               </td>
                             </tr>

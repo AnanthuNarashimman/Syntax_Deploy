@@ -43,6 +43,23 @@ const getStudentSeed = (quizId) => {
   return parseInt(seed, 10);
 };
 
+// Helper function to render text with **highlight** markers
+const renderHighlightedText = (text) => {
+  if (!text) return null;
+  
+  // Split by ** markers and render highlighted parts
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      // Remove ** and render as highlighted
+      const content = part.slice(2, -2);
+      return <mark key={index} className={styles.highlightedText}>{content}</mark>;
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
+
 const StudentQuiz = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -915,7 +932,7 @@ const StudentQuiz = () => {
                   Q{currentQuestion + 1}
                 </div>
                 <div className={styles.questionText}>
-                  {currentQ.question}
+                  {renderHighlightedText(currentQ.question)}
                 </div>
               </div>
 

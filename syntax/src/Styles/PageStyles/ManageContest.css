@@ -1339,6 +1339,17 @@
   margin-right: 8px;
 }
 
+.spinner-small {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 6px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -1697,6 +1708,18 @@
 
 .btn-reopen:active {
   transform: translateY(0);
+}
+
+.btn-reopen:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.btn-reopen:disabled:hover {
+  transform: none;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 /* Proctoring Logs Modal */

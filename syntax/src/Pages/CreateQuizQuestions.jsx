@@ -55,6 +55,9 @@ function CreateQuizQuestions() {
     const [smartImportData, setSmartImportData] = useState({
         topic: '',
         numberOfQuestions: 10,
+        difficulty: 'Medium',
+        mixDifficulty: false,
+        includeCombinedQuestions: false,
         focusSubtopics: '',
         avoidSubtopics: ''
     });
@@ -372,17 +375,47 @@ function CreateQuizQuestions() {
         XLSX.writeFile(wb, 'quiz_questions_template.xlsx');
     };
 
+    // ============== HIGHLIGHT HELPER FUNCTIONS ==============
+    
+    // Parse text with **highlight** markers and return JSX
+    const renderHighlightedText = (text) => {
+        if (!text) return null;
+        
+        // Split by ** markers and render highlighted parts
+        const parts = text.split(/(\*\*.*?\*\*)/g);
+        
+        return parts.map((part, index) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+                // Remove ** and render as highlighted
+                const content = part.slice(2, -2);
+                return <mark key={index} className="highlighted-text">{content}</mark>;
+            }
+            return <span key={index}>{part}</span>;
+        });
+    };
+
     // ============== SMART IMPORT FUNCTIONS ==============
 
     const generatePrompt = () => {
-        const { topic, numberOfQuestions, focusSubtopics, avoidSubtopics } = smartImportData;
+        const { topic, numberOfQuestions, difficulty, mixDifficulty, includeCombinedQuestions, focusSubtopics, avoidSubtopics } = smartImportData;
 
         if (!topic.trim()) {
             showError('Please enter a topic');
             return;
         }
 
+        const difficultyInstruction = mixDifficulty
+            ? 'Mix of Easy (basic concepts), Medium (intermediate understanding), and Hard (advanced/complex) questions'
+            : `All questions should be ${difficulty} level`;
+
+        const combinedQuestionsInstruction = includeCombinedQuestions 
+            ? 'Include some questions that combine multiple concepts from the topic (e.g., questions that require understanding of 2-3 related concepts together)'
+            : 'Focus on individual concepts within the topic';
+
         const prompt = `Generate exactly ${numberOfQuestions} multiple choice quiz questions about "${topic}".
+
+DIFFICULTY LEVEL: ${difficultyInstruction}
+QUESTION TYPE: ${combinedQuestionsInstruction}
 
 ${focusSubtopics.trim() ? `FOCUS on these subtopics: ${focusSubtopics}` : ''}
 ${avoidSubtopics.trim() ? `AVOID these subtopics: ${avoidSubtopics}` : ''}
@@ -393,14 +426,27 @@ CRITICAL INSTRUCTIONS:
 3. Format your response as: \`\`\`json followed by the JSON array, then closing \`\`\`
 4. Each question must have exactly 4 unique options
 5. The correctAnswer must exactly match one of the options word-for-word
+6. Use **double asterisks** to highlight important keywords or phrases in questions (e.g., "What is the **capital** of France?")
+7. Highlight key terms, technical concepts, or critical parts that students should focus on
 
 Required JSON format inside code block:
 \`\`\`json
 [
   {
-    "question": "Your question text here?",
+    "question": "Your question text with **highlighted** important parts?",
     "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
     "correctAnswer": "Option B text"
+  }
+]
+\`\`\`
+
+Example with highlighting:
+\`\`\`json
+[
+  {
+    "question": "What is the **time complexity** of binary search in a sorted array?",
+    "options": ["O(n)", "O(log n)", "O(n²)", "O(1)"],
+    "correctAnswer": "O(log n)"
   }
 ]
 \`\`\`
@@ -564,6 +610,15 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
             <div className="question-card">
                 <div className="question-input-group">
                     <label htmlFor="question">Question</label>
+                    {/* Preview with highlighting if markers exist */}
+                    {questions[currentQuestion]?.question?.includes('**') && (
+                        <div className="question-preview">
+                            <div className="preview-label">Preview:</div>
+                            <div className="preview-content">
+                                {renderHighlightedText(questions[currentQuestion]?.question)}
+                            </div>
+                        </div>
+                    )}
                     <textarea
                         id="question"
                         value={questions[currentQuestion]?.question || ''}
@@ -572,6 +627,9 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
                         rows="3"
                         required
                     />
+                    <div className="input-hint">
+                        💡 Tip: Use **text** to highlight important parts
+                    </div>
                 </div>
 
                 <div className="options-container">
@@ -760,8 +818,60 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
                                 min="1"
                                 max="50"
                                 value={smartImportData.numberOfQuestions}
-                                onChange={(e) => setSmartImportData({ ...smartImportData, numberOfQuestions: parseInt(e.target.value) || 10 })}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow empty string for deletion, otherwise parse the number
+                                    setSmartImportData({ 
+                                        ...smartImportData, 
+                                        numberOfQuestions: value === '' ? '' : parseInt(value) || 1 
+                                    });
+                                }}
+                                onBlur={(e) => {
+                                    // On blur, ensure we have a valid number
+                                    if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                                        setSmartImportData({ ...smartImportData, numberOfQuestions: 10 });
+                                    }
+                                }}
                             />
+                        </div>
+
+                        <div className="input-group">
+                            <label htmlFor="difficulty">Difficulty Level *</label>
+                            <select
+                                id="difficulty"
+                                value={smartImportData.difficulty}
+                                onChange={(e) => setSmartImportData({ ...smartImportData, difficulty: e.target.value })}
+                                className="difficulty-select"
+                                disabled={smartImportData.mixDifficulty}
+                            >
+                                <option value="Easy">Easy - Basic concepts</option>
+                                <option value="Medium">Medium - Intermediate level</option>
+                                <option value="Hard">Hard - Advanced/Complex</option>
+                            </select>
+                        </div>
+
+                        <div className="input-group checkbox-group">
+                            <label className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={smartImportData.mixDifficulty}
+                                    onChange={(e) => setSmartImportData({ ...smartImportData, mixDifficulty: e.target.checked })}
+                                />
+                                <span>Mix difficulty levels</span>
+                            </label>
+                            <p className="checkbox-hint">Generate questions with varying difficulty - Easy, Medium, and Hard</p>
+                        </div>
+
+                        <div className="input-group checkbox-group">
+                            <label className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={smartImportData.includeCombinedQuestions}
+                                    onChange={(e) => setSmartImportData({ ...smartImportData, includeCombinedQuestions: e.target.checked })}
+                                />
+                                <span>Include combined topic questions</span>
+                            </label>
+                            <p className="checkbox-hint">Questions that test understanding of multiple related concepts together</p>
                         </div>
 
                         <div className="input-group">
@@ -923,6 +1033,15 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
             <div className="question-card">
                 <div className="question-input-group">
                     <label htmlFor="question">Question</label>
+                    {/* Preview with highlighting if markers exist */}
+                    {questions[currentQuestion]?.question?.includes('**') && (
+                        <div className="question-preview">
+                            <div className="preview-label">Preview:</div>
+                            <div className="preview-content">
+                                {renderHighlightedText(questions[currentQuestion]?.question)}
+                            </div>
+                        </div>
+                    )}
                     <textarea
                         id="question"
                         value={questions[currentQuestion]?.question || ''}
@@ -931,6 +1050,9 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
                         rows="3"
                         required
                     />
+                    <div className="input-hint">
+                        💡 Tip: Use **text** to highlight important parts
+                    </div>
                 </div>
 
                 <div className="options-container">
