@@ -107,6 +107,7 @@ function Participants() {
     const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
     const [duplicateData, setDuplicateData] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
+    const [deletingStudentId, setDeletingStudentId] = useState(null);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -218,6 +219,7 @@ function Participants() {
         setConfirmMessage('Are you sure you want to delete this student? This action cannot be undone.');
         setConfirmAction(() => async () => {
             try {
+                setDeletingStudentId(studentId);
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/students/${studentId}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
@@ -235,6 +237,8 @@ function Participants() {
             } catch (error) {
                 console.error('Error deleting student:', error);
                 showError(error.message || 'Failed to delete student. Please try again.');
+            } finally {
+                setDeletingStudentId(null);
             }
             setShowConfirmModal(false);
         });
@@ -1303,8 +1307,13 @@ function Participants() {
                                             className="participant-action-btn delete-btn"
                                             onClick={() => handleDeleteStudent(participant.id)}
                                             title="Delete Student"
+                                            disabled={deletingStudentId === participant.id}
                                         >
-                                            <Trash2 className="action-icon" />
+                                            {deletingStudentId === participant.id ? (
+                                                <div className="btn-spinner-small"></div>
+                                            ) : (
+                                                <Trash2 className="action-icon" />
+                                            )}
                                         </button>
                                         <button
                                             className={`participant-action-btn dropdown-btn ${expandedRows.includes(participant.id) ? 'expanded' : ''}`}
