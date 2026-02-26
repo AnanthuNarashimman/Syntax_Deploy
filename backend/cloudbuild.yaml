@@ -27,4 +27,4 @@ images:
   - 'gcr.io/$PROJECT_ID/syntax-backend:$COMMIT_SHA'
 
 options:
-  logging: CLOUD_LOGGING_ONLY
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
