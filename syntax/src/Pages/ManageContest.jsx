@@ -624,6 +624,9 @@ function ManageContest() {
 
       // Refresh the leaderboard data to remove the reopened user
       handleViewParticipants(contestId, selectedEvent?.eventTitle);
+      
+      // Refresh events to update participant count in cards
+      await fetchEvents();
     } catch (error) {
       console.error('Error reopening contest:', error);
       showError(`Failed to reopen contest: ${error.message}`);
