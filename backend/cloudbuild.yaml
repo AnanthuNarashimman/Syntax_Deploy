@@ -16,7 +16,7 @@ steps:
       - 'deploy'
       - 'syntax-backend'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/syntax-backend:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/syntax-backend:$COMMIT_SHAsdfdf'
       - '--region'
       - 'us-central1'
       - '--platform'
