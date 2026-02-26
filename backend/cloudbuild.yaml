@@ -3,14 +3,11 @@ steps:
   # Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/syntax-backend:$COMMIT_SHA', '.']
+    dir: 'backend'
   
   # Push the image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/syntax-backend:$COMMIT_SHA']
-  
-  # INTENTIONAL ERROR - Invalid step name to test if trigger reads updated file
-  - name: 'this-builder-does-not-exist-testing-12345'
-    args: ['echo', 'If you see this error, the trigger is reading the updated file!']
   
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -31,4 +28,4 @@ images:
   - 'gcr.io/$PROJECT_ID/syntax-backend:$COMMIT_SHA'
 
 options:
-  logging: CLOUD_LOGGING_ONLY
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
