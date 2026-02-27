@@ -408,20 +408,34 @@ const bulkStudentAdd = async (req, res) => {
       });
     }
 
-    // Validate required columns
-    const requiredColumns = [
-      "Name",
-      "Email",
-      "Department",
-      "Year",
-      "Section",
-      "Semester",
-      "Batch",
-    ];
+    // Create case-insensitive column mapping
     const firstRow = data[0];
-    const missingColumns = requiredColumns.filter(
-      (col) => !(col in firstRow)
-    );
+    const columnMapping = {};
+    const requiredColumns = {
+      'name': 'Name',
+      'email': 'Email',
+      'department': 'Department',
+      'year': 'Year',
+      'college': 'COLLEGE',
+      'semester': 'Semester',
+      'batch': 'Batch'
+    };
+
+    // Map actual Excel columns to expected columns (case-insensitive)
+    Object.keys(firstRow).forEach(col => {
+      const lowerCol = col.toLowerCase();
+      if (lowerCol in requiredColumns) {
+        columnMapping[lowerCol] = col;
+      }
+    });
+
+    // Validate all required columns exist
+    const missingColumns = [];
+    Object.keys(requiredColumns).forEach(key => {
+      if (!(key in columnMapping)) {
+        missingColumns.push(requiredColumns[key]);
+      }
+    });
 
     if (missingColumns.length > 0) {
       console.log('ERROR: Missing columns:', missingColumns);
@@ -444,15 +458,24 @@ const bulkStudentAdd = async (req, res) => {
       const rowNumber = i + 2; // +2 because Excel rows start at 1 and we have header
 
       try {
+        // Get values using case-insensitive column mapping
+        const name = row[columnMapping['name']];
+        const email = row[columnMapping['email']];
+        const department = row[columnMapping['department']];
+        const year = row[columnMapping['year']];
+        const college = row[columnMapping['college']];
+        const semester = row[columnMapping['semester']];
+        const batch = row[columnMapping['batch']];
+
         // Validate required fields
         if (
-          !row.Name ||
-          !row.Email ||
-          !row.Department ||
-          !row.Year ||
-          !row.Section ||
-          !row.Semester ||
-          !row.Batch
+          !name ||
+          !email ||
+          !department ||
+          !year ||
+          !college ||
+          !semester ||
+          !batch
         ) {
           criticalErrors.push(`Row ${rowNumber}: Missing required fields`);
           console.log(`Row ${rowNumber}: Missing required fields`);
@@ -461,38 +484,38 @@ const bulkStudentAdd = async (req, res) => {
 
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(row.Email)) {
-          criticalErrors.push(`Row ${rowNumber}: Invalid email format - ${row.Email}`);
-          console.log(`Row ${rowNumber}: Invalid email format - ${row.Email}`);
+        if (!emailRegex.test(email)) {
+          criticalErrors.push(`Row ${rowNumber}: Invalid email format - ${email}`);
+          console.log(`Row ${rowNumber}: Invalid email format - ${email}`);
           continue;
         }
 
         // Check if email already exists
         const existingUser = await usersRef
-          .where("email", "==", row.Email.trim().toLowerCase())
+          .where("email", "==", email.trim().toLowerCase())
           .limit(1)
           .get();
         if (!existingUser.empty) {
-          duplicateErrors.push({ row: rowNumber, email: row.Email.trim(), name: row.Name.trim() });
-          console.log(`Row ${rowNumber}: Email ${row.Email} already exists`);
+          duplicateErrors.push({ row: rowNumber, email: email.trim(), name: name.trim() });
+          console.log(`Row ${rowNumber}: Email ${email} already exists`);
           continue;
         }
 
         // Generate custom password in format "Name@YearSection" (same as single add)
-        const customPassword = `${row.Name.trim().replace(/\s/g, "")}@${row.Year.toString().trim()}${row.Section.trim()}`;
+        const customPassword = `${name.trim().replace(/\s/g, "")}@${year.toString().trim()}${college.trim()}`;
 
         // Hash the custom password
         const hashedPassword = await passwordUtils.hashPasswords(customPassword);
 
         // Create student document
         const studentData = {
-          userName: row.Name.trim(),
-          email: row.Email.trim().toLowerCase(),
-          department: row.Department.trim(),
-          year: parseInt(row.Year.toString().trim()),
-          section: row.Section.trim(),
-          semester: parseInt(row.Semester.toString().trim()),
-          batch: row.Batch.trim(),
+          userName: name.trim(),
+          email: email.trim().toLowerCase(),
+          department: department.trim(),
+          year: parseInt(year.toString().trim()),
+          section: college.trim(),
+          semester: parseInt(semester.toString().trim()),
+          batch: batch.trim(),
           hashedPassword: hashedPassword,
           isStudent: true,
           isAdmin: false,
@@ -507,7 +530,7 @@ const bulkStudentAdd = async (req, res) => {
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         };
 
-        console.log(`Row ${rowNumber}: Adding student ${row.Name} (${row.Email})`);
+        console.log(`Row ${rowNumber}: Adding student ${name} (${email})`);
         const docRef = await usersRef.add(studentData);
         console.log(`Row ${rowNumber}: Successfully added with ID ${docRef.id}`);
 

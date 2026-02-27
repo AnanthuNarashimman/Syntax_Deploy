@@ -296,6 +296,27 @@ function Codeground() {
       <StudentNavbar />
       <div className={styles['codeground-page']}>
         {alert.show && <CustomAlert type={alert.type} message={alert.message} />}
+        
+        {/* Temporary Pause Notice */}
+        <div style={{
+          backgroundColor: '#fff3cd',
+          borderLeft: '4px solid #ffc107',
+          padding: '15px 20px',
+          margin: '20px 20px 0 20px',
+          borderRadius: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <XCircle size={20} color="#856404" />
+          <div>
+            <strong style={{ color: '#856404' }}>Notice:</strong>
+            <span style={{ color: '#856404', marginLeft: '8px' }}>
+              Code execution functionality is temporarily paused for maintenance. You can still write and edit code, but running code is currently unavailable.
+            </span>
+          </div>
+        </div>
+
         <div className={styles['main-content']}>
           {/* --- Left Panel: Code Editor --- */}
           <div className={styles['editor-panel']}>
@@ -325,9 +346,10 @@ function Codeground() {
                 <button 
                   className={`${styles['action-button']} ${styles.run}`} 
                   onClick={handleRun} 
-                  disabled={isExecuting}
+                  disabled={true}
+                  title="Code execution temporarily paused"
                 >
-                  <Play size={16} /> {isExecuting ? 'Running...' : 'Run Code'}
+                  <Play size={16} /> Temporarily Paused
                 </button>
               </div>
             </div>
