@@ -1052,7 +1052,7 @@ function Participants() {
                                         onChange={handleFileUpload}
                                         className="file-input"
                                     />
-                                    <p className="file-help">Please ensure your Excel file has columns: Name, Email, Department, Year, Section, Semester, Batch</p>
+                                    <p className="file-help">Please ensure your Excel file has columns: Name, Email, Department, Year, COLLEGE, Semester, Batch (column names are case-insensitive)</p>
                                 </div>
                                 
                                 {bulkImportPreview.length > 0 && (
