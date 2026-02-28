@@ -807,8 +807,8 @@ const StudentQuiz = () => {
     );
   }
 
-  // Main quiz view
-  if (questions.length === 0) {
+  // Main quiz view - only show "no questions" if quiz truly has no questions (not just waiting for shuffle)
+  if (questions.length === 0 && (!quizData?.questions || quizData.questions.length === 0)) {
     return (
       <div className={styles.studentQuiz}>
         <StudentNavbar />
