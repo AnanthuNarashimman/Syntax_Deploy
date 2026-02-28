@@ -325,6 +325,47 @@
   font-size: 1rem;
 }
 
+/* Mark for Review */
+.markForReviewContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.markForReviewButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: 1.5px solid #d97706;
+  background: white;
+  color: #d97706;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.markForReviewButton:hover {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.markForReviewButton.marked {
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+}
+
+.markForReviewButton.marked:hover {
+  background: #d97706;
+  border-color: #d97706;
+}
+
 /* Navigation Controls */
 .navigationControls {
   display: flex;
@@ -727,6 +768,11 @@
   background: #e5e7eb;
 }
 
+.legendDot.markedForReview {
+  background: #f59e0b;
+  border: 2px solid #fbbf24;
+}
+
 .questionsGrid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -812,6 +858,26 @@
 .questionNumberBtn.unansweredQuestion:hover {
   background: #f9fafb;
   border-color: #d1d5db;
+}
+
+.questionNumberBtn.markedForReviewQuestion {
+  background: #fbbf24;
+  color: white;
+  border-color: #fbbf24;
+  position: relative;
+}
+
+.questionNumberBtn.markedForReviewQuestion:hover {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.flagIcon {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .navigationSummary {

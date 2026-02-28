@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Clock, CheckCircle, Home, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Home, AlertCircle, Flag } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import styles from '../Styles/PageStyles/StudentQuiz.module.css';
 import axios from 'axios';
@@ -76,6 +76,7 @@ const StudentQuiz = () => {
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(!navigationQuizData);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [markedForReview, setMarkedForReview] = useState({}); // Track questions marked for review
   const [showResults, setShowResults] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [quizResults, setQuizResults] = useState(null);
@@ -423,6 +424,12 @@ const StudentQuiz = () => {
       setSelectedAnswers(JSON.parse(savedAnswers));
     }
 
+    // Load saved marked for review questions
+    const savedMarkedForReview = localStorage.getItem(`quiz_${quizData.id}_marked`);
+    if (savedMarkedForReview) {
+      setMarkedForReview(JSON.parse(savedMarkedForReview));
+    }
+
     // Load saved current question
     const savedQuestion = localStorage.getItem(`quiz_${quizData.id}_current`);
     if (savedQuestion) {
@@ -516,13 +523,20 @@ const StudentQuiz = () => {
     return () => clearInterval(countdownTimer);
   }, [showAutoSubmitModal, autoSubmitCountdown]);
 
-  // Save answers to localStorage whenever they change
+  // Save answers and marked for review to localStorage whenever they change
   useEffect(() => {
     if (quizData && Object.keys(selectedAnswers).length > 0) {
       localStorage.setItem(`quiz_${quizData.id}_answers`, JSON.stringify(selectedAnswers));
       localStorage.setItem(`quiz_${quizData.id}_current`, currentQuestion.toString());
     }
   }, [selectedAnswers, currentQuestion, quizData]);
+
+  // Save marked for review to localStorage whenever it changes
+  useEffect(() => {
+    if (quizData && Object.keys(markedForReview).length > 0) {
+      localStorage.setItem(`quiz_${quizData.id}_marked`, JSON.stringify(markedForReview));
+    }
+  }, [markedForReview, quizData]);
 
   // Get questions array - use shuffled questions for display
   const questions = shuffledQuestions.length > 0 ? shuffledQuestions : (quizData?.questions || []);
@@ -560,6 +574,20 @@ const StudentQuiz = () => {
 
   const handleQuestionJump = (questionIndex) => {
     setCurrentQuestion(questionIndex);
+  };
+
+  const handleToggleMarkForReview = (shuffledIndex) => {
+    // Map shuffled index to original index
+    const originalIndex = shuffleMap.length > 0 ? shuffleMap[shuffledIndex] : shuffledIndex;
+    setMarkedForReview(prev => {
+      const newMarked = { ...prev };
+      if (newMarked[originalIndex]) {
+        delete newMarked[originalIndex];
+      } else {
+        newMarked[originalIndex] = true;
+      }
+      return newMarked;
+    });
   };
 
   // Internal submit handler that can be called by both user and proctoring auto-submit
@@ -626,9 +654,10 @@ const StudentQuiz = () => {
       // Store the quiz results
       setQuizResults(response.data);
 
-      // Clear localStorage (quiz answers and shuffle seed)
+      // Clear localStorage (quiz answers, marked for review, and shuffle seed)
       localStorage.removeItem(`quiz_${quizData.id}_answers`);
       localStorage.removeItem(`quiz_${quizData.id}_current`);
+      localStorage.removeItem(`quiz_${quizData.id}_marked`);
       localStorage.removeItem(`quiz_shuffle_seed_${quizData.id}`);
 
       // Clear proctoring data from localStorage
@@ -656,9 +685,10 @@ const StudentQuiz = () => {
       // Fallback to local calculation if API fails
       alert('There was an error submitting your quiz. Showing local results.');
 
-      // Clear localStorage (quiz answers and shuffle seed)
+      // Clear localStorage (quiz answers, marked for review, and shuffle seed)
       localStorage.removeItem(`quiz_${quizData.id}_answers`);
       localStorage.removeItem(`quiz_${quizData.id}_current`);
+      localStorage.removeItem(`quiz_${quizData.id}_marked`);
       localStorage.removeItem(`quiz_shuffle_seed_${quizData.id}`);
 
       // Clear proctoring data from localStorage
@@ -962,6 +992,23 @@ const StudentQuiz = () => {
                 })}
               </div>
 
+              {/* Mark for Review Button */}
+              <div className={styles.markForReviewContainer}>
+                <button
+                  className={`${styles.markForReviewButton} ${
+                    markedForReview[shuffleMap.length > 0 ? shuffleMap[currentQuestion] : currentQuestion]
+                      ? styles.marked
+                      : ''
+                  }`}
+                  onClick={() => handleToggleMarkForReview(currentQuestion)}
+                >
+                  <Flag size={18} />
+                  {markedForReview[shuffleMap.length > 0 ? shuffleMap[currentQuestion] : currentQuestion]
+                    ? 'Marked for Review'
+                    : 'Mark for Review'}
+                </button>
+              </div>
+
               {/* Navigation Controls */}
               <div className={styles.navigationControls}>
                 <button
@@ -1003,6 +1050,10 @@ const StudentQuiz = () => {
                     <div className={`${styles.legendDot} ${styles.unanswered}`}></div>
                     <span>Unanswered</span>
                   </div>
+                  <div className={styles.legendItem}>
+                    <div className={`${styles.legendDot} ${styles.markedForReview}`}></div>
+                    <span>Review</span>
+                  </div>
                 </div>
               </div>
               
@@ -1011,21 +1062,25 @@ const StudentQuiz = () => {
                   // Get the original index to check if this question is answered
                   const originalIndex = shuffleMap.length > 0 ? shuffleMap[index] : index;
                   const isAnswered = selectedAnswers[originalIndex] !== undefined;
+                  const isMarked = markedForReview[originalIndex];
 
                   return (
                     <button
                       key={index}
                       className={`${styles.questionNumberBtn} ${
                         index === currentQuestion ? styles.currentQuestion :
+                        isMarked ? styles.markedForReviewQuestion :
                         isAnswered ? styles.answeredQuestion : styles.unansweredQuestion
                       }`}
                       onClick={() => handleQuestionJump(index)}
                       title={`Question ${index + 1} ${
                         index === currentQuestion ? '(Current)' :
+                        isMarked ? '(Marked for Review)' :
                         isAnswered ? '(Answered)' : '(Unanswered)'
                       }`}
                     >
                       {index + 1}
+                      {isMarked && <Flag size={10} className={styles.flagIcon} />}
                     </button>
                   );
                 })}
@@ -1043,6 +1098,10 @@ const StudentQuiz = () => {
                 <div className={styles.summaryItem}>
                   <span className={styles.summaryLabel}>Remaining:</span>
                   <span className={styles.summaryValue}>{questions.length - Object.keys(selectedAnswers).length}</span>
+                </div>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Marked for Review:</span>
+                  <span className={styles.summaryValue}>{Object.keys(markedForReview).length}</span>
                 </div>
               </div>
 
