@@ -236,16 +236,16 @@ function CreateQuizQuestions() {
     const isCurrentQuestionValid = () => {
         const current = questions[currentQuestion];
         return current &&
-            current.question.trim() !== '' &&
-            current.options.every(option => option.trim() !== '') &&
-            current.correctAnswer.trim() !== '';
+            String(current.question).trim() !== '' &&
+            current.options.every(option => String(option).trim() !== '') &&
+            String(current.correctAnswer).trim() !== '';
     };
 
     const areAllQuestionsValid = () => {
         return questions.every(q =>
-            q.question.trim() !== '' &&
-            q.options.every(option => option.trim() !== '') &&
-            q.correctAnswer.trim() !== ''
+            String(q.question).trim() !== '' &&
+            q.options.every(option => String(option).trim() !== '') &&
+            String(q.correctAnswer).trim() !== ''
         );
     };
 
@@ -297,12 +297,12 @@ function CreateQuizQuestions() {
                 data.forEach((row, index) => {
                     const question = {
                         id: index + 1,
-                        question: row['Question'] || row['question'] || row['QUESTION'] || '',
+                        question: String(row['Question'] || row['question'] || row['QUESTION'] || ''),
                         options: [
-                            row['Option A'] || row['option_a'] || row['Option a'] || row['A'] || '',
-                            row['Option B'] || row['option_b'] || row['Option b'] || row['B'] || '',
-                            row['Option C'] || row['option_c'] || row['Option c'] || row['C'] || '',
-                            row['Option D'] || row['option_d'] || row['Option d'] || row['D'] || ''
+                            String(row['Option A'] || row['option_a'] || row['Option a'] || row['A'] || ''),
+                            String(row['Option B'] || row['option_b'] || row['Option b'] || row['B'] || ''),
+                            String(row['Option C'] || row['option_c'] || row['Option c'] || row['C'] || ''),
+                            String(row['Option D'] || row['option_d'] || row['Option d'] || row['D'] || '')
                         ],
                         correctAnswer: ''
                     };
@@ -320,10 +320,10 @@ function CreateQuizQuestions() {
                     }
 
                     // Validate
-                    if (!question.question.trim()) {
+                    if (!String(question.question).trim()) {
                         errors.push(`Row ${index + 2}: Missing question text`);
                     }
-                    const filledOptions = question.options.filter(o => o && o.toString().trim());
+                    const filledOptions = question.options.filter(o => o && String(o).trim());
                     if (filledOptions.length < 4) {
                         errors.push(`Row ${index + 2}: Missing some options (found ${filledOptions.length}/4)`);
                     }
@@ -502,13 +502,13 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
             // Validate and collect errors
             const errors = [];
             parsedQuestions.forEach((q, i) => {
-                if (!q.question.trim()) {
+                if (!String(q.question).trim()) {
                     errors.push(`Question ${i + 1}: Missing question text`);
                 }
                 if (q.options.length !== 4) {
                     errors.push(`Question ${i + 1}: Must have exactly 4 options`);
                 }
-                if (q.options.filter(o => o && o.trim()).length < 4) {
+                if (q.options.filter(o => o && String(o).trim()).length < 4) {
                     errors.push(`Question ${i + 1}: Some options are empty`);
                 }
                 if (!q.correctAnswer || !q.options.includes(q.correctAnswer)) {
@@ -658,7 +658,7 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
                     >
                         <option value="">Select correct answer</option>
                         {questions[currentQuestion]?.options.map((option, index) => (
-                            <option key={index} value={option} disabled={!option.trim()}>
+                            <option key={index} value={option} disabled={!String(option).trim()}>
                                 {String.fromCharCode(65 + index)}. {option}
                             </option>
                         ))}
@@ -682,9 +682,9 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
                         <div
                             key={index}
                             className={`question-indicator ${index === currentQuestion ? 'active' : ''} ${questions[index] &&
-                                questions[index].question.trim() &&
-                                questions[index].options.every(opt => opt.trim()) &&
-                                questions[index].correctAnswer.trim() ? 'completed' : ''
+                                String(questions[index].question).trim() &&
+                                questions[index].options.every(opt => String(opt).trim()) &&
+                                String(questions[index].correctAnswer).trim() ? 'completed' : ''
                                 }`}
                             onClick={() => setCurrentQuestion(index)}
                         >
@@ -1081,7 +1081,7 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
                     >
                         <option value="">Select correct answer</option>
                         {questions[currentQuestion]?.options.map((option, index) => (
-                            <option key={index} value={option} disabled={!option.trim()}>
+                            <option key={index} value={option} disabled={!String(option).trim()}>
                                 {String.fromCharCode(65 + index)}. {option}
                             </option>
                         ))}
@@ -1105,9 +1105,9 @@ Generate ${numberOfQuestions} questions now. Remember: wrap the JSON array in a 
                         <div
                             key={index}
                             className={`question-indicator ${index === currentQuestion ? 'active' : ''} ${questions[index] &&
-                                questions[index].question.trim() &&
-                                questions[index].options.every(opt => opt.trim()) &&
-                                questions[index].correctAnswer.trim() ? 'completed' : ''
+                                String(questions[index].question).trim() &&
+                                questions[index].options.every(opt => String(opt).trim()) &&
+                                String(questions[index].correctAnswer).trim() ? 'completed' : ''
                                 }`}
                             onClick={() => setCurrentQuestion(index)}
                         >
