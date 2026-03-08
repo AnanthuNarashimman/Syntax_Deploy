@@ -90,6 +90,7 @@ const StudentQuiz = () => {
   // Auto-submit modal state
   const [showAutoSubmitModal, setShowAutoSubmitModal] = useState(false);
   const [autoSubmitCountdown, setAutoSubmitCountdown] = useState(10);
+  const [autoSubmitError, setAutoSubmitError] = useState(false);
 
   // Server time tracking for secure timer (cannot be manipulated by user)
   const serverStartTimeRef = useRef(null);
@@ -499,6 +500,7 @@ const StudentQuiz = () => {
   // Auto-submit countdown effect
   useEffect(() => {
     if (!showAutoSubmitModal) return;
+    if (autoSubmitError) return; // Don't countdown if there's an error
 
     if (autoSubmitCountdown <= 0) {
       // Guard against duplicate submissions
@@ -508,11 +510,8 @@ const StudentQuiz = () => {
         return;
       }
 
-      // Time's up - submit now
-      setShowAutoSubmitModal(false);
-      if (submitHandlerRef.current) {
-        submitHandlerRef.current();
-      }
+      // Time's up - attempt auto-submit
+      handleAutoSubmit();
       return;
     }
 
@@ -521,7 +520,7 @@ const StudentQuiz = () => {
     }, 1000);
 
     return () => clearInterval(countdownTimer);
-  }, [showAutoSubmitModal, autoSubmitCountdown]);
+  }, [showAutoSubmitModal, autoSubmitCountdown, autoSubmitError]);
 
   // Save answers and marked for review to localStorage whenever they change
   useEffect(() => {
@@ -590,8 +589,22 @@ const StudentQuiz = () => {
     });
   };
 
+  // Auto-submit handler - tries to submit and shows error in modal if it fails
+  const handleAutoSubmit = async () => {
+    try {
+      await handleSubmitInternal(false, null, true); // clearData = true on success
+      setShowAutoSubmitModal(false);
+    } catch (error) {
+      console.error('Auto-submit failed:', error);
+      setAutoSubmitError(true);
+      isSubmittingRef.current = false; // Allow manual retry
+      setIsSubmitting(false);
+      // Keep modal open with error message and manual submit button
+    }
+  };
+
   // Internal submit handler that can be called by both user and proctoring auto-submit
-  const handleSubmitInternal = async (isDisqualified = false, disqualificationReason = null) => {
+  const handleSubmitInternal = async (isDisqualified = false, disqualificationReason = null, clearData = true) => {
     // Guard against duplicate submissions using ref (synchronous check)
     if (isSubmittingRef.current) {
       console.log('⏭️ Submission already in progress, skipping duplicate call');
@@ -654,70 +667,66 @@ const StudentQuiz = () => {
       // Store the quiz results
       setQuizResults(response.data);
 
-      // Clear localStorage (quiz answers, marked for review, and shuffle seed)
-      localStorage.removeItem(`quiz_${quizData.id}_answers`);
-      localStorage.removeItem(`quiz_${quizData.id}_current`);
-      localStorage.removeItem(`quiz_${quizData.id}_marked`);
-      localStorage.removeItem(`quiz_shuffle_seed_${quizData.id}`);
+      // Only clear data if specified (on successful submission)
+      if (clearData) {
+        // Clear localStorage (quiz answers, marked for review, and shuffle seed)
+        localStorage.removeItem(`quiz_${quizData.id}_answers`);
+        localStorage.removeItem(`quiz_${quizData.id}_current`);
+        localStorage.removeItem(`quiz_${quizData.id}_marked`);
+        localStorage.removeItem(`quiz_shuffle_seed_${quizData.id}`);
 
-      // Clear proctoring data from localStorage
-      localStorage.removeItem(`proctoring_violations_${quizData.id}`);
-      localStorage.removeItem(`proctoring_log_${quizData.id}`);
+        // Clear proctoring data from localStorage
+        localStorage.removeItem(`proctoring_violations_${quizData.id}`);
+        localStorage.removeItem(`proctoring_log_${quizData.id}`);
 
-      // Clear sessionStorage (quiz data for refresh persistence)
-      sessionStorage.removeItem('currentQuizData');
+        // Clear sessionStorage (quiz data for refresh persistence)
+        sessionStorage.removeItem('currentQuizData');
 
-      // Save final answers with timestamp
-      const finalAnswers = {
-        quizId: quizData.id,
-        answers: selectedAnswers,
-        submittedAt: new Date().toISOString(),
-        timeTaken: timeTakenSeconds,
-        validationResults: response.data
-      };
+        // Save final answers with timestamp
+        const finalAnswers = {
+          quizId: quizData.id,
+          answers: selectedAnswers,
+          submittedAt: new Date().toISOString(),
+          timeTaken: timeTakenSeconds,
+          validationResults: response.data
+        };
 
-      localStorage.setItem(`quiz_${quizData.id}_final`, JSON.stringify(finalAnswers));
+        localStorage.setItem(`quiz_${quizData.id}_final`, JSON.stringify(finalAnswers));
+      }
+      
       setShowResults(true);
       
     } catch (error) {
       console.error('Error submitting quiz:', error);
-      
-      // Fallback to local calculation if API fails
-      alert('There was an error submitting your quiz. Showing local results.');
-
-      // Clear localStorage (quiz answers, marked for review, and shuffle seed)
-      localStorage.removeItem(`quiz_${quizData.id}_answers`);
-      localStorage.removeItem(`quiz_${quizData.id}_current`);
-      localStorage.removeItem(`quiz_${quizData.id}_marked`);
-      localStorage.removeItem(`quiz_shuffle_seed_${quizData.id}`);
-
-      // Clear proctoring data from localStorage
-      localStorage.removeItem(`proctoring_violations_${quizData.id}`);
-      localStorage.removeItem(`proctoring_log_${quizData.id}`);
-
-      // Clear sessionStorage
-      sessionStorage.removeItem('currentQuizData');
-
-      const finalAnswers = {
-        quizId: quizData.id,
-        answers: selectedAnswers,
-        submittedAt: new Date().toISOString(),
-        timeTaken: timeTakenSeconds
-      };
-
-      localStorage.setItem(`quiz_${quizData.id}_final`, JSON.stringify(finalAnswers));
-      setShowResults(true);
-    } finally {
       setIsSubmitting(false);
-      // Note: Don't reset isSubmittingRef here - we want to prevent any further submissions
-      // once the quiz is submitted (even if there's an error, we show results)
+      isSubmittingRef.current = false;
+      
+      // Re-throw error so auto-submit handler can catch it
+      throw error;
     }
   };
 
   // Public submit handler (called by user clicking submit button)
   const handleSubmit = useCallback(async () => {
-    await handleSubmitInternal(false, null);
-  }, [quizData, questions, selectedAnswers, timeRemaining]);
+    try {
+      await handleSubmitInternal(false, null, true);
+    } catch (error) {
+      showError('Submission failed. Please check your connection and try again.');
+    }
+  }, [quizData, questions, selectedAnswers, timeRemaining, showError]);
+
+  // Manual submit from auto-submit modal (after auto-submit failed)
+  const handleManualSubmitFromModal = async () => {
+    setAutoSubmitError(false);
+    setAutoSubmitCountdown(10); // Reset for next time
+    try {
+      await handleSubmitInternal(false, null, true);
+      setShowAutoSubmitModal(false);
+    } catch (error) {
+      showError('Submission failed. Please check your connection and try again.');
+      setAutoSubmitError(true); // Show error again
+    }
+  };
 
   // Keep submitHandlerRef updated with latest handleSubmit (avoids stale closures in timer)
   useEffect(() => {
@@ -888,19 +897,42 @@ const StudentQuiz = () => {
         <div className={styles.autoSubmitModalOverlay}>
           <div className={styles.autoSubmitModal}>
             <div className={styles.autoSubmitIcon}>
-              <Clock size={48} />
+              {autoSubmitError ? <AlertCircle size={48} color="#ef4444" /> : <Clock size={48} />}
             </div>
-            <h2 className={styles.autoSubmitTitle}>Time's Up!</h2>
-            <p className={styles.autoSubmitMessage}>
-              Your quiz time has expired. Your answers will be automatically submitted.
-            </p>
-            <div className={styles.autoSubmitCountdown}>
-              <span className={styles.countdownNumber}>{autoSubmitCountdown}</span>
-              <span className={styles.countdownLabel}>seconds</span>
-            </div>
-            <p className={styles.autoSubmitNote}>
-              Auto-submitting your work...
-            </p>
+            <h2 className={styles.autoSubmitTitle}>
+              {autoSubmitError ? 'Submission Failed' : "Time's Up!"}
+            </h2>
+            
+            {autoSubmitError ? (
+              <>
+                <p className={styles.autoSubmitMessage}>
+                  Something went wrong with the automatic submission. Please submit your quiz manually.
+                </p>
+                <button 
+                  className={styles.manualSubmitButton}
+                  onClick={handleManualSubmitFromModal}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Quiz Manually'}
+                </button>
+                <p className={styles.autoSubmitNote} style={{marginTop: '10px', fontSize: '0.85rem'}}>
+                  Your answers are saved. Click the button above to submit.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className={styles.autoSubmitMessage}>
+                  Your quiz time has expired. Your answers will be automatically submitted.
+                </p>
+                <div className={styles.autoSubmitCountdown}>
+                  <span className={styles.countdownNumber}>{autoSubmitCountdown}</span>
+                  <span className={styles.countdownLabel}>seconds</span>
+                </div>
+                <p className={styles.autoSubmitNote}>
+                  {isSubmitting ? 'Submitting your work...' : 'Auto-submitting your work...'}
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}

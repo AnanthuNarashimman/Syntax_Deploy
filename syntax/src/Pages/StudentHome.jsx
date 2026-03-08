@@ -294,7 +294,7 @@ const StudentHome = () => {
                 <span className={styles.infoTag}>{studentData.department}</span>
                 <span className={styles.infoTag}>Year {studentData.year}</span>
                 <span className={styles.infoTag}>
-                  Section {studentData.section}
+                  College {studentData.section}
                 </span>
               </div>
             </div>
