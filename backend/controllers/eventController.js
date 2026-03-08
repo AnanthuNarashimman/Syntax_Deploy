@@ -668,16 +668,17 @@ const finishContest = async (req, res) => {
 
         if (startTime) {
           const allowedDurationMs = contest.durationMinutes * 60 * 1000;
-          // 60 second grace period accounts for:
+          // 5 minute (300 second) grace period accounts for:
           // - 10 second auto-submit countdown modal shown to user
+          // - Manual submission fallback if auto-submit fails
           // - Network latency for submission
-          // - Any processing delays
-          const gracePeriodMs = 60 * 1000;
+          // - Any processing delays and retries
+          const gracePeriodMs = 300 * 1000;
           const elapsedMs = Date.now() - startTime;
 
           if (elapsedMs > allowedDurationMs + gracePeriodMs) {
             console.warn(`⚠️ TIME EXCEEDED: Student ${studentId} submitted after time limit`);
-            // console.warn(`   Elapsed: ${Math.floor(elapsedMs / 1000)}s, Allowed: ${contest.durationMinutes * 60}s (+60s grace)`);
+            // console.warn(`   Elapsed: ${Math.floor(elapsedMs / 1000)}s, Allowed: ${contest.durationMinutes * 60}s (+300s grace)`);
 
             // Still accept the submission but mark it as late
             // You could also reject it entirely if you prefer strict enforcement
