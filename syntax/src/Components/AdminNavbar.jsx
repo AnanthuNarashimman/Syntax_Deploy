@@ -9,6 +9,7 @@ import {
   Database
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import '../Styles/ComponentStyles/AdminNavbar.css';
 import { Button } from './Button';
 
@@ -26,9 +27,32 @@ const sidebarItems = [
 function AdminNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Determine active tab by matching current path
   const activeTab = sidebarItems.find(item => location.pathname.startsWith(item.route))?.id || 'home';
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <div className="navbar-sidebar">
@@ -51,7 +75,9 @@ function AdminNavbar() {
             </button>
           );
         })}
-        <Button className="navbar-logout-btn" onClick={() => window.location.href = '/'}>Logout</Button>
+        <Button className="navbar-logout-btn" onClick={handleLogout} disabled={isLoggingOut}>
+          {isLoggingOut ? 'Logging out...' : 'Logout'}
+        </Button>
       </nav>
     </div>
   );

@@ -119,12 +119,10 @@ const superAdminLogin = async (req, res) => {
 };
 
 const logout = (req, res) => {
-  const isProduction = process.env.NODE_ENV === "production";
   res.clearCookie("auth_token", {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "None" : "Lax",
-    ...(isProduction && { partitioned: true }),
+    secure: true,
+    sameSite: "None",
     path: "/",
   });
   res.status(200).json({ message: "Logged out successfully." });
