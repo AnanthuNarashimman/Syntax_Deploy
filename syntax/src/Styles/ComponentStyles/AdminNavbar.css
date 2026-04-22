@@ -31,6 +31,7 @@
   margin-bottom: 0;
   letter-spacing: 1px;
   justify-content: flex-start;
+  cursor: pointer;
 }
 
 .navbar-logo-text {

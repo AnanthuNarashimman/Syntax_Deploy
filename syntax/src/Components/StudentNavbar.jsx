@@ -44,7 +44,7 @@ const StudentNavbar = () => {
     <nav className={styles['student-navbar']}>
       <div className={styles['navbar-container']}>
         {/* Logo */}
-        <div className={styles['navbar-logo']}>&lt; SYNTAX /&gt;</div>
+        <div onClick={() => navigate('/student-home')} className={styles['navbar-logo']}>&lt; SYNTAX /&gt;</div>
 
         {/* Desktop Navigation */}
         <div className={`${styles['navbar-menu']} ${styles['desktop-menu']}`}>

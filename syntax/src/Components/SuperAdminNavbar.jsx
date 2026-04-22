@@ -49,7 +49,7 @@ function SuperAdminNavbar() {
   return (
     <nav className="SuperAdminNavbar">
       <div className="NavbarHeader">
-        <div className="NavbarLogo">
+        <div className="NavbarLogo" onClick={() => {navigate('/super-dashboard')}}>
           <span className="LogoBracket">&lt;</span>
           <span className="LogoText">SYNTAX</span>
           <span className="LogoBracket">/&gt;</span>

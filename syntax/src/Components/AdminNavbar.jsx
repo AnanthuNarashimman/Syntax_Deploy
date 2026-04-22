@@ -57,7 +57,7 @@ function AdminNavbar() {
   return (
     <div className="navbar-sidebar">
       <div className="navbar-header">
-        <div className="navbar-logo">&lt; SYNTAX /&gt;</div>
+        <div onClick={() => {navigate('/admin-dashboard')}} className="navbar-logo">&lt; SYNTAX /&gt;</div>
         <p className="navbar-logo-subtitle">Admin Panel</p>
       </div>
       
