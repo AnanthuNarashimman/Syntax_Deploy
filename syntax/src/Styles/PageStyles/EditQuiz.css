@@ -1,0 +1,194 @@
+.edit-quiz-page {
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  font-family: 'Nunito sans';
+  margin-left: 250px;
+}
+
+.edit-quiz-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.edit-quiz-page .header-top {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.edit-quiz-page .back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-quiz-page .back-btn:hover {
+  background-color: #f0f0f0;
+  border-color: #ccc;
+}
+
+.edit-quiz-page .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.edit-quiz-page .modal-content {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.edit-quiz-page .leave-confirm-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.edit-quiz-page .leave-confirm-modal .modal-header h3 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.edit-quiz-page .leave-confirm-modal .close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.edit-quiz-page .leave-confirm-modal .close-button:hover {
+  color: #333;
+}
+
+.edit-quiz-page .leave-confirm-content {
+  margin-bottom: 20px;
+}
+
+.edit-quiz-page .leave-confirm-content .confirm-message {
+  color: #555;
+  font-size: 15px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.edit-quiz-page .leave-confirm-content .warning-box {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: #fef3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+}
+
+.edit-quiz-page .leave-confirm-content .warning-box svg {
+  color: #856404;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.edit-quiz-page .leave-confirm-content .warning-content {
+  flex: 1;
+}
+
+.edit-quiz-page .leave-confirm-content .warning-title {
+  font-weight: 600;
+  color: #856404;
+  margin: 0 0 6px 0;
+  font-size: 14px;
+}
+
+.edit-quiz-page .leave-confirm-content .warning-box ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #856404;
+  font-size: 13px;
+}
+
+.edit-quiz-page .leave-confirm-content .warning-box ul li {
+  margin-bottom: 4px;
+}
+
+.edit-quiz-page .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.edit-quiz-page .btn-secondary {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  color: #555;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-quiz-page .btn-secondary:hover {
+  background-color: #f5f5f5;
+}
+
+.edit-quiz-page .btn-danger {
+  padding: 10px 20px;
+  border: none;
+  background-color: #dc3545;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-quiz-page .btn-danger:hover {
+  background-color: #c82333;
+}
+
+.edit-quiz-page .btn-success {
+  padding: 10px 20px;
+  border: none;
+  background-color: #28a745;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-quiz-page .btn-success:hover {
+  background-color: #218838;
+}

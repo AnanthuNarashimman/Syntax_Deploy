@@ -29,6 +29,8 @@ import { useAlert } from "../contexts/AlertContext";
 import { useMemo } from "react";
 import * as XLSX from "xlsx";
 
+import EditQuiz from "../Components/EditQuiz";
+
 function ManageContest() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -41,6 +43,10 @@ function ManageContest() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [startEventLoading, setStartEventLoading] = useState(false);
+
+  const [questions, setQuestions] = useState([]);
+  const [showEdit, setShowEdit] = useState(false);
+  const [curEditEvent, setCurEditEvent] = useState("");
 
   // Add these new state variables
 
@@ -116,7 +122,7 @@ function ManageContest() {
 
   // Get categorized events from context
   const categorizedEvents = getCategorizedEvents();
-  
+
   // Debug: Log the first event to see its structure
   if (categorizedEvents.all.length > 0) {
     console.log("First event data:", categorizedEvents.all[0]);
@@ -388,11 +394,11 @@ function ManageContest() {
       questions: prev.questions.map((q, index) =>
         index === questionIndex
           ? {
-              ...q,
-              options: q.options.map((opt, optIndex) =>
-                optIndex === optionIndex ? value : opt
-              ),
-            }
+            ...q,
+            options: q.options.map((opt, optIndex) =>
+              optIndex === optionIndex ? value : opt
+            ),
+          }
           : q
       ),
     }));
@@ -413,9 +419,9 @@ function ManageContest() {
       problems: prev.problems.map((p, index) =>
         index === problemIndex
           ? {
-              ...p,
-              problemDetails: { ...p.problemDetails, [detailField]: value },
-            }
+            ...p,
+            problemDetails: { ...p.problemDetails, [detailField]: value },
+          }
           : p
       ),
     }));
@@ -427,9 +433,9 @@ function ManageContest() {
       problems: prev.problems.map((p, index) =>
         index === problemIndex
           ? {
-              ...p,
-              starterCode: { ...p.starterCode, [language]: value },
-            }
+            ...p,
+            starterCode: { ...p.starterCode, [language]: value },
+          }
           : p
       ),
     }));
@@ -441,9 +447,9 @@ function ManageContest() {
       problems: prev.problems.map((p, index) =>
         index === problemIndex
           ? {
-              ...p,
-              examples: [{ ...p.examples[0], [field]: value }],
-            }
+            ...p,
+            examples: [{ ...p.examples[0], [field]: value }],
+          }
           : p
       ),
     }));
@@ -455,11 +461,11 @@ function ManageContest() {
       problems: prev.problems.map((p, index) =>
         index === problemIndex
           ? {
-              ...p,
-              testCases: p.testCases.map((tc, tcIndex) =>
-                tcIndex === testCaseIndex ? { ...tc, [field]: value } : tc
-              ),
-            }
+            ...p,
+            testCases: p.testCases.map((tc, tcIndex) =>
+              tcIndex === testCaseIndex ? { ...tc, [field]: value } : tc
+            ),
+          }
           : p
       ),
     }));
@@ -624,7 +630,7 @@ function ManageContest() {
 
       // Refresh the leaderboard data to remove the reopened user
       handleViewParticipants(contestId, selectedEvent?.eventTitle);
-      
+
       // Refresh events to update participant count in cards
       await fetchEvents();
     } catch (error) {
@@ -640,6 +646,48 @@ function ManageContest() {
     setShowReopenConfirm(false);
     setReopenData(null);
   };
+
+
+  // Edit function
+
+  const handleEditQuiz = async (eventId) => {
+
+    try {
+      setCurEditEvent(eventId);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/edit/events/${eventId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include"
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log("Error while calling API!")
+        console.log("ERROR:", errorData.message)
+      }
+
+      const data = await response.json();
+
+      console.log("Success:", data.data.questions);
+
+      setQuestions(data.data.questions);
+      setShowEdit(true);
+    } catch (err) {
+      console.log("Error:", err);
+    }
+
+  }
+
+  if(showEdit) {
+    return (
+    <>
+    <AdminNavbar />
+    <EditQuiz questions={questions} eventId={curEditEvent} onCancel = {() => {setShowEdit(false)}}/>
+    </>
+    )
+  }
 
   return (
     <>
@@ -739,9 +787,8 @@ function ManageContest() {
                               </div>
                             </div>
                             <div
-                              className={`status-badge ${
-                                getStatusBadge(item.status).className
-                              }`}
+                              className={`status-badge ${getStatusBadge(item.status).className
+                                }`}
                             >
                               {getStatusBadge(item.status).text}
                             </div>
@@ -774,7 +821,7 @@ function ManageContest() {
                                 onClick={() => copyContestId(item.id)}
                                 title="Copy Contest ID"
                               >
-                                <Copy size={17}/>
+                                <Copy size={17} />
                               </button>
                             </div>
                           </div>
@@ -786,6 +833,17 @@ function ManageContest() {
                                 onClick={() => handleStartEvent(item.id)}
                               >
                                 Start Event
+                              </button>
+                            )}
+                            {item.status === 'queue' && item.type === 'quiz' && (
+                              <button
+                                className="btn-edit"
+                                onClick={() => {
+                                  console.log("Edit button clicked!");
+                                  handleEditQuiz(item.id);
+                                }}
+                              >
+                                Edit
                               </button>
                             )}
                             {item.status === "ongoing" && (
@@ -805,15 +863,15 @@ function ManageContest() {
 
                             {(item.status === "ongoing" ||
                               item.status === "ended") && (
-                              <button
-                                className="btn-info"
-                                onClick={() =>
-                                  handleViewParticipants(item.id, item.title)
-                                }
-                              >
-                                Participants
-                              </button>
-                            )}
+                                <button
+                                  className="btn-info"
+                                  onClick={() =>
+                                    handleViewParticipants(item.id, item.title)
+                                  }
+                                >
+                                  Participants
+                                </button>
+                              )}
                           </div>
                         </div>
                       ))}
@@ -1002,21 +1060,21 @@ function ManageContest() {
                       participantFilters.department !== "all" ||
                       participantFilters.year !== "all" ||
                       participantFilters.section !== "all") && (
-                      <button
-                        className="clear-filters-btn"
-                        onClick={() => {
-                          setParticipantSearch("");
-                          setParticipantFilters({
-                            department: "all",
-                            year: "all",
-                            section: "all",
-                          });
-                        }}
-                      >
-                        <Filter className="icon" size={16} />
-                        Clear Filters
-                      </button>
-                    )}
+                        <button
+                          className="clear-filters-btn"
+                          onClick={() => {
+                            setParticipantSearch("");
+                            setParticipantFilters({
+                              department: "all",
+                              year: "all",
+                              section: "all",
+                            });
+                          }}
+                        >
+                          <Filter className="icon" size={16} />
+                          Clear Filters
+                        </button>
+                      )}
                   </div>
 
                   <div className="participants-count">
@@ -1369,8 +1427,8 @@ function ManageContest() {
                     <div className="detail-item">
                       <span className="detail-label">Participants:</span>
                       <span className="detail-value">
-                        {typeof selectedEvent.participants === 'number' 
-                          ? selectedEvent.participants 
+                        {typeof selectedEvent.participants === 'number'
+                          ? selectedEvent.participants
                           : (selectedEvent.participants?.length || 0)}
                       </span>
                     </div>
@@ -1414,11 +1472,10 @@ function ManageContest() {
                             {question.options?.map((option, optIndex) => (
                               <div
                                 key={optIndex}
-                                className={`option-item ${
-                                  option === question.correctAnswer
-                                    ? "correct"
-                                    : ""
-                                }`}
+                                className={`option-item ${option === question.correctAnswer
+                                  ? "correct"
+                                  : ""
+                                  }`}
                               >
                                 <span className="option-label">
                                   {String.fromCharCode(65 + optIndex)}.
@@ -2019,7 +2076,7 @@ function ManageContest() {
                         {editingEvent.eventType === "quiz"
                           ? editingEvent.totalScore
                           : editingEvent.numberOfPrograms *
-                            editingEvent.pointsPerProgram}
+                          editingEvent.pointsPerProgram}
                       </span>
                     </div>
                   </div>

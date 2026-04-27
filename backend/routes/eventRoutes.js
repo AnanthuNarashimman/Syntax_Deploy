@@ -53,6 +53,13 @@ router.delete(
   articleController.deleteArticle
 );
 
+// Test or dev routes
+router.get(
+  "/admin/edit/events/:eventId",
+  middleware.requireAdminAuth,
+  eventController.handleQuizEdit
+)
+
 router.post('/student/finish-contest', middleware.requireStudentAuth, eventController.finishContest);
 
 module.exports = router;
