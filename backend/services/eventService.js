@@ -42,18 +42,16 @@ async function handleQuizCreation(req, res, data) {
         !question.correctAnswer
       ) {
         return res.status(400).json({
-          message: `Question ${
-            i + 1
-          } is incomplete. Each question must have a question text, 4 options, and a correct answer.`,
+          message: `Question ${i + 1
+            } is incomplete. Each question must have a question text, 4 options, and a correct answer.`,
         });
       }
 
       // Validate that correct answer exists in options
       if (!question.options.includes(question.correctAnswer)) {
         return res.status(400).json({
-          message: `Question ${
-            i + 1
-          }: Correct answer must be one of the provided options.`,
+          message: `Question ${i + 1
+            }: Correct answer must be one of the provided options.`,
         });
       }
     }
@@ -75,9 +73,8 @@ async function handleQuizCreation(req, res, data) {
       pointsPerQuestion: parseInt(pointsPerProgram),
       totalScore: numberOfQuestions * parseInt(pointsPerProgram),
       questions: questions.map((q, index) => ({
-        questionId: `q_${contestTitle.replace(/\s/g, "_").toLowerCase()}_${
-          index + 1
-        }_${Date.now()}`,
+        questionId: `q_${contestTitle.replace(/\s/g, "_").toLowerCase()}_${index + 1
+          }_${Date.now()}`,
         questionNumber: index + 1,
         question: q.question,
         options: q.options,
@@ -231,9 +228,8 @@ async function handleCodingContestCreation(req, res, data) {
         const htc = hiddenTestCases[j];
         if (!htc.input || !htc.output) {
           return res.status(400).json({
-            message: `Problem ${i}, Hidden Test Case ${
-              j + 1
-            } is incomplete (missing input or output).`,
+            message: `Problem ${i}, Hidden Test Case ${j + 1
+              } is incomplete (missing input or output).`,
           });
         }
       }
@@ -428,8 +424,10 @@ async function fetchResultsForEvent(eventId) {
   return combinedResults;
 }
 
+
+
 module.exports = {
   handleQuizCreation,
   handleCodingContestCreation,
-  fetchResultsForEvent,
+  fetchResultsForEvent
 };

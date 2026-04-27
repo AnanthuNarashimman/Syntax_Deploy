@@ -1140,6 +1140,29 @@ const reopenContest = async (req, res) => {
   }
 };
 
+
+async function handleQuizEdit(req, res) {
+
+  const { eventId } = req.params;
+  const resultQuery = db
+    .collection("events")
+    .doc(eventId);
+
+  const resultSnapShot = await resultQuery.get();
+
+  const data = resultSnapShot.data();
+
+  if (resultSnapShot.empty) {
+    return {
+      "message": "There is no such event data in db.",
+      "Data": []
+    }
+  }
+
+  return res.status(200).json({"message": "Success", data });
+
+}
+
 module.exports = {
   createContest,
   updateContest,
@@ -1151,5 +1174,6 @@ module.exports = {
   deleteSuperEvent,
   getEventResults,
   finishContest,
-  reopenContest
+  reopenContest,
+  handleQuizEdit
 };

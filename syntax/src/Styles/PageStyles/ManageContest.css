@@ -404,7 +404,7 @@
   border-color: #c53030;
 }
 
-.btn-success {
+.btn-success, .btn-edit {
   padding: 8px 16px;
   border: 2px solid #38a169;
   background: #38a169;
@@ -414,6 +414,16 @@
   color: white;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.btn-edit {
+  background: #2563EB;
+  border: 2px solid #2563EB;
+}
+
+.btn-edit:hover {
+  background: #1c53ca;
+  border-color: #1c53ca;
 }
 
 .btn-success:hover {
