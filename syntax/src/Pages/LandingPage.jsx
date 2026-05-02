@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, ShieldCheck, Cpu, Terminal, Sparkles, ArrowRight, Zap, Lock, BarChart3, Send, AppWindow, X, Mail, Copy } from 'lucide-react';
 import LP from "../assets/Images/LP.png";
+import Logo from "../assets/Images/converted.svg";
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -174,6 +175,7 @@ export default function LandingPage() {
           padding: 1rem 0;
           opacity: 0;
           animation: fadeSlideDown 0.6s ease forwards;
+          margin-bottom: -3%;
         }
 
         @keyframes fadeSlideDown {
@@ -184,21 +186,22 @@ export default function LandingPage() {
         .lp-logo {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          font-size: 1.5rem;
-          font-weight: 800;
+          gap: 1rem;
+          background: #ffffff;
+          border-radius: 16px;
+          border: 1px solid rgba(249, 115, 22, 0.4);
+          box-shadow: 0 2px 8px rgba(249, 115, 22, 0.05);
+          font-size: 1.75rem;
+          font-weight: 900;
           letter-spacing: -0.03em;
           color: var(--text-primary);
         }
 
         .lp-logo-icon {
-          padding: 0.5rem;
-          background: var(--primary);
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
+          height: 86px;
+          width: auto;
+          margin-bottom: 3.5%;
+          margin-right: -5%;
         }
 
         .lp-version-badge {
@@ -262,19 +265,19 @@ export default function LandingPage() {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
-          padding: 0.5rem 1rem;
+          padding: 0.75rem 1.5rem;
           background: #fff7ed;
-          border: 1px dashed var(--accent);
+          border: 2px solid var(--accent);
           border-radius: 100px;
-          font-size: 0.85rem;
-          font-weight: 500;
+          font-size: 1.1rem;
+          font-weight: 700;
           color: var(--accent);
           margin-bottom: 2rem;
         }
 
         .lp-badge-dot {
-          width: 6px;
-          height: 6px;
+          width: 8px;
+          height: 8px;
           background: var(--accent);
           border-radius: 50%;
           animation: pulse 2s ease-in-out infinite;
@@ -854,10 +857,8 @@ export default function LandingPage() {
                 {/* Navigation */}
                 <nav className="lp-nav">
                     <div className="lp-logo">
-                        <div className="lp-logo-icon">
-                            <Terminal size={20} strokeWidth={2.5} />
-                        </div>
-                        Syntax
+                        <img src={Logo} alt="Logo" className="lp-logo-icon" />
+                        KSR College of Engineering
                     </div>
                     <div className="lp-version-badge">
                         <span className="lp-version-tag">
@@ -875,7 +876,7 @@ export default function LandingPage() {
                         <div className="lp-badge">
                             <div className="lp-badge-dot"></div>
                             <AppWindow size={14} />
-                            Built for execution and evaluation.
+                            Department of Computer Science and Engineering
                         </div>
 
                         <h1 className="lp-hero-title">
