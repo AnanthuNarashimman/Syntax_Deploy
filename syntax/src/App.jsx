@@ -27,6 +27,7 @@ import CodingContestPage from './Pages/CodingContestPage';
 import Codeground from './Pages/Codeground.jsx';
 
 import LandingPage from "./Pages/LandingPage.jsx";
+import RoleSelectPage from "./Pages/RoleSelectPage.jsx";
 import MobileBlocker from "./Components/MobileBlocker.jsx";
 
 import "./App.css";
@@ -43,6 +44,7 @@ function App() {
           <Router>
             <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/role-select" element={<RoleSelectPage />} />
             <Route path="/student-login" element={<StudentLogPage />} />
             <Route path="/admin-login" element={<AdminLogPage />} />
             <Route path="/super-login" element={<SuperAdminLogPage />} />

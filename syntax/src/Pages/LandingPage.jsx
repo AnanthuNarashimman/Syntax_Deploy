@@ -15,6 +15,9 @@ import {
   GraduationCap,
   Terminal,
   Clock,
+  Server,
+  Database,
+  Cpu,
   Github,
   Linkedin,
   Twitter,
@@ -28,6 +31,7 @@ export default function LandingPage() {
 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showContactModal, setShowContactModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("students");
 
   useEffect(() => {
@@ -192,19 +196,195 @@ export default function LandingPage() {
           // overflow: hidden;
         }
 
-        /* Navigation */
-        .lp-nav {
+        /* Fixed Top Navbar */
+        .lp-top-nav {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 100;
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          padding: 0 3rem;
+          height: 56px;
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 1rem 0;
-          opacity: 0;
-          animation: fadeSlideDown 0.6s ease forwards;
+          justify-content: center;
+          animation: navSlideDown 0.5s ease forwards;
         }
 
-        @keyframes fadeSlideDown {
-          from { opacity: 0; transform: translateY(-20px); }
+        @keyframes navSlideDown {
+          from { opacity: 0; transform: translateY(-100%); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        .lp-top-nav-inner {
+          width: 100%;
+          max-width: 1400px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .lp-nav-logo {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 1.15rem;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          color: var(--text-primary);
+          cursor: pointer;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lp-nav-logo-icon {
+          padding: 0.35rem;
+          background: var(--primary);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+        }
+
+        .lp-nav-links {
+          display: flex;
+          align-items: center;
+          gap: 2rem;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+
+        .lp-nav-link {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: color 0.2s;
+          text-decoration: none;
+          background: none;
+          border: none;
+          font-family: inherit;
+          padding: 0;
+          position: relative;
+        }
+
+        .lp-nav-link::after {
+          content: '';
+          position: absolute;
+          bottom: -4px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: var(--accent);
+          transform: scaleX(0);
+          transition: transform 0.2s;
+          border-radius: 2px;
+        }
+
+        .lp-nav-link:hover {
+          color: var(--text-primary);
+        }
+
+        .lp-nav-link:hover::after {
+          transform: scaleX(1);
+        }
+
+        .lp-nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .lp-nav-login-btn {
+          padding: 0.4rem 1rem;
+          background: transparent;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
+          color: var(--text-primary);
+          font-size: 0.8rem;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+
+        .lp-nav-login-btn:hover {
+          border-color: var(--accent);
+          color: var(--accent);
+        }
+
+        .lp-nav-register-btn {
+          padding: 0.4rem 1rem;
+          background: var(--primary);
+          border: none;
+          border-radius: 8px;
+          color: white;
+          font-size: 0.8rem;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+
+        .lp-nav-register-btn:hover {
+          background: #2d2d2d;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .lp-nav-mobile-toggle {
+          display: none;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0.4rem;
+          color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+          .lp-top-nav {
+            padding: 0 1.5rem;
+          }
+
+          .lp-nav-links {
+            display: none;
+            position: absolute;
+            top: 56px;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            flex-direction: column;
+            padding: 1rem 1.5rem;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          }
+
+          .lp-nav-links.open {
+            display: flex;
+          }
+
+          .lp-nav-mobile-toggle {
+            display: flex;
+            align-items: center;
+          }
+
+          .lp-nav-actions {
+            gap: 0.5rem;
+          }
+
+          .lp-nav-login-btn,
+          .lp-nav-register-btn {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+          }
         }
 
         .lp-logo {
@@ -1190,6 +1370,205 @@ export default function LandingPage() {
           color: var(--text-muted);
         }
 
+        /* Built for Scale Section */
+        .lp-scale-section {
+          background: var(--bg-main);
+          padding: 6rem 3rem;
+          position: relative;
+          z-index: 2;
+          overflow: hidden;
+        }
+
+        .lp-scale-section::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(249, 115, 22, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(249, 115, 22, 0.06) 1px, transparent 1px);
+          background-size: 60px 60px;
+          pointer-events: none;
+        }
+
+        .lp-scale-section::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(ellipse at 30% 50%, rgba(249, 115, 22, 0.08) 0%, transparent 50%);
+          pointer-events: none;
+        }
+
+        .lp-scale-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          position: relative;
+          z-index: 1;
+        }
+
+        .lp-scale-header {
+          text-align: center;
+          margin-bottom: 4rem;
+        }
+
+        .lp-scale-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.4rem 1rem;
+          background: rgba(249, 115, 22, 0.1);
+          border: 1px solid rgba(249, 115, 22, 0.3);
+          border-radius: 100px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: var(--accent);
+          margin-bottom: 1.5rem;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+        }
+
+        .lp-scale-title {
+          font-size: 3rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin-bottom: 1rem;
+          letter-spacing: -0.02em;
+        }
+
+        .lp-scale-subtitle {
+          font-size: 1.1rem;
+          color: var(--text-secondary);
+          max-width: 650px;
+          margin: 0 auto;
+          line-height: 1.7;
+        }
+
+        .lp-scale-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+
+        .lp-scale-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 20px;
+          padding: 2rem;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .lp-scale-card:hover {
+          background: var(--bg-card-hover);
+          border-color: var(--border-hover);
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .lp-scale-card:hover .lp-scale-card-icon {
+          background: rgba(249, 115, 22, 0.2);
+        }
+
+        .lp-scale-card-icon {
+          width: 48px;
+          height: 48px;
+          background: rgba(249, 115, 22, 0.1);
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--accent);
+          margin-bottom: 1.25rem;
+          transition: background 0.3s;
+        }
+
+        .lp-scale-card-title {
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin-bottom: 0.5rem;
+        }
+
+        .lp-scale-card-desc {
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          line-height: 1.7;
+          margin-bottom: 1.25rem;
+        }
+
+        .lp-scale-card-stats {
+          display: flex;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+        }
+
+        .lp-scale-stat {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          font-weight: 500;
+        }
+
+        .lp-scale-stat-value {
+          font-weight: 700;
+          color: var(--accent);
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.9rem;
+        }
+
+        .lp-scale-tech-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
+        }
+
+        .lp-scale-tech-tag {
+          padding: 0.3rem 0.75rem;
+          background: rgba(249, 115, 22, 0.08);
+          border: 1px solid rgba(249, 115, 22, 0.15);
+          border-radius: 6px;
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lp-scale-full-width {
+          grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+          .lp-scale-section {
+            padding: 4rem 1.5rem;
+          }
+
+          .lp-scale-title {
+            font-size: 2rem;
+          }
+
+          .lp-scale-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .lp-scale-card {
+            padding: 1.5rem;
+          }
+
+          .lp-scale-card-stats {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+
+          .lp-scale-full-width {
+            grid-column: 1;
+          }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
           .lp-container {
@@ -1337,7 +1716,56 @@ export default function LandingPage() {
         style={{ left: mousePosition.x, top: mousePosition.y }}
       ></div>
 
-      <div className="lp-container">
+      {/* Fixed Top Navbar */}
+      <nav className="lp-top-nav">
+        <div className="lp-top-nav-inner">
+          <div className="lp-nav-logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            &lt; SYNTAX /&gt;
+          </div>
+
+          <ul className={`lp-nav-links${mobileMenuOpen ? " open" : ""}`}>
+            <li>
+              <button className="lp-nav-link" onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); setMobileMenuOpen(false); }}>
+                Home
+              </button>
+            </li>
+            <li>
+              <button className="lp-nav-link" onClick={() => { scrollToSection("features"); setMobileMenuOpen(false); }}>
+                Features
+              </button>
+            </li>
+            <li>
+              <button className="lp-nav-link" onClick={() => { scrollToSection("assessment"); setMobileMenuOpen(false); }}>
+                Assessment Suite
+              </button>
+            </li>
+            <li>
+              <button className="lp-nav-link" onClick={() => { scrollToSection("architecture"); setMobileMenuOpen(false); }}>
+                Architecture
+              </button>
+            </li>
+            <li>
+              <button className="lp-nav-link" onClick={() => { setShowContactModal(true); setMobileMenuOpen(false); }}>
+                Contact
+              </button>
+            </li>
+          </ul>
+
+          <div className="lp-nav-actions">
+            <button className="lp-nav-login-btn" onClick={() => navigate("/role-select")}>
+              Login
+            </button>
+            <button className="lp-nav-register-btn" onClick={() => setShowContactModal(true)}>
+              Register
+            </button>
+            <button className="lp-nav-mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              {mobileMenuOpen ? <X size={18} /> : <span style={{ fontSize: "1.25rem", lineHeight: 1 }}>☰</span>}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <div className="lp-container" style={{ paddingTop: "56px" }}>
         {/* Decorative Grid Dots */}
         <div className="lp-grid-dots top-right">
           <div className="dot"></div>
@@ -1423,7 +1851,7 @@ export default function LandingPage() {
 
             <div className="lp-cta-buttons">
               <button
-                onClick={() => navigate("/student-login")}
+                onClick={() => navigate("/role-select")}
                 className="lp-submit-btn"
               >
                 Login to Platform
@@ -1616,6 +2044,115 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Built for Scale Section */}
+      <section id="architecture" className="lp-scale-section">
+        <div className="lp-scale-container">
+          <div className="lp-scale-header">
+            <div className="lp-scale-badge">
+              <Server size={14} />
+              Built for Scale
+            </div>
+            <h2 className="lp-scale-title">Engineered for Production</h2>
+            <p className="lp-scale-subtitle">
+              A distributed architecture handling concurrent code evaluations,
+              real-time assessments, and thousands of API requests without
+              dropping a session.
+            </p>
+          </div>
+
+          <div className="lp-scale-grid">
+            {/* Concurrent Code Execution */}
+            <div className="lp-scale-card lp-scale-full-width">
+              <div className="lp-scale-card-icon">
+                <Terminal size={22} />
+              </div>
+              <h3 className="lp-scale-card-title">Concurrent Code Execution Engine</h3>
+              <p className="lp-scale-card-desc">
+                Every code submission is dispatched to a sandboxed code
+                execution service that compiles and runs code in an isolated
+                environment. Single code runs execute synchronously with
+                results returned on completion, while contest submissions run
+                as a batch with polling — all while Node.js's event loop keeps
+                accepting new requests concurrently. Combined with auto-scaling
+                infrastructure, the system horizontally scales to handle
+                multiple concurrent evaluations with zero session drops.
+              </p>
+              <div className="lp-scale-card-stats">
+                <div className="lp-scale-stat">
+                  <span className="lp-scale-stat-value">&lt; 2s</span>
+                  &nbsp;avg execution time
+                </div>
+                <div className="lp-scale-stat">
+                  <span className="lp-scale-stat-value">Multiple</span>
+                  &nbsp;concurrent evaluations
+                </div>
+                <div className="lp-scale-stat">
+                  <span className="lp-scale-stat-value">Zero</span>
+                  &nbsp;session drops
+                </div>
+              </div>
+              <div className="lp-scale-tech-list">
+                <span className="lp-scale-tech-tag">Judge0 CE</span>
+                <span className="lp-scale-tech-tag">Docker</span>
+                <span className="lp-scale-tech-tag">Cloud Run</span>
+                <span className="lp-scale-tech-tag">RSA-OAEP</span>
+                <span className="lp-scale-tech-tag">Node.js Event Loop</span>
+              </div>
+            </div>
+
+            {/* Database Schema Strategy */}
+            <div className="lp-scale-card">
+              <div className="lp-scale-card-icon">
+                <Database size={22} />
+              </div>
+              <h3 className="lp-scale-card-title">Database Architecture</h3>
+              <p className="lp-scale-card-desc">
+                Built on a serverless, horizontally scalable document database
+                with a denormalized subcollection pattern for user results. Quiz
+                answers are validated server-side — correct answers are never
+                sent to the client. Hidden test cases for coding contests remain
+                on the server, preventing client-side tampering. A unique token
+                on each result document prevents race conditions and duplicate
+                scoring.
+              </p>
+              <div className="lp-scale-tech-list">
+                <span className="lp-scale-tech-tag">Serverless DB</span>
+                <span className="lp-scale-tech-tag">Subcollection Pattern</span>
+                <span className="lp-scale-tech-tag">Server-side Validation</span>
+                <span className="lp-scale-tech-tag">Race Condition Prevention</span>
+              </div>
+            </div>
+
+            {/* Execution Queue & API Performance */}
+            <div className="lp-scale-card">
+              <div className="lp-scale-card-icon">
+                <Cpu size={22} />
+              </div>
+              <h3 className="lp-scale-card-title">Execution Pipeline &amp; Performance</h3>
+              <p className="lp-scale-card-desc">
+                The submission pipeline follows a clean flow: code written in
+                the editor is dispatched to Judge0 which executes against all
+                test cases — both visible and hidden. Results and scores are
+                returned to the frontend, encrypted with AES-256, and persisted
+                locally. On contest finish, all submissions are sent to the
+                backend which validates timing server-side, checks for
+                duplicates via a unique submission token, aggregates scores,
+                and stores results to the database. An in-memory cache layer
+                reduces database reads for hot data like the leaderboard.
+                Hidden test cases and correct answers are never exposed to the
+                client.
+              </p>
+              <div className="lp-scale-tech-list">
+                <span className="lp-scale-tech-tag">In-memory Cache</span>
+                <span className="lp-scale-tech-tag">AES-256 Encryption</span>
+                <span className="lp-scale-tech-tag">Server-side Validation</span>
+                <span className="lp-scale-tech-tag">Submission Token</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="lp-cta-section">
         <div className="lp-cta-container">
@@ -1629,7 +2166,7 @@ export default function LandingPage() {
           <div className="lp-cta-buttons">
             <button
               className="lp-cta-button lp-cta-button-primary"
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/role-select")}
             >
               <Zap size={20} />
               Get Started
@@ -1662,7 +2199,7 @@ export default function LandingPage() {
             </p>
             <div className="lp-footer-social">
               <a
-                href="https://linkedin.com"
+                href="https://www.linkedin.com/in/ananthunarashimman/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="lp-footer-social-link"
@@ -1670,7 +2207,7 @@ export default function LandingPage() {
                 <Linkedin size={20} />
               </a>
               <a
-                href="https://twitter.com"
+                href="https://x.com/home"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="lp-footer-social-link"
@@ -1707,7 +2244,13 @@ export default function LandingPage() {
               </span>
               <span
                 className="lp-footer-link"
-                onClick={() => navigate("/login")}
+                onClick={() => scrollToSection("architecture")}
+              >
+                Architecture
+              </span>
+              <span
+                className="lp-footer-link"
+                onClick={() => navigate("/role-select")}
               >
                 Login
               </span>
