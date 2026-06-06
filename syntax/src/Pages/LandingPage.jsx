@@ -694,12 +694,12 @@ export default function LandingPage() {
 
         .lp-grid-dots.top-right {
           top: 10%;
-          right: -17%;
+          right: 2%;
         }
 
         .lp-grid-dots.bottom-left {
           bottom: 4%;
-          left: -17%;
+          left: 2%;
         }
 
         .lp-grid-dots .dot {
@@ -822,7 +822,7 @@ export default function LandingPage() {
         /* Assessment Suite Section */
         .lp-assessment-section {
           background: white;
-          padding: 6rem 3rem;
+          padding: 4rem 3rem;
           position: relative;
           background-image: radial-gradient(circle, rgba(249, 115, 22, 0.4) 1.5px, transparent 1px);
           background-size: 30px 30px;
@@ -832,19 +832,19 @@ export default function LandingPage() {
           max-width: 1400px;
           margin: 0 auto;
           display: flex;
-          gap: 5rem;
+          gap: 2rem;
           align-items: stretch;
         }
 
         .lp-assessment-item {
           flex: 1;
           background: white;
-          border-radius: 20px;
-          padding: 3rem;
+          border-radius: 16px;
+          padding: 2rem;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1rem;
           transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
@@ -856,35 +856,35 @@ export default function LandingPage() {
         .lp-assessment-content {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1rem;
           flex: 1;
         }
 
         .lp-assessment-icon {
-          width: 60px;
-          height: 60px;
+          width: 48px;
+          height: 48px;
           background: linear-gradient(135deg, var(--accent) 0%, #ea580c 100%);
-          border-radius: 16px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.25rem;
         }
 
         .lp-assessment-title {
-          font-size: 2.5rem;
+          font-size: 1.75rem;
           font-weight: 700;
           color: var(--text-primary);
           letter-spacing: -0.02em;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.25rem;
         }
 
         .lp-assessment-description {
-          font-size: 1.1rem;
-          line-height: 1.8;
+          font-size: 0.95rem;
+          line-height: 1.6;
           color: var(--text-secondary);
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
         }
 
         .lp-assessment-features {
@@ -893,16 +893,16 @@ export default function LandingPage() {
           margin: 0;
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
+          gap: 0.5rem;
         }
 
         .lp-assessment-features li {
           display: grid;
-          grid-template-columns: 24px auto;
-          gap: 0.75rem;
-          font-size: 0.95rem;
+          grid-template-columns: 20px auto;
+          gap: 0.5rem;
+          font-size: 0.85rem;
           color: var(--text-secondary);
-          line-height: 1.6;
+          line-height: 1.5;
         }
 
         .lp-assessment-features li::before {
@@ -910,14 +910,14 @@ export default function LandingPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 24px;
-          height: 24px;
+          width: 20px;
+          height: 20px;
           background: rgba(249, 115, 22, 0.1);
           color: var(--accent);
           border-radius: 50%;
           font-weight: 700;
           flex-shrink: 0;
-          margin-top: 2px;
+          margin-top: 1px;
         }
 
         .lp-assessment-features li strong {
@@ -1620,29 +1620,29 @@ export default function LandingPage() {
           }
 
           .lp-assessment-section {
-            padding: 4rem 1.5rem;
+            padding: 3rem 1.5rem;
           }
 
           .lp-assessment-container {
             flex-direction: column;
-            gap: 2rem;
+            gap: 1.5rem;
           }
 
           .lp-assessment-item {
-            padding: 2rem;
+            padding: 1.5rem;
           }
 
           .lp-assessment-title {
-            font-size: 1.75rem;
+            font-size: 1.5rem;
           }
 
           .lp-assessment-description {
-            font-size: 1rem;
+            font-size: 0.9rem;
           }
 
           .lp-assessment-icon {
-            width: 50px;
-            height: 50px;
+            width: 42px;
+            height: 42px;
           }
 
           .lp-grid-dots {
