@@ -1,40 +1,70 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, ShieldCheck, Cpu, Terminal, Sparkles, ArrowRight, Zap, Lock, BarChart3, Send, AppWindow, X, Mail, Copy } from 'lucide-react';
-import LP from "../assets/Images/LP.png";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  Zap,
+  Send,
+  X,
+  Mail,
+  Copy,
+  FileText,
+  Code2,
+  Newspaper,
+  Shield,
+  Users,
+  GraduationCap,
+  Terminal,
+  Clock,
+  Server,
+  Database,
+  Cpu,
+  Github,
+  Linkedin,
+  Twitter,
+} from "lucide-react";
+import superAdminDash from "../assets/Images/super_dash.png";
+import adminDash from "../assets/Images/admin_dash.png";
+import studentDash from "../assets/Images/stu_dash.png";
 
 export default function LandingPage() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-    const [showContactModal, setShowContactModal] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("students");
 
-    useEffect(() => {
-        const handleMouseMove = (e) => {
-            setMousePosition({ x: e.clientX, y: e.clientY });
-        };
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, []);
-
-    const scrollToRoles = () => {
-        document.getElementById('roles-section')?.scrollIntoView({ behavior: 'smooth' });
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
     };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
-    const openMailClient = () => {
-        const email = 'syntaxplatform@gmail.com';
-        const subject = encodeURIComponent('Inquiry about Syntax Platform');
-        const body = encodeURIComponent('Hello Syntax Team,\n\nI would like to inquire about...\n\n');
-        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-    };
+  const openMailClient = () => {
+    const email = "syntaxplatform@gmail.com";
+    const subject = encodeURIComponent("Inquiry about Syntax Platform");
+    const body = encodeURIComponent(
+      "Hello Syntax Team,\n\nI would like to inquire about...\n\n",
+    );
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+  };
 
-    const copyEmail = () => {
-        navigator.clipboard.writeText('syntaxplatform@gmail.com');
-    };
+  const copyEmail = () => {
+    navigator.clipboard.writeText("syntaxplatform@gmail.com");
+  };
 
-    return (
-        <>
-            <style>{`
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  return (
+    <>
+      <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
         :root {
@@ -74,21 +104,21 @@ export default function LandingPage() {
           inset: 0;
           z-index: 0;
           overflow: hidden;
-          background: linear-gradient(180deg, #faf8f5 0%, #fef7ed 50%, #fff7ed 100%);
+          background: #ffffff;
         }
 
         .lp-gradient-orb {
           position: absolute;
           border-radius: 50%;
-          filter: blur(100px);
-          opacity: 0.5;
+          filter: blur(120px);
+          opacity: 0.15;
           animation: orbFloat 20s ease-in-out infinite;
         }
 
         .lp-gradient-orb.orb-1 {
           width: 600px;
           height: 600px;
-          background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+          background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
           top: -200px;
           left: -100px;
           animation-delay: 0s;
@@ -97,7 +127,7 @@ export default function LandingPage() {
         .lp-gradient-orb.orb-2 {
           width: 500px;
           height: 500px;
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+          background: linear-gradient(135deg, #fffbf5 0%, #ffedd5 100%);
           bottom: -150px;
           right: -100px;
           animation-delay: -7s;
@@ -106,12 +136,12 @@ export default function LandingPage() {
         .lp-gradient-orb.orb-3 {
           width: 400px;
           height: 400px;
-          background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+          background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
           animation-delay: -14s;
-          opacity: 0.4;
+          opacity: 0.1;
         }
 
         @keyframes orbFloat {
@@ -126,10 +156,9 @@ export default function LandingPage() {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
-          background-size: 60px 60px;
-          mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+            linear-gradient(rgba(249, 115, 22, 0.07) 2px, transparent 2px),
+            linear-gradient(90deg, rgba(249, 115, 22, 0.07) 2px, transparent 2px);
+          background-size: 50px 50px;
         }
 
         /* Noise texture */
@@ -158,27 +187,204 @@ export default function LandingPage() {
         .lp-container {
           position: relative;
           z-index: 10;
-          min-height: 100vh;
+          height: 100vh;
           max-width: 1400px;
           margin: 0 auto;
           padding: 2rem 3rem;
           display: flex;
           flex-direction: column;
+          // overflow: hidden;
         }
 
-        /* Navigation */
-        .lp-nav {
+        /* Fixed Top Navbar */
+        .lp-top-nav {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 100;
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          padding: 0 3rem;
+          height: 56px;
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 1rem 0;
-          opacity: 0;
-          animation: fadeSlideDown 0.6s ease forwards;
+          justify-content: center;
+          animation: navSlideDown 0.5s ease forwards;
         }
 
-        @keyframes fadeSlideDown {
-          from { opacity: 0; transform: translateY(-20px); }
+        @keyframes navSlideDown {
+          from { opacity: 0; transform: translateY(-100%); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        .lp-top-nav-inner {
+          width: 100%;
+          max-width: 1400px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .lp-nav-logo {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 1.15rem;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          color: var(--text-primary);
+          cursor: pointer;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lp-nav-logo-icon {
+          padding: 0.35rem;
+          background: var(--primary);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+        }
+
+        .lp-nav-links {
+          display: flex;
+          align-items: center;
+          gap: 2rem;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+
+        .lp-nav-link {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: color 0.2s;
+          text-decoration: none;
+          background: none;
+          border: none;
+          font-family: inherit;
+          padding: 0;
+          position: relative;
+        }
+
+        .lp-nav-link::after {
+          content: '';
+          position: absolute;
+          bottom: -4px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: var(--accent);
+          transform: scaleX(0);
+          transition: transform 0.2s;
+          border-radius: 2px;
+        }
+
+        .lp-nav-link:hover {
+          color: var(--text-primary);
+        }
+
+        .lp-nav-link:hover::after {
+          transform: scaleX(1);
+        }
+
+        .lp-nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .lp-nav-login-btn {
+          padding: 0.4rem 1rem;
+          background: transparent;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
+          color: var(--text-primary);
+          font-size: 0.8rem;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+
+        .lp-nav-login-btn:hover {
+          border-color: var(--accent);
+          color: var(--accent);
+        }
+
+        .lp-nav-register-btn {
+          padding: 0.4rem 1rem;
+          background: var(--primary);
+          border: none;
+          border-radius: 8px;
+          color: white;
+          font-size: 0.8rem;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+
+        .lp-nav-register-btn:hover {
+          background: #2d2d2d;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .lp-nav-mobile-toggle {
+          display: none;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0.4rem;
+          color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+          .lp-top-nav {
+            padding: 0 1.5rem;
+          }
+
+          .lp-nav-links {
+            display: none;
+            position: absolute;
+            top: 56px;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            flex-direction: column;
+            padding: 1rem 1.5rem;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          }
+
+          .lp-nav-links.open {
+            display: flex;
+          }
+
+          .lp-nav-mobile-toggle {
+            display: flex;
+            align-items: center;
+          }
+
+          .lp-nav-actions {
+            gap: 0.5rem;
+          }
+
+          .lp-nav-login-btn,
+          .lp-nav-register-btn {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+          }
         }
 
         .lp-logo {
@@ -238,19 +444,43 @@ export default function LandingPage() {
         /* Main Content */
         .lp-main {
           flex: 1;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 4rem;
+          display: flex;
+          flex-direction: column;
           align-items: center;
+          justify-content: center;
           padding: 2rem 0;
-          min-height: calc(100vh - 100px);
+          height: calc(100vh - 4rem);
+          text-align: center;
+          position: relative;
+          // overflow: hidden;
         }
 
-        /* Hero Left */
+        /* Background Text */
+        .lp-bg-text {
+          font-family: Poppins;
+          position: absolute;
+          top: 45%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 23vw;
+          font-weight: 600;
+          color: var(--text-primary);
+          opacity: 0.065;
+          letter-spacing: 1 rem;
+          user-select: none;
+          pointer-events: none;
+          z-index: 0;
+          white-space: nowrap;
+        }
+
+        /* Hero Content */
         .lp-hero-content {
           opacity: 0;
           animation: fadeSlideUp 0.8s ease 0.2s forwards;
-          margin-top: -40px;
+          max-width: 900px;
+          margin: 0 auto;
+          position: relative;
+          z-index: 10;
         }
 
         @keyframes fadeSlideUp {
@@ -270,6 +500,7 @@ export default function LandingPage() {
           font-weight: 500;
           color: var(--accent);
           margin-bottom: 2rem;
+          position: relative;
         }
 
         .lp-badge-dot {
@@ -286,11 +517,12 @@ export default function LandingPage() {
         }
 
         .lp-hero-title {
-          font-size: 4rem;
-          font-weight: 800;
+          font-size: 5rem;
+          font-weight: 700;
           line-height: 1.1;
-          letter-spacing: -0.03em;
+          letter-spacing: -0.04em;
           margin-bottom: 1.5rem;
+          font-family: 'Montserrat', sans-serif;
         }
 
         .lp-hero-title .line-1 {
@@ -307,18 +539,21 @@ export default function LandingPage() {
         }
 
         .lp-hero-desc {
-          font-size: 1.2rem;
+          font-size: 1.3rem;
           line-height: 1.7;
           color: var(--text-secondary);
-          margin-bottom: 2.5rem;
-          max-width: 500px;
+          margin-bottom: 3rem;
+          max-width: 700px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
         /* CTA Buttons */
         .lp-cta-buttons {
           display: flex;
           gap: 1rem;
-          margin-bottom: 2rem;
+          margin-bottom: 3rem;
+          justify-content: center;
         }
 
         .lp-submit-btn {
@@ -389,189 +624,543 @@ export default function LandingPage() {
           gap: 1.5rem;
           font-size: 0.9rem;
           color: var(--text-muted);
-        }
-
-        .lp-helper-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .lp-helper-item svg {
-          color: var(--accent);
-        }
-
-        /* Hero Right - Image */
-        .lp-hero-visual {
-          position: relative;
-          opacity: 0;
-          animation: fadeSlideUp 0.8s ease 0.4s forwards;
-          display: flex;
-          align-items: center;
           justify-content: center;
         }
 
-        .lp-hero-image {
-          width: 100%;
-          max-width: 590px;
-          height: auto;
-          object-fit: contain;
-          filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.1));
-          animation: floatImage 6s ease-in-out infinite;
-          border-radius: 15px;
+        /* Stats Badge */
+        .lp-stats-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.6rem 1.2rem;
+          background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+          border-radius: 100px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: white;
+          margin-bottom: 2rem;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        @keyframes floatImage {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
+        .lp-stats-number {
+          font-size: 1.1rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, var(--accent) 0%, #fbbf24 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
 
-        /* Role Cards */
-        .lp-roles-section {
-          padding: 4rem 0;
-          opacity: 0;
-          animation: fadeSlideUp 0.8s ease 0.6s forwards;
+        /* Feature Badges */
+        .lp-feature-badges {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          justify-content: center;
+          margin-bottom: 2.5rem;
         }
 
-        .lp-roles-header {
+        .lp-feature-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          background: white;
+          border: 1.5px solid rgba(249, 115, 22, 0.5);
+          border-radius: 100px;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--accent);
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .lp-feature-badge:hover {
+          background: white;
+          border-color: var(--accent);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+        }
+
+        /* Decorative Grid Pattern */
+        .lp-grid-dots {
+          position: absolute;
+          display: grid;
+          grid-template-columns: repeat(3, 20px);
+          grid-template-rows: repeat(10, 25px);
+          gap: 8px;
+          z-index: 5;
+        }
+
+        .lp-grid-dots.top-right {
+          top: 10%;
+          right: -17%;
+        }
+
+        .lp-grid-dots.bottom-left {
+          bottom: 4%;
+          left: -17%;
+        }
+
+        .lp-grid-dots .dot {
+          width: 15px;
+          height: 15px;
+          background: var(--accent);
+          border-radius: 2px;
+          opacity: 0.5;
+          transition: opacity 0.3s;
+        }
+
+        .lp-grid-dots:hover .dot {
+          opacity: 0.8;
+        }
+
+        /* Multi-Tenant Section */
+        .lp-multitenant-section {
+          background: #fff9f5;
+          padding: 6rem 3rem;
+          position: relative;
+          z-index: 2;
+        }
+
+        .lp-section-header {
           text-align: center;
-          margin-bottom: 3rem;
+          margin-bottom: 4rem;
         }
 
-        .lp-roles-title {
-          font-size: 1.5rem;
+        .lp-section-title {
+          font-size: 3rem;
           font-weight: 700;
           color: var(--text-primary);
-          margin-bottom: 0.5rem;
+          margin-bottom: 1rem;
+          letter-spacing: -0.02em;
         }
 
-        .lp-roles-subtitle {
-          color: var(--text-muted);
+        .lp-section-subtitle {
+          font-size: 1.1rem;
+          color: var(--text-secondary);
+          max-width: 600px;
+          margin: 0 auto;
         }
 
-        .lp-roles-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.5rem;
+        /* Multi-Tenant Container */
+        .lp-multitenant-container {
+          max-width: 1600px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          gap: 6rem;
         }
 
-        .lp-role-card {
+        .lp-tenant-item {
+          background: transparent;
+          padding: 3rem;
+          display: flex;
+          gap: 3rem;
+          align-items: center;
           position: relative;
-          background: #ffffff;
-          border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .lp-tenant-item:nth-child(even) {
+          flex-direction: row-reverse;
+        }
+
+        .lp-tenant-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          position: relative;
+          z-index: 1;
+        }
+
+        .lp-tenant-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1.25rem;
+          background: var(--text-primary);
+          border-radius: 50px;
+          color: white;
+          font-size: 0.875rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          width: fit-content;
+        }
+
+        .lp-tenant-title {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          letter-spacing: -0.02em;
+          line-height: 1.2;
+          margin-top: 0.5rem;
+        }
+
+        .lp-tenant-description {
+          font-size: 1.1rem;
+          line-height: 1.8;
+          color: var(--text-secondary);
+          margin-top: 0.5rem;
+        }
+
+        .lp-tenant-image {
+          flex: 1.2;
+          position: relative;
+          z-index: 1;
+        }
+
+        .lp-tenant-image img {
+          width: 100%;
+          height: auto;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          object-fit: cover;
+        }
+
+        /* Assessment Suite Section */
+        .lp-assessment-section {
+          background: white;
+          padding: 6rem 3rem;
+          position: relative;
+          background-image: radial-gradient(circle, rgba(249, 115, 22, 0.4) 1.5px, transparent 1px);
+          background-size: 30px 30px;
+        }
+
+        .lp-assessment-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          display: flex;
+          gap: 5rem;
+          align-items: stretch;
+        }
+
+        .lp-assessment-item {
+          flex: 1;
+          background: white;
           border-radius: 20px;
-          padding: 2rem;
-          cursor: pointer;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          overflow: hidden;
+          padding: 3rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .lp-role-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, var(--accent) 0%, transparent 50%);
-          opacity: 0;
-          transition: opacity 0.4s;
-        }
-
-        .lp-role-card:hover {
+        .lp-assessment-item:hover {
           transform: translateY(-8px);
-          border-color: rgba(249, 115, 22, 0.2);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(249, 115, 22, 0.1);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
         }
 
-        .lp-role-card:hover::before {
-          opacity: 0.03;
+        .lp-assessment-content {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          flex: 1;
         }
 
-        .lp-role-icon-wrapper {
-          position: relative;
+        .lp-assessment-icon {
           width: 60px;
           height: 60px;
-          margin-bottom: 1.5rem;
-        }
-
-        .lp-role-icon {
-          width: 100%;
-          height: 100%;
+          background: linear-gradient(135deg, var(--accent) 0%, #ea580c 100%);
           border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
-          position: relative;
-          z-index: 1;
-          transition: all 0.3s;
-        }
-
-        .lp-role-icon.icon-candidate {
-          background: #fff7ed;
-          color: var(--accent);
-        }
-
-        .lp-role-icon.icon-examiner {
-          background: #f0f9ff;
-          color: #0ea5e9;
-        }
-
-        .lp-role-icon.icon-admin {
-          background: #ecfdf5;
-          color: #10b981;
-        }
-
-        .lp-role-card:hover .lp-role-icon {
-          transform: scale(1.1);
-        }
-
-        .lp-role-glow {
-          position: absolute;
-          inset: -10px;
-          border-radius: 20px;
-          opacity: 0;
-          filter: blur(20px);
-          transition: opacity 0.4s;
-        }
-
-        .lp-role-card:hover .lp-role-glow {
-          opacity: 0.2;
-        }
-
-        .lp-role-glow.glow-candidate { background: var(--accent); }
-        .lp-role-glow.glow-examiner { background: #0ea5e9; }
-        .lp-role-glow.glow-admin { background: #10b981; }
-
-        .lp-role-content {
-          position: relative;
-          z-index: 1;
-        }
-
-        .lp-role-title {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: var(--text-primary);
+          color: white;
           margin-bottom: 0.5rem;
         }
 
-        .lp-role-desc {
-          color: var(--text-muted);
+        .lp-assessment-title {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          letter-spacing: -0.02em;
+          margin-bottom: 0.5rem;
+        }
+
+        .lp-assessment-description {
+          font-size: 1.1rem;
+          line-height: 1.8;
+          color: var(--text-secondary);
+          margin-bottom: 1rem;
+        }
+
+        .lp-assessment-features {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        .lp-assessment-features li {
+          display: grid;
+          grid-template-columns: 24px auto;
+          gap: 0.75rem;
           font-size: 0.95rem;
-          line-height: 1.5;
+          color: var(--text-secondary);
+          line-height: 1.6;
+        }
+
+        .lp-assessment-features li::before {
+          content: '✓';
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          background: rgba(249, 115, 22, 0.1);
+          color: var(--accent);
+          border-radius: 50%;
+          font-weight: 700;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .lp-assessment-features li strong {
+          display: block;
+          color: var(--text-primary);
+          font-weight: 600;
+          margin-bottom: 0.15rem;
+        }
+
+
+
+        /* CTA Section */
+        .lp-cta-section {
+          background: var(--accent);
+          padding: 5rem 3rem;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .lp-cta-section::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-image: radial-gradient(circle, rgba(255, 255, 255, 0.15) 2px, transparent 2px);
+          background-size: 30px 30px;
+          pointer-events: none;
+          opacity: 0.6;
+        }
+
+        .lp-cta-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          text-align: center;
+          position: relative;
+          z-index: 1;
+        }
+
+        .lp-cta-title {
+          font-size: 3.5rem;
+          font-weight: 800;
+          color: white;
+          margin-bottom: 1.5rem;
+          letter-spacing: -0.02em;
+          line-height: 1.2;
+        }
+
+        .lp-cta-subtitle {
+          font-size: 1.25rem;
+          color: rgba(255, 255, 255, 0.95);
+          margin-bottom: 2.5rem;
+          max-width: 700px;
+          margin-left: auto;
+          margin-right: auto;
+          line-height: 1.6;
+        }
+
+        .lp-cta-buttons {
+          display: flex;
+          gap: 1.5rem;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .lp-cta-button {
+          padding: 1rem 2.5rem;
+          font-size: 1.1rem;
+          font-weight: 600;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: none;
+          font-family: inherit;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .lp-cta-button-primary {
+          background: white;
+          color: var(--accent);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .lp-cta-button-primary:hover {
+          background: #ffffff;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .lp-cta-button-secondary {
+          background: transparent;
+          color: white;
+          border: 2px solid white;
+        }
+
+        .lp-cta-button-secondary:hover {
+          background: rgba(255, 255, 255, 0.1);
+          transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .lp-footer-wrapper {
+          background: var(--accent);
+          padding: 4rem 3rem 6rem;
+          position: relative;
+        }
+
+        .lp-footer-wrapper::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-image: radial-gradient(circle, rgba(255, 255, 255, 0.15) 2px, transparent 2px);
+          background-size: 30px 30px;
+          pointer-events: none;
+          opacity: 0.6;
+        }
+
+        .lp-footer {
+          max-width: 95vw;
+          margin: 0 auto;
+          background: white;
+          border-radius: 24px;
+          padding: 5rem;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 3rem;
+          position: relative;
+          z-index: 1;
+          margin-bottom: -70px;
+        }
+
+        .lp-footer-left {
+          flex: 1;
+          max-width: 500px;
+        }
+
+        .lp-footer-logo {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
           margin-bottom: 1.5rem;
         }
 
-        .lp-role-link {
-          display: inline-flex;
+        .lp-footer-logo-icon {
+          width: 40px;
+          height: 40px;
+          background: var(--accent);
+          border-radius: 10px;
+          display: flex;
           align-items: center;
-          gap: 0.5rem;
-          color: var(--text-secondary);
-          font-weight: 600;
-          font-size: 0.9rem;
-          transition: all 0.3s;
+          justify-content: center;
+          color: white;
         }
 
-        .lp-role-card:hover .lp-role-link {
+        .lp-footer-logo-text {
+          font-size: 1.75rem;
+          font-weight: 800;
+          color: var(--text-primary);
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lp-footer-description {
+          font-size: 1rem;
+          line-height: 1.8;
+          color: var(--text-secondary);
+          margin-bottom: 1.5rem;
+        }
+
+        .lp-footer-social {
+          display: flex;
+          gap: 1rem;
+        }
+
+        .lp-footer-social-link {
+          width: 44px;
+          height: 44px;
+          background: rgba(249, 115, 22, 0.1);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           color: var(--accent);
-          gap: 0.75rem;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          text-decoration: none;
+        }
+
+        .lp-footer-social-link:hover {
+          background: var(--accent);
+          color: white;
+          transform: translateY(-3px);
+        }
+
+        .lp-footer-right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          justify-content: space-between;
+          min-height: 200px;
+        }
+
+        .lp-footer-links {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          align-items: flex-end;
+        }
+
+        .lp-footer-credit {
+          text-align: right;
+          color: var(--text-secondary);
+          font-size: 0.85rem;
+          opacity: 0.7;
+        }
+
+        .lp-footer-link {
+          font-size: 1rem;
+          color: var(--text-secondary);
+          text-decoration: none;
+          transition: color 0.3s ease;
+          font-weight: 500;
+          cursor: pointer;
+        }
+
+        .lp-footer-link:hover {
+          color: var(--accent);
+        }
+
+        .lp-footer-bottom {
+          text-align: center;
+          padding: 2rem 0 0;
+          margin-top: 2rem;
+          border-top: 1px solid rgba(0, 0, 0, 0.08);
+          color: var(--text-secondary);
+          font-size: 0.9rem;
         }
 
         /* Contact Modal */
@@ -781,22 +1370,206 @@ export default function LandingPage() {
           color: var(--text-muted);
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-          .lp-main {
+        /* Built for Scale Section */
+        .lp-scale-section {
+          background: var(--bg-main);
+          padding: 6rem 3rem;
+          position: relative;
+          z-index: 2;
+          overflow: hidden;
+        }
+
+        .lp-scale-section::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(249, 115, 22, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(249, 115, 22, 0.06) 1px, transparent 1px);
+          background-size: 60px 60px;
+          pointer-events: none;
+        }
+
+        .lp-scale-section::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(ellipse at 30% 50%, rgba(249, 115, 22, 0.08) 0%, transparent 50%);
+          pointer-events: none;
+        }
+
+        .lp-scale-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          position: relative;
+          z-index: 1;
+        }
+
+        .lp-scale-header {
+          text-align: center;
+          margin-bottom: 4rem;
+        }
+
+        .lp-scale-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.4rem 1rem;
+          background: rgba(249, 115, 22, 0.1);
+          border: 1px solid rgba(249, 115, 22, 0.3);
+          border-radius: 100px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: var(--accent);
+          margin-bottom: 1.5rem;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+        }
+
+        .lp-scale-title {
+          font-size: 3rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin-bottom: 1rem;
+          letter-spacing: -0.02em;
+        }
+
+        .lp-scale-subtitle {
+          font-size: 1.1rem;
+          color: var(--text-secondary);
+          max-width: 650px;
+          margin: 0 auto;
+          line-height: 1.7;
+        }
+
+        .lp-scale-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+
+        .lp-scale-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 20px;
+          padding: 2rem;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .lp-scale-card:hover {
+          background: var(--bg-card-hover);
+          border-color: var(--border-hover);
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .lp-scale-card:hover .lp-scale-card-icon {
+          background: rgba(249, 115, 22, 0.2);
+        }
+
+        .lp-scale-card-icon {
+          width: 48px;
+          height: 48px;
+          background: rgba(249, 115, 22, 0.1);
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--accent);
+          margin-bottom: 1.25rem;
+          transition: background 0.3s;
+        }
+
+        .lp-scale-card-title {
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin-bottom: 0.5rem;
+        }
+
+        .lp-scale-card-desc {
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          line-height: 1.7;
+          margin-bottom: 1.25rem;
+        }
+
+        .lp-scale-card-stats {
+          display: flex;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+        }
+
+        .lp-scale-stat {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          font-weight: 500;
+        }
+
+        .lp-scale-stat-value {
+          font-weight: 700;
+          color: var(--accent);
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.9rem;
+        }
+
+        .lp-scale-tech-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
+        }
+
+        .lp-scale-tech-tag {
+          padding: 0.3rem 0.75rem;
+          background: rgba(249, 115, 22, 0.08);
+          border: 1px solid rgba(249, 115, 22, 0.15);
+          border-radius: 6px;
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lp-scale-full-width {
+          grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+          .lp-scale-section {
+            padding: 4rem 1.5rem;
+          }
+
+          .lp-scale-title {
+            font-size: 2rem;
+          }
+
+          .lp-scale-grid {
             grid-template-columns: 1fr;
-            gap: 3rem;
           }
 
-          .lp-hero-visual {
-            order: -1;
+          .lp-scale-card {
+            padding: 1.5rem;
           }
 
-          .lp-hero-image {
-            max-width: 400px;
+          .lp-scale-card-stats {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+
+          .lp-scale-full-width {
+            grid-column: 1;
           }
         }
 
+        /* Responsive */
         @media (max-width: 768px) {
           .lp-container {
             padding: 1.5rem;
@@ -815,15 +1588,6 @@ export default function LandingPage() {
             display: none;
           }
 
-          .lp-main {
-            min-height: auto;
-            padding: 2rem 0 4rem;
-          }
-
-          .lp-roles-grid {
-            grid-template-columns: 1fr;
-          }
-
           .lp-cta-buttons {
             flex-direction: column;
           }
@@ -832,196 +1596,715 @@ export default function LandingPage() {
           .lp-contact-btn {
             justify-content: center;
           }
+
+          .lp-multitenant-section {
+            padding: 4rem 1.5rem;
+          }
+
+          .lp-section-title {
+            font-size: 2rem;
+          }
+
+          .lp-tenant-item {
+            padding: 2rem 1.5rem;
+            flex-direction: column;
+          }
+
+          .lp-tenant-title {
+            font-size: 1.75rem;
+          }
+
+          .lp-tenant-badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 1rem;
+          }
+
+          .lp-assessment-section {
+            padding: 4rem 1.5rem;
+          }
+
+          .lp-assessment-container {
+            flex-direction: column;
+            gap: 2rem;
+          }
+
+          .lp-assessment-item {
+            padding: 2rem;
+          }
+
+          .lp-assessment-title {
+            font-size: 1.75rem;
+          }
+
+          .lp-assessment-description {
+            font-size: 1rem;
+          }
+
+          .lp-assessment-icon {
+            width: 50px;
+            height: 50px;
+          }
+
+          .lp-grid-dots {
+            display: none;
+          }
+
+          .lp-cta-section {
+            padding: 4rem 1.5rem;
+          }
+
+          .lp-cta-title {
+            font-size: 2.25rem;
+          }
+
+          .lp-cta-subtitle {
+            font-size: 1rem;
+          }
+
+          .lp-cta-buttons {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .lp-cta-button {
+            justify-content: center;
+          }
+
+          .lp-footer-wrapper {
+            padding: 3rem 1.5rem;
+          }
+
+          .lp-footer {
+            flex-direction: column;
+            padding: 2rem;
+            gap: 2rem;
+          }
+
+          .lp-footer-left {
+            max-width: 100%;
+          }
+
+          .lp-footer-right {
+            align-items: flex-start;
+            gap: 2rem;
+            width: 100%;
+            min-height: auto;
+          }
+
+          .lp-footer-links {
+            align-items: flex-start;
+          }
+
+          .lp-footer-credit {
+            text-align: left;
+          }
         }
       `}</style>
 
-            {/* Background */}
-            <div className="lp-bg-wrapper">
-                <div className="lp-gradient-orb orb-1"></div>
-                <div className="lp-gradient-orb orb-2"></div>
-                <div className="lp-gradient-orb orb-3"></div>
-                <div className="lp-grid-pattern"></div>
-                <div className="lp-noise"></div>
+      {/* Background */}
+      <div className="lp-bg-wrapper">
+        <div className="lp-gradient-orb orb-1"></div>
+        <div className="lp-gradient-orb orb-2"></div>
+        <div className="lp-gradient-orb orb-3"></div>
+        <div className="lp-grid-pattern"></div>
+        <div className="lp-noise"></div>
+      </div>
+
+      {/* Mouse Glow Effect */}
+      <div
+        className="lp-mouse-glow"
+        style={{ left: mousePosition.x, top: mousePosition.y }}
+      ></div>
+
+      {/* Fixed Top Navbar */}
+      <nav className="lp-top-nav">
+        <div className="lp-top-nav-inner">
+          <div className="lp-nav-logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            &lt; SYNTAX /&gt;
+          </div>
+
+          <ul className={`lp-nav-links${mobileMenuOpen ? " open" : ""}`}>
+            <li>
+              <button className="lp-nav-link" onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); setMobileMenuOpen(false); }}>
+                Home
+              </button>
+            </li>
+            <li>
+              <button className="lp-nav-link" onClick={() => { scrollToSection("features"); setMobileMenuOpen(false); }}>
+                Features
+              </button>
+            </li>
+            <li>
+              <button className="lp-nav-link" onClick={() => { scrollToSection("assessment"); setMobileMenuOpen(false); }}>
+                Assessment Suite
+              </button>
+            </li>
+            <li>
+              <button className="lp-nav-link" onClick={() => { scrollToSection("architecture"); setMobileMenuOpen(false); }}>
+                Architecture
+              </button>
+            </li>
+            <li>
+              <button className="lp-nav-link" onClick={() => { setShowContactModal(true); setMobileMenuOpen(false); }}>
+                Contact
+              </button>
+            </li>
+          </ul>
+
+          <div className="lp-nav-actions">
+            <button className="lp-nav-login-btn" onClick={() => navigate("/role-select")}>
+              Login
+            </button>
+            <button className="lp-nav-register-btn" onClick={() => setShowContactModal(true)}>
+              Register
+            </button>
+            <button className="lp-nav-mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              {mobileMenuOpen ? <X size={18} /> : <span style={{ fontSize: "1.25rem", lineHeight: 1 }}>☰</span>}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <div className="lp-container" style={{ paddingTop: "56px" }}>
+        {/* Decorative Grid Dots */}
+        <div className="lp-grid-dots top-right">
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+        </div>
+        <div className="lp-grid-dots bottom-left">
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+        </div>
+
+        {/* Main Content */}
+        <main className="lp-main">
+          {/* Background Text */}
+          <div className="lp-bg-text">SYNTAX</div>
+
+          {/* Hero Content */}
+          <div className="lp-hero-content">
+            <h1 className="lp-hero-title">
+              <span className="line-1">Evaluate Talent.</span>
+              <span className="line-2">Elevate Teams.</span>
+            </h1>
+
+            <p className="lp-hero-desc">
+              The scalable assessment platform for institutions. Create quizzes,
+              host coding contests, and publish technical articles — all in one
+              place.
+            </p>
+
+            <div className="lp-stats-badge">
+              <Zap size={18} />
+              Handled <span className="lp-stats-number">500+</span> users
             </div>
 
-            {/* Mouse Glow Effect */}
-            <div
-                className="lp-mouse-glow"
-                style={{ left: mousePosition.x, top: mousePosition.y }}
-            ></div>
-
-            <div className="lp-container">
-                {/* Navigation */}
-                <nav className="lp-nav">
-                    <div className="lp-logo">
-                        <div className="lp-logo-icon">
-                            <Terminal size={20} strokeWidth={2.5} />
-                        </div>
-                        Syntax
-                    </div>
-                    <div className="lp-version-badge">
-                        <span className="lp-version-tag">
-                            <span className="pulse-dot"></span>
-                            V1
-                        </span>
-                        <span className="lp-version-text">Actively improving · More features coming soon</span>
-                    </div>
-                </nav>
-
-                {/* Main Content */}
-                <main className="lp-main">
-                    {/* Hero Left */}
-                    <div className="lp-hero-content">
-                        <div className="lp-badge">
-                            <div className="lp-badge-dot"></div>
-                            <AppWindow size={14} />
-                            Built for execution and evaluation.
-                        </div>
-
-                        <h1 className="lp-hero-title">
-                            <span className="line-1">Evaluate Talent.</span>
-                            <span className="line-2">Syntax.</span>
-                        </h1>
-
-                        <p className="lp-hero-desc">
-                            A unified platform to manage admins, enroll students, and host live coding contests. No clutter, just the tools you need.
-                        </p>
-
-                        <div className="lp-cta-buttons">
-                            <button onClick={scrollToRoles} className="lp-submit-btn">
-                                Get Started
-                                <ArrowRight size={18} />
-                            </button>
-                            <button className="lp-contact-btn" onClick={() => setShowContactModal(true)}>
-                                <Send size={18} />
-                                Contact
-                            </button>
-                        </div>
-
-                        <div className="lp-helper-text">
-                            <div className="lp-helper-item">
-                                <Sparkles size={16} />
-                                Distraction free
-                            </div>
-                            <div className="lp-helper-item">
-                                <Lock size={16} />
-                                Secure Sandbox
-                            </div>
-                            <div className="lp-helper-item">
-                                <BarChart3 size={16} />
-                                Real-time analytics
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Hero Right - Image */}
-                    <div className="lp-hero-visual">
-                        <img src={LP} alt="Syntax Platform" className="lp-hero-image" />
-                    </div>
-                </main>
-
-                {/* Role Cards Section */}
-                <section id="roles-section" className="lp-roles-section">
-                    <div className="lp-roles-header">
-                        <h2 className="lp-roles-title">Choose your portal</h2>
-                        <p className="lp-roles-subtitle">Access the platform based on your role</p>
-                    </div>
-
-                    <div className="lp-roles-grid">
-                        {/* Candidate */}
-                        <div className="lp-role-card" onClick={() => navigate("/student-login")}>
-                            <div className="lp-role-icon-wrapper">
-                                <div className="lp-role-glow glow-candidate"></div>
-                                <div className="lp-role-icon icon-candidate">
-                                    <User size={28} />
-                                </div>
-                            </div>
-                            <div className="lp-role-content">
-                                <h3 className="lp-role-title">Candidate Portal</h3>
-                                <p className="lp-role-desc">
-                                    Take assessments, track your progress, and view detailed performance analytics.
-                                </p>
-                                <span className="lp-role-link">
-                                    Get Started <ArrowRight size={16} />
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Examiner */}
-                        <div className="lp-role-card" onClick={() => navigate("/admin-login")}>
-                            <div className="lp-role-icon-wrapper">
-                                <div className="lp-role-glow glow-examiner"></div>
-                                <div className="lp-role-icon icon-examiner">
-                                    <ShieldCheck size={28} />
-                                </div>
-                            </div>
-                            <div className="lp-role-content">
-                                <h3 className="lp-role-title">Examiner Admin</h3>
-                                <p className="lp-role-desc">
-                                    Create assessments, monitor proctoring sessions, and evaluate submissions.
-                                </p>
-                                <span className="lp-role-link">
-                                    Get Started <ArrowRight size={16} />
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Admin */}
-                        <div className="lp-role-card" onClick={() => navigate("/super-login")}>
-                            <div className="lp-role-icon-wrapper">
-                                <div className="lp-role-glow glow-admin"></div>
-                                <div className="lp-role-icon icon-admin">
-                                    <Cpu size={28} />
-                                </div>
-                            </div>
-                            <div className="lp-role-content">
-                                <h3 className="lp-role-title">System Admin</h3>
-                                <p className="lp-role-desc">
-                                    Onboard faculty members, and oversee platform operations and all active contests.
-                                </p>
-                                <span className="lp-role-link">
-                                    Get Started <ArrowRight size={16} />
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+            <div className="lp-cta-buttons">
+              <button
+                onClick={() => navigate("/role-select")}
+                className="lp-submit-btn"
+              >
+                Login to Platform
+                <ArrowRight size={18} />
+              </button>
+              <button
+                className="lp-contact-btn"
+                onClick={() => setShowContactModal(true)}
+              >
+                <Send size={18} />
+                Register Institution
+              </button>
             </div>
+          </div>
+        </main>
+      </div>
 
-            {/* Contact Modal */}
-            {showContactModal && (
-                <div className="lp-modal-overlay" onClick={() => setShowContactModal(false)}>
-                    <div className="lp-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="lp-modal-hero">
-                            <button className="lp-modal-close" onClick={() => setShowContactModal(false)}>
-                                <X size={18} />
-                            </button>
-                            <div className="lp-modal-icon">
-                                <Send size={32} />
-                            </div>
-                            <h3 className="lp-modal-title">Get in Touch</h3>
-                            <p className="lp-modal-subtitle">We'd love to hear from you</p>
-                        </div>
+      {/* Multi-Tenant Experience Section */}
+      <section id="features" className="lp-multitenant-section">
+        <div className="lp-section-header">
+          <h2 className="lp-section-title">The Multi-Tenant Experience</h2>
+          <p className="lp-section-subtitle">
+            Tailored dashboards for every role in your ecosystem
+          </p>
+        </div>
 
-                        <div className="lp-modal-body">
-                            <div className="lp-modal-email-box">
-                                <span className="lp-modal-email">syntaxplatform@gmail.com</span>
-                                <button className="lp-modal-copy" onClick={copyEmail}>
-                                    <Copy size={14} />
-                                    Copy
-                                </button>
-                            </div>
+        <div className="lp-multitenant-container">
+          {/* Students */}
+          <div className="lp-tenant-item">
+            <div className="lp-tenant-content">
+              <div className="lp-tenant-badge">
+                <GraduationCap size={16} />
+                Students
+              </div>
+              <h3 className="lp-tenant-title">Practice, compete, and grow</h3>
+              <p className="lp-tenant-description">
+                A distraction-free sandbox environment to practice coding, track
+                tier progression, and compete on the leaderboard. Access
+                quizzes, participate in contests, read technical articles, and
+                monitor your growth journey with personalized insights.
+              </p>
+            </div>
+            <div className="lp-tenant-image">
+              <img src={studentDash} alt="Student Dashboard" />
+            </div>
+          </div>
 
-                            <button className="lp-modal-send-btn" onClick={openMailClient}>
-                                <Mail size={20} />
-                                Open Mail App
-                            </button>
+          {/* Trainers/Evaluators */}
+          <div className="lp-tenant-item">
+            <div className="lp-tenant-content">
+              <div className="lp-tenant-badge">
+                <Users size={16} />
+                Trainers/Evaluators
+              </div>
+              <h3 className="lp-tenant-title">
+                Create, evaluate, and track performance
+              </h3>
+              <p className="lp-tenant-description">
+                Powerful tools to create custom MCQ quizzes, configure test
+                cases for coding contests, and publish technical articles. Track
+                candidate performance with detailed analytics, manage
+                assessments, and evaluate results efficiently with intuitive
+                controls.
+              </p>
+            </div>
+            <div className="lp-tenant-image">
+              <img src={adminDash} alt="Admin Dashboard" />
+            </div>
+          </div>
 
-                            <p className="lp-modal-hint">Opens your default email client</p>
-                        </div>
-                    </div>
+          {/* Super Admins */}
+          <div className="lp-tenant-item">
+            <div className="lp-tenant-content">
+              <div className="lp-tenant-badge">
+                <Shield size={16} />
+                Super Admins
+              </div>
+              <h3 className="lp-tenant-title">
+                Manage and monitor the entire platform
+              </h3>
+              <p className="lp-tenant-description">
+                Comprehensive dashboard for managing admin accounts, tracking
+                overall platform performance, and monitoring system behavior.
+                Get real-time insights into user activity, system health, and
+                institutional metrics all in one centralized hub.
+              </p>
+            </div>
+            <div className="lp-tenant-image">
+              <img src={superAdminDash} alt="Super Admin Dashboard" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Assessment Suite Section */}
+      <section id="assessment" className="lp-assessment-section">
+        <div className="lp-section-header">
+          <h2 className="lp-section-title">The Assessment Suite</h2>
+          <p className="lp-section-subtitle">
+            Powerful tools to evaluate talent and track progress
+          </p>
+        </div>
+
+        <div className="lp-assessment-container">
+          {/* Coding Contests */}
+          <div className="lp-assessment-item">
+            <div className="lp-assessment-content">
+              <div className="lp-assessment-icon">
+                <Terminal size={28} />
+              </div>
+              <h3 className="lp-assessment-title">Coding Contests</h3>
+              <p className="lp-assessment-description">
+                Create comprehensive coding challenges with a professional-grade
+                development environment designed for accurate skill assessment.
+              </p>
+              <ul className="lp-assessment-features">
+                <li>
+                  <div>
+                    <strong>Secure Sandbox Environment:</strong>
+                    <span>
+                      Isolated execution ensures code runs safely without
+                      affecting the system
+                    </span>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Multiple Language Support:</strong>
+                    <span>
+                      Python, Java, C, C++, and JavaScript with customizable
+                      starter code
+                    </span>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Real-Time Test Case Evaluation:</strong>
+                    <span>
+                      Instant feedback with detailed test results and execution
+                      metrics
+                    </span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Custom Quizzes */}
+          <div className="lp-assessment-item">
+            <div className="lp-assessment-content">
+              <div className="lp-assessment-icon">
+                <Clock size={28} />
+              </div>
+              <h3 className="lp-assessment-title">Custom Quizzes</h3>
+              <p className="lp-assessment-description">
+                Build and deploy MCQ assessments with advanced features for fair
+                and efficient candidate evaluation.
+              </p>
+              <ul className="lp-assessment-features">
+                <li>
+                  <div>
+                    <strong>Customizable Timer:</strong>
+                    <span>
+                      Set precise time limits with server-synchronized countdown
+                      and auto-submit functionality
+                    </span>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Question Randomization:</strong>
+                    <span>
+                      Each student gets a unique question order using seeded
+                      randomization for fairness
+                    </span>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Automated Grading:</strong>
+                    <span>
+                      Instant results with detailed analytics, answer review,
+                      and performance tracking
+                    </span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Built for Scale Section */}
+      <section id="architecture" className="lp-scale-section">
+        <div className="lp-scale-container">
+          <div className="lp-scale-header">
+            <div className="lp-scale-badge">
+              <Server size={14} />
+              Built for Scale
+            </div>
+            <h2 className="lp-scale-title">Engineered for Production</h2>
+            <p className="lp-scale-subtitle">
+              A distributed architecture handling concurrent code evaluations,
+              real-time assessments, and thousands of API requests without
+              dropping a session.
+            </p>
+          </div>
+
+          <div className="lp-scale-grid">
+            {/* Concurrent Code Execution */}
+            <div className="lp-scale-card lp-scale-full-width">
+              <div className="lp-scale-card-icon">
+                <Terminal size={22} />
+              </div>
+              <h3 className="lp-scale-card-title">Concurrent Code Execution Engine</h3>
+              <p className="lp-scale-card-desc">
+                Every code submission is dispatched to a sandboxed code
+                execution service that compiles and runs code in an isolated
+                environment. Single code runs execute synchronously with
+                results returned on completion, while contest submissions run
+                as a batch with polling — all while Node.js's event loop keeps
+                accepting new requests concurrently. Combined with auto-scaling
+                infrastructure, the system horizontally scales to handle
+                multiple concurrent evaluations with zero session drops.
+              </p>
+              <div className="lp-scale-card-stats">
+                <div className="lp-scale-stat">
+                  <span className="lp-scale-stat-value">&lt; 2s</span>
+                  &nbsp;avg execution time
                 </div>
-            )}
-        </>
-    );
+                <div className="lp-scale-stat">
+                  <span className="lp-scale-stat-value">Multiple</span>
+                  &nbsp;concurrent evaluations
+                </div>
+                <div className="lp-scale-stat">
+                  <span className="lp-scale-stat-value">Zero</span>
+                  &nbsp;session drops
+                </div>
+              </div>
+              <div className="lp-scale-tech-list">
+                <span className="lp-scale-tech-tag">Judge0 CE</span>
+                <span className="lp-scale-tech-tag">Docker</span>
+                <span className="lp-scale-tech-tag">Cloud Run</span>
+                <span className="lp-scale-tech-tag">RSA-OAEP</span>
+                <span className="lp-scale-tech-tag">Node.js Event Loop</span>
+              </div>
+            </div>
+
+            {/* Database Schema Strategy */}
+            <div className="lp-scale-card">
+              <div className="lp-scale-card-icon">
+                <Database size={22} />
+              </div>
+              <h3 className="lp-scale-card-title">Database Architecture</h3>
+              <p className="lp-scale-card-desc">
+                Built on a serverless, horizontally scalable document database
+                with a denormalized subcollection pattern for user results. Quiz
+                answers are validated server-side — correct answers are never
+                sent to the client. Hidden test cases for coding contests remain
+                on the server, preventing client-side tampering. A unique token
+                on each result document prevents race conditions and duplicate
+                scoring.
+              </p>
+              <div className="lp-scale-tech-list">
+                <span className="lp-scale-tech-tag">Serverless DB</span>
+                <span className="lp-scale-tech-tag">Subcollection Pattern</span>
+                <span className="lp-scale-tech-tag">Server-side Validation</span>
+                <span className="lp-scale-tech-tag">Race Condition Prevention</span>
+              </div>
+            </div>
+
+            {/* Execution Queue & API Performance */}
+            <div className="lp-scale-card">
+              <div className="lp-scale-card-icon">
+                <Cpu size={22} />
+              </div>
+              <h3 className="lp-scale-card-title">Execution Pipeline &amp; Performance</h3>
+              <p className="lp-scale-card-desc">
+                The submission pipeline follows a clean flow: code written in
+                the editor is dispatched to Judge0 which executes against all
+                test cases — both visible and hidden. Results and scores are
+                returned to the frontend, encrypted with AES-256, and persisted
+                locally. On contest finish, all submissions are sent to the
+                backend which validates timing server-side, checks for
+                duplicates via a unique submission token, aggregates scores,
+                and stores results to the database. An in-memory cache layer
+                reduces database reads for hot data like the leaderboard.
+                Hidden test cases and correct answers are never exposed to the
+                client.
+              </p>
+              <div className="lp-scale-tech-list">
+                <span className="lp-scale-tech-tag">In-memory Cache</span>
+                <span className="lp-scale-tech-tag">AES-256 Encryption</span>
+                <span className="lp-scale-tech-tag">Server-side Validation</span>
+                <span className="lp-scale-tech-tag">Submission Token</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="lp-cta-section">
+        <div className="lp-cta-container">
+          <h2 className="lp-cta-title">
+            Ready to Transform Your Learning Experience?
+          </h2>
+          <p className="lp-cta-subtitle">
+            Join the students and educators already using Syntax to master
+            coding skills and evaluate talent effectively.
+          </p>
+          <div className="lp-cta-buttons">
+            <button
+              className="lp-cta-button lp-cta-button-primary"
+              onClick={() => navigate("/role-select")}
+            >
+              <Zap size={20} />
+              Get Started
+            </button>
+            <button
+              className="lp-cta-button lp-cta-button-secondary"
+              onClick={() => setShowContactModal(true)}
+            >
+              <Mail size={20} />
+              Contact Us
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="lp-footer-wrapper">
+        <div className="lp-footer">
+          <div className="lp-footer-left">
+            <div className="lp-footer-logo">
+              <div className="lp-footer-logo-icon">
+                <Code2 size={24} />
+              </div>
+              <span className="lp-footer-logo-text">&lt; SYNTAX /&gt;</span>
+            </div>
+            <p className="lp-footer-description">
+              Our mission is to revolutionize coding education through
+              comprehensive assessment tools, empowering students and educators
+              to achieve excellence in software development.
+            </p>
+            <div className="lp-footer-social">
+              <a
+                href="https://www.linkedin.com/in/ananthunarashimman/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lp-footer-social-link"
+              >
+                <Linkedin size={20} />
+              </a>
+              <a
+                href="https://x.com/home"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lp-footer-social-link"
+              >
+                <Twitter size={20} />
+              </a>
+              <div
+                className="lp-footer-social-link"
+                onClick={() => setShowContactModal(true)}
+              >
+                <Mail size={20} />
+              </div>
+            </div>
+          </div>
+          <div className="lp-footer-right">
+            <div className="lp-footer-links">
+              <span
+                className="lp-footer-link"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              >
+                Home
+              </span>
+              <span
+                className="lp-footer-link"
+                onClick={() => scrollToSection("features")}
+              >
+                Features
+              </span>
+              <span
+                className="lp-footer-link"
+                onClick={() => scrollToSection("assessment")}
+              >
+                Assessment Suite
+              </span>
+              <span
+                className="lp-footer-link"
+                onClick={() => scrollToSection("architecture")}
+              >
+                Architecture
+              </span>
+              <span
+                className="lp-footer-link"
+                onClick={() => navigate("/role-select")}
+              >
+                Login
+              </span>
+              <span
+                className="lp-footer-link"
+                onClick={() => setShowContactModal(true)}
+              >
+                Contact
+              </span>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div
+          className="lp-modal-overlay"
+          onClick={() => setShowContactModal(false)}
+        >
+          <div className="lp-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="lp-modal-hero">
+              <button
+                className="lp-modal-close"
+                onClick={() => setShowContactModal(false)}
+              >
+                <X size={18} />
+              </button>
+              <div className="lp-modal-icon">
+                <Send size={32} />
+              </div>
+              <h3 className="lp-modal-title">Get in Touch</h3>
+              <p className="lp-modal-subtitle">We'd love to hear from you</p>
+            </div>
+
+            <div className="lp-modal-body">
+              <div className="lp-modal-email-box">
+                <span className="lp-modal-email">syntaxplatform@gmail.com</span>
+                <button className="lp-modal-copy" onClick={copyEmail}>
+                  <Copy size={14} />
+                  Copy
+                </button>
+              </div>
+
+              <button className="lp-modal-send-btn" onClick={openMailClient}>
+                <Mail size={20} />
+                Open Mail App
+              </button>
+
+              <p className="lp-modal-hint">Opens your default email client</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
